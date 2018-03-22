@@ -4,36 +4,76 @@ library(magrittr)
 # data path ---------------------------------------------------------------
 
 miRNA_list_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-miRNA_exp_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/肺癌基因表达量数据/rsem标准化表达量"
+miRNA_exp_path <- "F:/data/TCGA/TCGA_data"
 gene_list_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
 
 # laod data ---------------------------------------------------------------
 
 miRNA_list <- readr::read_tsv(file.path(miRNA_list_path,"NOISeq_DE_mirna_FC2_cpm30.mirnaid.up.id"))
-miRNA_exp <- read.table(file.path(miRNA_exp_path,"miRNA_isoform.expression.mirnaid.noMIMA"),sep="\t",header = T)
-pro_exp <- read.table(file.path(miRNA_exp_path,"Pro_rsem_exp.xls"),sep="\t",header = T)
-TF_exp <- read.table(file.path(miRNA_exp_path,"TF_rsem_exp.xls"),sep="\t",header = T)
+miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
+  dplyr::filter(cancer_types=="LUAD") %>%
+  tidyr::unnest() %>%
+  dplyr::mutate(sample=substr(9,16,sample))
+gene_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_expr.rds.gz")) %>%
+  dplyr::filter(cancer_types=="LUAD") %>%
+  tidyr::unnest() %>%
+  dplyr::mutate(sample=substr(9,16,sample))
+>>>>>>>>>>>>>>>>>>
 genelist_pro <- readr::read_tsv(file.path(gene_list_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.protein_coding_LUAD-FC2_down"))
 genelist_TF <- readr::read_tsv(file.path(gene_list_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.TF_LUAD-FC2.down"))
 
 # data manage -------------------------------------------------------------
 miRNA_exp %>%
-  dplyr::filter(mirna_id %in% miRNA_list$mirna_id) %>%
-  tidyr::gather(-mirna_id,key="sample",value="mirna_exp") %>%
+  dplyr::filter(name %in% miRNA_list$mirna_id) %>%
+  dplyr::select(-cancer_types,-gene) %>%
+  tidyr::gather(-name,key="sample",value="mirna_exp") %>%
   dplyr::as_tibble() %>%
-  tidyr::nest(-mirna_id) -> miRNA_exp.gather
+  tidyr::nest(-name) -> miRNA_exp.gather
 
-pro_exp %>%
-  rbind(TF_exp) %>%
-  dplyr::filter(gene_id %in% c(genelist_pro$gene_id,genelist_TF$gene_id)) %>%
-  tidyr::gather(-gene_id,key="sample",value="gene_exp") %>%
+gene_exp %>%
+  dplyr::filter(symbol %in% c(genelist_pro$gene_id,genelist_TF$gene_id)) %>%
+  dplyr::select(-cancer_types,-entrez_id) %>%
+  tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
   dplyr::as_tibble() %>%
-  tidyr::nest(-gene_id) -> gene_exp.gather
+  tidyr::nest(-symbol) -> gene_exp.gather
 
+gene_exp %>%
+  dplyr::filter(symbol %in% c("EZH2","CBX2")) %>%
+  dplyr::select(-cancer_types,-entrez_id) %>%
+  tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-symbol) -> EZH2_CBX2_exp.gather
+
+gene_exp %>%
+  dplyr::filter(symbol %in% c("E2F1","SOX9","EGR2","EGR1","NEGR1","E2F3","KLF6","FOXP3","SOX4")) %>%
+  dplyr::select(-cancer_types,-entrez_id) %>%
+  tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-symbol) -> EZH2_CBX2_upstreamTF_exp.gather
+
+CBX2_upstreamMIR<- c("hsa-miR-331-3p","hsa-let-7f-5p","hsa-miR-93-5p","hsa-miR-629-5p","hsa-miR-338-3p","hsa-miR-1-3p","hsa-miR-30a-5p",
+  "hsa-miR-193b-3p","hsa-miR-128-3p","hsa-miR-183-5p","hsa-miR-1287-5p","hsa-let-7c-5p","hsa-miR-195-5p","hsa-miR-424-5p",
+  "hsa-miR-2355-5p")
+EZH2_upstreamMIR<- c("hsa-miR-200a-3p","hsa-miR-139-5p","hsa-miR-93-5p","hsa-miR-193b-3p","hsa-miR-128-3p","hsa-let-7c-5p",
+                     "hsa-miR-195-5p","hsa-miR-429","hsa-miR-92b-3p")
+miRNA_exp %>%
+  dplyr::filter(name %in% CBX2_upstreamMIR) %>%
+  dplyr::select(-cancer_types,-gene) %>%
+  tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-name) -> CBX2_upstreamMIR_exp.gather
+miRNA_exp %>%
+  dplyr::filter(name %in% EZH2_upstreamMIR) %>%
+  dplyr::select(-cancer_types,-gene) %>%
+  tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-name) -> EZH2_upstreamMIR_exp.gather
+# calculation -------------------------------------------------------------
+#funciton ----
 fn_get_spm_a <- function(m_data){
   # print(m_data)
   gene_exp.gather %>%
-    dplyr::group_by(gene_id) %>%
+    dplyr::group_by(symbol) %>%
     # dplyr::filter(gene_id %in% c("RBMS3")) %>%
     dplyr::mutate(spm=purrr::map(data,m_data=m_data,fn_get_spm_b)) %>%
     dplyr::select(-data) %>%
@@ -60,14 +100,18 @@ fn_get_spm_b <- function(g_data,m_data){
 }
 miRNA_exp.gather$mirna_id <- as.character(miRNA_exp.gather$mirna_id)
 gene_exp.gather$gene_id <- as.character(gene_exp.gather$gene_id)
+
+# miRNA and EZH2&CBX2 targets
 miRNA_exp.gather %>%
-  # dplyr::filter(mirna_id %in% c("hsa-miR-21-5p")) %>%
-  dplyr::group_by(mirna_id) %>%
+  dplyr::filter(name %in% c("hsa-miR-21-5p")) %>%
+  dplyr::group_by(name) %>%
   dplyr::mutate(spm=purrr::map(data,fn_get_spm_a)) %>%
   dplyr::select(-data) %>%
   dplyr::ungroup() %>%
   tidyr::unnest() -> mirna_gene_spm_cor
 
+# EZH2&CBX2 with their targets
+gene_exp.gather %>%
 mirna_gene_spm_cor %>%
   dplyr::select(mirna_id,gene_id,Cor) %>%
   tidyr::spread(gene_id,Cor) %>%
