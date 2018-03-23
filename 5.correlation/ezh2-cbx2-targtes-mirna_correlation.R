@@ -61,12 +61,14 @@ miRNA_exp %>%
   dplyr::filter(name %in% CBX2_upstreamMIR) %>%
   dplyr::select(-cancer_types,-gene) %>%
   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+  dplyr::mutate(sample=substr(9,16,sample)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-name) -> CBX2_upstreamMIR_exp.gather
 miRNA_exp %>%
   dplyr::filter(name %in% EZH2_upstreamMIR) %>%
   dplyr::select(-cancer_types,-gene) %>%
   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+  dplyr::mutate(sample=substr(9,16,sample)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-name) -> EZH2_upstreamMIR_exp.gather
 # calculation -------------------------------------------------------------
