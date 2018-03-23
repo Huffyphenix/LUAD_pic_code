@@ -12,13 +12,10 @@ gene_list_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-ta
 miRNA_list <- readr::read_tsv(file.path(miRNA_list_path,"NOISeq_DE_mirna_FC2_cpm30.mirnaid.up.id"))
 miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
-  tidyr::unnest() %>%
-  dplyr::mutate(sample=substr(9,16,sample))
+  tidyr::unnest() 
 gene_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
-  tidyr::unnest() %>%
-  dplyr::mutate(sample=substr(9,16,sample))
->>>>>>>>>>>>>>>>>>
+  tidyr::unnest() 
 genelist_pro <- readr::read_tsv(file.path(gene_list_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.protein_coding_LUAD-FC2_down"))
 genelist_TF <- readr::read_tsv(file.path(gene_list_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.TF_LUAD-FC2.down"))
 
@@ -27,6 +24,7 @@ miRNA_exp %>%
   dplyr::filter(name %in% miRNA_list$mirna_id) %>%
   dplyr::select(-cancer_types,-gene) %>%
   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+  dplyr::mutate(sample=substr(9,16,sample)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-name) -> miRNA_exp.gather
 
@@ -34,6 +32,7 @@ gene_exp %>%
   dplyr::filter(symbol %in% c(genelist_pro$gene_id,genelist_TF$gene_id)) %>%
   dplyr::select(-cancer_types,-entrez_id) %>%
   tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::mutate(sample=substr(9,16,sample)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-symbol) -> gene_exp.gather
 
@@ -41,6 +40,7 @@ gene_exp %>%
   dplyr::filter(symbol %in% c("EZH2","CBX2")) %>%
   dplyr::select(-cancer_types,-entrez_id) %>%
   tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::mutate(sample=substr(9,16,sample)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-symbol) -> EZH2_CBX2_exp.gather
 
@@ -48,6 +48,7 @@ gene_exp %>%
   dplyr::filter(symbol %in% c("E2F1","SOX9","EGR2","EGR1","NEGR1","E2F3","KLF6","FOXP3","SOX4")) %>%
   dplyr::select(-cancer_types,-entrez_id) %>%
   tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::mutate(sample=substr(9,16,sample)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-symbol) -> EZH2_CBX2_upstreamTF_exp.gather
 
