@@ -1,5 +1,5 @@
 
-.libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
+# .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
 library(magrittr)
 # data path ---------------------------------------------------------------
 
@@ -180,6 +180,8 @@ EZH2_CBX2_exp.gather %>%
   dplyr::select(-data) %>%
   dplyr::ungroup() %>%
   tidyr::unnest() -> EZH2_CBX2_targets_spm_cor
+EZH2_CBX2_targets_spm_cor %>%
+  readr::write_tsv(file.path(out_path_sup,"EZH2_CBX2_targets_spm_cor.tsv"))
 
 EZH2_CBX2_targets_spm_cor %>%
   dplyr::select(symbol1,symbol,Cor) %>%
