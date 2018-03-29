@@ -15,8 +15,7 @@ out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 # load data ---------------------------------------------------------------
 
 luad_meth <- readr::read_tsv(file.path(data_path,"LUAD_paired_methylation.txt"))
-luad_meth %>%
-  tidyr::separate(gene,c("tag","symbol"),"_") -> luad_meth
+
 
 gene_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
@@ -53,18 +52,19 @@ luad_meth %>%
   tidyr::nest(-Gene_Symbol) %>%
   dplyr::group_by(Gene_Symbol) %>%
   dplyr::mutate(Genomic_Direction=purrr::map(data,fn_rank)) %>%
+  dplyr::select(-data) %>%
   tidyr::unnest() %>%
   dplyr::ungroup() %>%
-  dplyr::select(-Genomic_Coordinate,-tag1,-Genomic_Coordinate1)-> genelist_pro.tag_posi
+  dplyr::select(-Gene_Symbol) -> genelist_pro.tag_posi
 genelist_pro.methy %>%
-  dplyr::select(-Gene_Symbol) %>%
   dplyr::mutate(methy=as.numeric(methy)) %>%
-  tidyr::nest(-tag,-group) %>%
+  tidyr::nest(-tag,-group,-Gene_Symbol) %>%
   dplyr::group_by(tag,group) %>%
   dplyr::mutate(median=purrr::map(data,fn_median)) %>%
   dplyr::select(-data) %>%
   tidyr::unnest() %>%
-  dplyr::inner_join(genelist_pro.tag_posi,by="tag") -> genelist_pro.median.methy
+  dplyr::inner_join(genelist_pro.tag_posi,by="tag") %>%
+  dplyr::ungroup() -> genelist_pro.median.methy
   
 luad_meth %>%
   dplyr::filter(Gene_Symbol %in% c(genelist_TF$gene_id)) %>%
@@ -181,22 +181,140 @@ ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone_line.pdf"),EZH2_
 genelist_pro.methy %>%
   tidyr::drop_na(methy) %>%
   dplyr::mutate(methy=as.numeric(methy)) %>%
-  dplyr::group_by(tag) %>%
+  # dplyr::filter(tag=="cg00008737") %>%
+  dplyr::mutate(sample=substr(sample,1,4)) %>%
+  dplyr::group_by(tag,Gene_Symbol,sample,group) %>%
+  dplyr::mutate(methy_mean=mean(methy)) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-methy) %>%
+  unique() %>%
+  tidyr::spread(group,methy_mean) %>%
+  dplyr::group_by(Gene_Symbol) %>%
   dplyr::do(
     broom::tidy(
-      t.test(methy ~ group, data = .)
+      t.test(.$`T`, .$N, data = ., paired=TRUE)
     )
   ) %>%
   dplyr::mutate(sig=ifelse(p.value<=0.05,"*","")) %>%
   dplyr::mutate(sig=ifelse(p.value<=0.01,"**",sig)) %>%
-  dplyr::mutate(diff = -estimate) %>%
-  dplyr::select(tag,p.value,diff) -> genelist_pro.ttest
+  dplyr::mutate(`diff(T-N)` = estimate) %>%
+  dplyr::rename("ttestPvalue"="p.value","ttestMethod"="method","diffSig"="sig") -> genelist_pro.paired_ttest
 
-genelist_pro.ttest %>%
-  dplyr::inner_join(genelist_pro.tag_posi,by="tag") %>%
-  dplyr::filter(p.value<=0.05) %>%
+genelist_pro.paired_ttest %>%
+  dplyr::filter(`diff(T-N)`<0 & p.value<=0.05) -> genelist_diff_in_methyTN
+
+
+gene_exp %>%
+  dplyr::filter(symbol %in% c(genelist_pro$gene_id,genelist_TF$gene_id)) %>%
+  dplyr::select(-cancer_types,-entrez_id) %>%
+  tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::mutate(sample=substr(sample,9,16)) %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-symbol,.key="exp") %>%
+  dplyr::rename("Gene_Symbol"="symbol")-> gene_exp.gather
+luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% c(genelist_pro$gene_id,genelist_TF$gene_id)) %>%
+  dplyr::select(-Genomic_Coordinate) %>%
+  tidyr::gather(-tag,-Gene_Symbol,key="sample",value="methy") %>%
+  dplyr::mutate(sample=substr(sample,9,16)) %>%
+  tidyr::drop_na() %>%
+  dplyr::mutate(methy=as.numeric(methy)) %>%
+  dplyr::group_by(Gene_Symbol,sample) %>%
+  dplyr::mutate(methy_mean=mean(methy)) %>%
+  dplyr::select(-tag,-methy) %>%
+  unique() %>%
+  dplyr::ungroup() %>% 
+  tidyr::nest(-Gene_Symbol,.key="methy") -> genelist_methy.gather
+
+fn_spm <- function(.exp,.methy){
+  .exp %>%
+    dplyr::inner_join(.methy,by="sample") %>%
+    dplyr::mutate(methy_mean=methy_mean+runif(n(),min=0,max=0.001)) %>%
+    dplyr::mutate(gene_exp=gene_exp+runif(n(),min=0,max=0.001)) -> .tmp
+  broom::tidy(
+      cor.test(.tmp$methy_mean,.tmp$gene_exp,method = "spearman")
+    ) -> .out
+  return(.out)
+}
+gene_exp.gather %>%
+  dplyr::inner_join(genelist_methy.gather,by="Gene_Symbol") %>%
   dplyr::group_by(Gene_Symbol) %>%
-  dplyr::mutate(diff.m=mean(diff)) %>%
-  dplyr::select(Gene_Symbol,diff.m) %>%
-  unique()
+  dplyr::mutate(spm=purrr::map2(exp,methy,fn_spm)) %>%
+  dplyr::select(-(exp:methy)) %>%
+  tidyr::unnest() %>%
+  dplyr::rename("spmCor"="estimate") %>%
+  dplyr::rename("spm_pvalue"="p.value","CorMethod"="method") -> genelist_exp_methy_cor
+genelist_exp_methy_cor %>%
+  dplyr::filter(spm_pvalue<=0.05) %>%
+  dplyr::arrange(spmCor) %>% .$Gene_Symbol -> genesymbol_rank
 
+genelist_exp_methy_cor %>%
+  dplyr::inner_join(genelist_pro.paired_ttest,by="Gene_Symbol") %>%
+  dplyr::select(Gene_Symbol,spmCor,spm_pvalue,ttestPvalue,`diff(T-N)`) -> genelist_spm_diff
+
+CPCOLS <- c("red", "white", "blue")
+genelist_exp_methy_cor %>%
+  dplyr::filter(spm_pvalue<=0.05) %>%
+  dplyr::mutate(spm_pvalue=ifelse(spm_pvalue==0,0.0000001,spm_pvalue)) %>%
+  dplyr::mutate(log10pvalue=-log10(spm_pvalue)) %>%
+  dplyr::mutate(x="Spearman Cor") %>%
+  ggplot(aes(x=x,y=Gene_Symbol)) +
+  geom_point(aes(size=log10pvalue,color=spmCor)) +
+  scale_y_discrete(limit = genesymbol_rank) +
+  scale_color_gradient2(
+    name = "Spearman Cor", #"Methylation diff (T - N)",
+    low = CPCOLS[3],
+    mid = CPCOLS[2],
+    high = CPCOLS[1]
+  ) +
+  scale_size_continuous(
+    name = "-log10(Pvalue)"
+  ) +
+  theme(legend.position = "bottom",
+       panel.background = element_rect(colour = "black", fill = "white"),
+       panel.grid = element_line(colour = "grey", linetype = "dashed"),
+       panel.grid.major = element_line(
+         colour = "grey",
+         linetype = "dashed",
+         size = 0.2),
+       axis.text.x = element_text(size = 10),
+       axis.text.y = element_text(size = 10),
+       legend.text = element_text(size = 10),
+       legend.title = element_text(size = 12),
+       legend.key = element_rect(fill = "white", colour = "black") ,
+       plot.title = element_text(size=20)
+  ) -> p;p
+ggsave(file.path(out_path_fig,"Figure4","Figure4B.methy_diff.pdf"),device = "pdf",width = 8,height = 8)
+
+genelist_pro.paired_ttest %>%
+  dplyr::filter(Gene_Symbol %in% genesymbol_rank) %>%
+  dplyr::mutate(ttestPvalue=ifelse(ttestPvalue==0,0.0000001,ttestPvalue)) %>%
+  dplyr::mutate(log10pvalue=-log10(ttestPvalue)) %>%
+  dplyr::mutate(x="Methy_Diff(T-N)") %>%
+  ggplot(aes(x=x,y=Gene_Symbol)) +
+  geom_point(aes(size=log10pvalue,color=`diff(T-N)`)) +
+  scale_y_discrete(limit = genesymbol_rank) +
+  scale_color_gradient2(
+    name = "Methylation diff (T - N)",
+    low = CPCOLS[3],
+    mid = CPCOLS[2],
+    high = CPCOLS[1]
+  ) +
+  scale_size_continuous(
+    name = "-log10(Pvalue)"
+  ) +
+  theme(legend.position = "bottom",
+        panel.background = element_rect(colour = "black", fill = "white"),
+        panel.grid = element_line(colour = "grey", linetype = "dashed"),
+        panel.grid.major = element_line(
+          colour = "grey",
+          linetype = "dashed",
+          size = 0.2),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 10),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 12),
+        legend.key = element_rect(fill = "white", colour = "black") ,
+        plot.title = element_text(size=20)
+  ) -> p;p
+ggsave(file.path(out_path_fig,"Figure4","Figure4B.methy_Cor.pdf"),device = "pdf",width = 8,height = 8)
