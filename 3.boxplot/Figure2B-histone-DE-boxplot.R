@@ -24,6 +24,8 @@ exp %>%
   dplyr::mutate(Group=substr(sample,6,7)) %>%
   dplyr::mutate(Group=ifelse(Group=="01","Tumor","Normal")) -> genelist_exp
 
+
+
 all_DE_info %>%
   dplyr::filter(Gene_id %in% genelist) %>%
   dplyr::select(Gene_id,log2FC) -> genelist_FC
@@ -36,6 +38,20 @@ genelist_exp %>%
   dplyr::select(gene_id,fdr) %>%
   dplyr::mutate(label=paste0("FDR = ",signif(fdr, 3)))-> genelist_stage_pvalue
 # draw pic ----------------------------------------------------------------
+
+# use ggpubr --------------------------------------------------------------
+
+genelist_exp %>%
+  dplyr::arrange(Group) %>%
+  dplyr::mutate(Group=ifelse(Group=="Normal","Normal(TA)",Group)) %>%
+  ggpubr::ggboxplot(x = "Group", y = "Expression",
+                    color = "Group", palette = "npg", add = "jitter",
+                    facet.by = "gene_id") +
+  theme(legend.position = "none") +
+  ggpubr::stat_compare_means(label.y = 1800) -> p 
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 8,height = 5)
+
+# by ggplot2 --------------------------------------------------------------
 
 library(ggplot2)
 genelist_exp$gene_id %>%
