@@ -18,12 +18,12 @@ TF %>%
 
 library(org.Hs.eg.db)
 library(clusterProfiler)
-all_gene.id <- bitr(c(all_gene_de_info$gene_id), fromType = "SYMBOL",
+all_gene.id <- bitr(c(all_gene_de_info$gene_id), fromType = "ALIAS",
                    toType = c("ENTREZID"),
                    OrgDb = org.Hs.eg.db)
 all_gene_de_info %>%
-  dplyr::rename("SYMBOL"="gene_id") %>%
-  dplyr::inner_join(all_gene.id,by="SYMBOL") %>%
+  dplyr::rename("ALIAS"="gene_id") %>%
+  dplyr::inner_join(all_gene.id,by="ALIAS") %>%
   as.data.frame()-> all_gene_info
 
 
