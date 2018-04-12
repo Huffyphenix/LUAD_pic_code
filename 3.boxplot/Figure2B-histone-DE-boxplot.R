@@ -2,12 +2,18 @@
 # gene list ---------------------------------------------------------------
 
 genelist <- c("CBX2","EZH2","UHRF1")
+genelist <- c("TP53")
 
 de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 TF_DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::rename("Gene_id"="gene_id")
 progene_DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
 rbind(TF_DE_info,progene_DE_info) -> all_DE_info
+# all gene no filter: cpm>1
+TF_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_TF_cpm_1_noFDR")) 
+progene_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_ProGene_cpm_1_noFDR"))
+rbind(TF_nofil,progene_nofil) -> all_gene_nofil
 # load exp ----------------------------------------------------------------
 
 exp <-readr::read_tsv("H:/data/TCGA/lung_DE/CBX24678/all_genes_exp.confirm")
@@ -26,9 +32,9 @@ exp %>%
 
 
 
-all_DE_info %>%
-  dplyr::filter(Gene_id %in% genelist) %>%
-  dplyr::select(Gene_id,log2FC) -> genelist_FC
+all_gene_nofil %>%
+  dplyr::filter(gene_id %in% genelist) %>%
+  dplyr::select(gene_id,log2FC) -> genelist_FC
 
 genelist_exp %>%
   dplyr::group_by(gene_id) %>%
@@ -40,7 +46,7 @@ genelist_exp %>%
 # draw pic ----------------------------------------------------------------
 
 # use ggpubr --------------------------------------------------------------
-
+library(ggplot2)
 genelist_exp %>%
   dplyr::arrange(Group) %>%
   dplyr::mutate(Group=ifelse(Group=="Normal","Normal(TA)",Group)) %>%
@@ -50,7 +56,7 @@ genelist_exp %>%
   theme(legend.position = "none") +
   ggpubr::stat_compare_means(label.y = 1800) -> p 
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 8,height = 5)
-
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
 # by ggplot2 --------------------------------------------------------------
 
 library(ggplot2)

@@ -2,7 +2,7 @@
 # configuration -----------------------------------------------------------
 
 data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
-de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达"
+de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 # loading data ------------------------------------------------------------
 
 progene.exp <- read.table(file.path(data_path,"NOISeq_DE_mirna_FC2_cpm30.exp.mirnaid.xls"),sep = '\t',header = T)
@@ -33,21 +33,21 @@ gene_anno <- rowAnnotation(df=gene_info,
                            col = list(log2FC=circlize::colorRamp2(c(min(gene_info$log2FC),
                                                                     0,
                                                                     max(gene_info$log2FC)),
-                                                                  c("green","white","red")),
+                                                                  c("#6495ED","white","#FF7F24")),
                                       log2N_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
                                                                         median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
                                                                         max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
-                                                                      c("blue","white","red")),
+                                                                      c("#00C5CD","white", "#D15FEE")),
                                       log2T_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
                                                                         median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
                                                                         max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
-                                                                      c("blue","white", "red"))),
+                                                                      c("#00C5CD","white", "#D15FEE"))),
                            width = unit(1.5, "cm"),
                            gap = unit(c(1), "mm"))
 draw(gene_anno,1:20)
 
 sample_anno <- HeatmapAnnotation(df = sample_info,
-                                 col = list(group=c("T" = "#D1EEEE", "N" = "#FFEFDB")),
+                                 col = list(group=c("T" = "#8C8C8C", "N" = "#FFFAFA")),
                                  width = unit(0.5, "cm"),
                                  name = "Group")
 draw(sample_anno,1:118)
