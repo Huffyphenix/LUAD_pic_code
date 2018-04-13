@@ -3,6 +3,12 @@
 
 genelist <- c("CBX2","EZH2","UHRF1")
 genelist <- c("TP53")
+genelist <- c("E2F1","E2F2","E2F3","E2F5","SOX4","NME2","TP63","TP53","CBX7")
+genelist <- c("CCNA2","CCNB1",
+              "CCNB2","CCNE1",
+              "CCNE2","CDK1",
+              "CDKN2A","CDC25C",
+              "MCM2","MCM4","MCM6","MCM7")
 
 de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
@@ -16,7 +22,7 @@ progene_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_ProGene_cpm_1_
 rbind(TF_nofil,progene_nofil) -> all_gene_nofil
 # load exp ----------------------------------------------------------------
 
-exp <-readr::read_tsv("H:/data/TCGA/lung_DE/CBX24678/all_genes_exp.confirm")
+exp <- readr::read_tsv("H:/data/TCGA/lung_DE/CBX24678/all_genes_exp.confirm")
 
 
 # filter ------------------------------------------------------------------
@@ -28,13 +34,15 @@ exp %>%
   # .[-1,] %>%
   # dplyr::rename("PRDM5_RSEM"="value") %>%
   dplyr::mutate(Group=substr(sample,6,7)) %>%
-  dplyr::mutate(Group=ifelse(Group=="01","Tumor","Normal")) -> genelist_exp
+  dplyr::mutate(Group=ifelse(Group=="01","Tumor","Normal")) %>%
+  dplyr::mutate(log2Exp=log2(Expression)) -> genelist_exp
 
 
 
 all_gene_nofil %>%
   dplyr::filter(gene_id %in% genelist) %>%
-  dplyr::select(gene_id,log2FC) -> genelist_FC
+  dplyr::select(gene_id,log2FC) %>%
+  dplyr::mutate(title=paste(gene_id," (log2FC = ",round(log2FC,2),")",sep=""))-> genelist_FC
 
 genelist_exp %>%
   dplyr::group_by(gene_id) %>%
@@ -48,15 +56,18 @@ genelist_exp %>%
 # use ggpubr --------------------------------------------------------------
 library(ggplot2)
 genelist_exp %>%
+  dplyr::inner_join(genelist_FC,by="gene_id") %>%
   dplyr::arrange(Group) %>%
   dplyr::mutate(Group=ifelse(Group=="Normal","Normal(TA)",Group)) %>%
-  ggpubr::ggboxplot(x = "Group", y = "Expression",
+  ggpubr::ggboxplot(x = "Group", y = "log2Exp",
                     color = "Group", palette = "npg", add = "jitter",
-                    facet.by = "gene_id") +
+                    facet.by = "title") +
   theme(legend.position = "none") +
-  ggpubr::stat_compare_means(label.y = 1800) -> p 
+  ggpubr::stat_compare_means(label.y = 16) -> p;p
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 8,height = 5)
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.cell_cycle_genes_boxplot.pdf",device = "pdf",width = 8,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure1/Figure1B.DE_histone_boxplot.pdf",device = "pdf",width = 6,height = 5)
 # by ggplot2 --------------------------------------------------------------
 
 library(ggplot2)
