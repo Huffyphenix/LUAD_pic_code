@@ -1,12 +1,18 @@
-# data_path <- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Í¨Â·¸»¼¯/LUAD-FC2-dwon_pro-TFgene"
-data_path <- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Í¨Â·¸»¼¯/LUAD-FC2-dwon_pro-TFgene"
-data_path_1<- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Í¨Â·¸»¼¯/LUAD-noFC-prob0.9-kegg-gsea"
-data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/²îÒì±í´ïdata/FC2"
-data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+# data_path <- "F:/?ÒµÄ¼?????/ENCODE-TCGA-LUAD/Í¨Â·????/LUAD-FC2-dwon_pro-TFgene"
+# data_path <- "F:/?ÒµÄ¼?????/ENCODE-TCGA-LUAD/Í¨Â·????/LUAD-FC2-dwon_pro-TFgene"
+# data_path_1<- "F:/?ÒµÄ¼?????/ENCODE-TCGA-LUAD/Í¨Â·????/LUAD-noFC-prob0.9-kegg-gsea"
+# data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/????????data/FC2"
+# data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path <- "S:/åšæžœäº‘/æˆ‘çš„åšæžœäº‘/ENCODE-TCGA-LUAD/é€šè·¯å¯Œé›†/LUAD-FC2-dwon_pro-TFgene"
+data_path_1<- "S:/åšæžœäº‘/æˆ‘çš„åšæžœäº‘/ENCODE-TCGA-LUAD/é€šè·¯å¯Œé›†/LUAD-noFC-prob0.9-kegg-gsea"
+data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/å·®å¼‚è¡¨è¾¾data/FC2"
+data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+
 # laod pac ----------------------------------------------------------------
 
 library(magrittr)
 library(clusterProfiler)
+
 # load data ---------------------------------------------------------------
 # DE gene----
 TF <- readr::read_tsv(file.path(data_path_2,"NOISeq_DE_TF_FC2_cpm_30")) %>%
@@ -131,7 +137,7 @@ kk_fc2_info %>%
   dplyr::select(Description,enrichmentScore,p.adjust,SYMBOL,log2FC) %>%
   unique() %>%
   dplyr::mutate(color=ifelse(log2FC>0,"red","blue"))-> kk_fc2_plotready
-data_path_4 <- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Í¨Â·¸»¼¯/LUAD-FC2-prob0.9-kegg-gsea"
+data_path_4 <- "F:/?ÒµÄ¼?????/ENCODE-TCGA-LUAD/Í¨Â·????/LUAD-FC2-prob0.9-kegg-gsea"
 kk_fc2_plotready$SYMBOL %>%
   bitr(fromType = "SYMBOL",
        toType = c("UNIPROT"),
@@ -245,14 +251,36 @@ kk_nofc_plotready %>%
 ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
 
 # heatmap 
+cell_cycle_relate <- c("Cell cycle","Pyrimidine metabolism","Oocyte meiosis","DNA replication","Homologous recombination")
 kk_nofc_plotready %>%
-  dplyr::filter(enrichmentScore>0) %>%
+  dplyr::filter(Description %in% cell_cycle_relate) %>%
+  dplyr::filter(log2FC >=1) %>%
+  dplyr::group_by(SYMBOL) %>%
+  dplyr::mutate(n=n()) %>%
+  dplyr::arrange(n) %>%
+  dplyr::select(SYMBOL,n) -> symbol.rank
+symbol.rank %>%
+  readr::write_tsv(file.path(data_path_1,"gseaKEGG_cellcycle-related-DEgene.txt"))
+kk_nofc_plotready %>%
+  dplyr::filter(Description %in% cell_cycle_relate) %>%
+  dplyr::filter(log2FC >=1) %>% 
   ggplot(aes(x=SYMBOL,y=Description)) +
   geom_tile(aes(fill = log2FC)) +
-  scale_fill_gradientn(colours=c("#00BFFF","red"),
+  scale_fill_gradientn(colours=c("white","red"),
                        name = "log2FC",
-                       breaks=c(0,2,4,6,8))
-
+                       breaks=c(0,2,4,6)) +
+  # scale_x_discrete(limits=symbol.rank$SYMBOL) +
+  theme(
+    axis.text.x = element_text(angle = 45,hjust = 1),
+    panel.background = element_blank(),
+    panel.grid = element_line(colour = "grey", linetype = "dashed"),
+    panel.grid.major = element_line(
+      colour = "grey",
+      linetype = "dashed",
+      size = 0.2
+    ),
+    panel.border =element_rect(fill='transparent', color='black'))
+ggsave(file.path(data_path_1,"gseaKEGG_cellcycle-related-gene-heatmap.pdf"),width = 14,height = 2)
 gseaplot(kk, geneSetID = 3, title = kk$Description[3])
 heatplot(kk,foldChange = y)
 
@@ -276,6 +304,7 @@ TF_crosstalk.node %>%
   readr::write_tsv(file.path(data_path_1,"TF.crosstalk","TF_crosstalk.node.attribute.txt"))
 TF_crosstalk %>%
   readr::write_tsv(file.path(data_path_1,"TF.crosstalk","TF_crosstalk.node.network.txt"))
+
 
 ego3 <- gseGO(geneList     = x,
               OrgDb        = org.Hs.eg.db,
