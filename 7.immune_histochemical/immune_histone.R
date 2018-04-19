@@ -1,6 +1,6 @@
 library(magrittr)
-data_path<-"S:/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
-result_path<-"S:/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
+data_path<-"S:/study/ENCODE-TCGA-LUAD/鑺墖-鍏嶇柅缁勫寲/data"
+result_path<-"S:/study/ENCODE-TCGA-LUAD/鑺墖-鍏嶇柅缁勫寲/result"
 immune_histone<-read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",header = T)
 hist(immune_histone$EZH2_karyon)
 
@@ -49,7 +49,7 @@ immune_histone %>%
   ggpubr::stat_compare_means(label.y = 3) +
   ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(2, 2.5))->p;p
 
-ggsave(filename = "immune_histone-stage.pdf", plot = p, device = "pdf", path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2", 
+ggsave(filename = "immune_histone-stage.pdf", plot = p, device = "pdf", path = "F:/?业募?????/ENCODE-TCGA-LUAD/Figure/Figure2", 
        width = 8, height = 5)
 
 # immune_histone %>%
@@ -75,7 +75,7 @@ immune_histone %>%
                     facet.by = "group") +
   theme(legend.position = "none") +
   ggpubr::stat_compare_means(label.y = 2.3)->p;p
-ggsave(filename = "immune_histone.pdf", plot = p, device = "pdf", path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
+ggsave(filename = "immune_histone.pdf", plot = p, device = "pdf", path = "F:/?业募?????/ENCODE-TCGA-LUAD/Figure/Figure2",
        width = 8, height = 5)
 
 
