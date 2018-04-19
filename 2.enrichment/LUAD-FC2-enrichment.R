@@ -197,10 +197,14 @@ ggsave(file.path(data_path_4,"heatmap_gseaKEGG_for_LUAD-FC2-prob0.9_padjust0.05_
 # heatplot(kk,foldChange = x)
 
 # for all prob 0.9 ----
+all_gene_prob0.9_info %>%
+  dplyr::filter(log2FC>0) -> all_gene_prob0.9up_info
 all_gene_prob0.9_info[,6] ->y
 names(y) = all_gene_prob0.9_info$ENTREZID
 sort(y,decreasing = TRUE) ->y
-
+# all_gene_prob0.9up_info[,6] ->y
+# names(y) = all_gene_prob0.9up_info$ENTREZID
+# sort(y,decreasing = TRUE) ->y
 kk_nofc <- gseKEGG(y, nPerm=1000,pvalueCutoff=1)
 ridgeplot(kk_nofc,showCategory = 40)
 kk_nofc %>% 
@@ -215,6 +219,7 @@ library(RColorBrewer)
 Colormap<- colorRampPalette(rev(brewer.pal(11,'Spectral')))(32)
 kk_nofc_info %>%
   dplyr::filter(p.adjust<=0.05) %>%
+  dplyr::filter(enrichmentScore>0) %>%
   dplyr::select(Description,enrichmentScore,p.adjust,SYMBOL,log2FC) %>%
   unique() %>%
   dplyr::mutate(color=ifelse(log2FC>0,"red","blue"))-> kk_nofc_plotready
@@ -237,7 +242,8 @@ library(ggplot2)
 kk_nofc_plotready %>%
   ggplot(aes(x=log2FC,y=Description)) +
   ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
-  scale_fill_gradientn(colours=c("#00BFFF","white","red"),name = "enrichmentScore") +
+  scale_fill_gradientn(colours=c("#CAE1FF","#FF7F50"),
+                       name = "enrichmentScore") + #"#00BFFF"
   scale_y_discrete(limits=kk_nofc_rank$Description) +
   ylab("KEGG pathway") +
   theme(panel.background = element_blank(),
@@ -248,10 +254,10 @@ kk_nofc_plotready %>%
           size = 0.2
         ),
         panel.border =element_rect(fill='transparent', color='black'))
-ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-UP-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
 
 # heatmap 
-cell_cycle_relate <- c("Cell cycle","Pyrimidine metabolism","Oocyte meiosis","DNA replication","Homologous recombination")
+cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication","Homologous recombination")
 kk_nofc_plotready %>%
   dplyr::filter(Description %in% cell_cycle_relate) %>%
   dplyr::filter(log2FC >=1) %>%
@@ -266,7 +272,7 @@ kk_nofc_plotready %>%
   dplyr::filter(log2FC >=1) %>% 
   ggplot(aes(x=SYMBOL,y=Description)) +
   geom_tile(aes(fill = log2FC)) +
-  scale_fill_gradientn(colours=c("white","red"),
+  scale_fill_gradientn(colours=c(c("#BFEFFF"), "#FF0000"),
                        name = "log2FC",
                        breaks=c(0,2,4,6)) +
   # scale_x_discrete(limits=symbol.rank$SYMBOL) +
