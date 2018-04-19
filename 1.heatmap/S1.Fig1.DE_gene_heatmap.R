@@ -1,8 +1,12 @@
 
 # configuration -----------------------------------------------------------
 
-data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/ÈÈÍ¼"
-de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/²îÒì±í´ï"
+# data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/??Í¼"
+# de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/????????"
+
+data_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/çƒ­å›¾"
+de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/å·®å¼‚è¡¨è¾¾data"
+
 # loading data ------------------------------------------------------------
 
 progene.exp <- read.table(file.path(data_path,"20160519.FC2","NOISeq_DE_ProGene_FC2_cpm_30.exp.xls"),sep = '\t',header = T)
@@ -15,6 +19,14 @@ colnames(progene.exp) %>% grep(".01",.) -> tumor.pos
 colnames(progene.exp) %>% grep(".11",.) -> normal.pos
 colnames(progene.exp)[tumor.pos] <- paste("T",1:length(tumor.pos),sep = "_")
 colnames(progene.exp)[normal.pos] <- paste("N",1:length(normal.pos),sep = "_")
+
+# colnames arrange 
+progene.exp %>%
+  dplyr::as_tibble() %>%
+  tidyr::gather(-gene_id,key="Sample",value="Exp") %>%
+  dplyr::arrange(Sample) %>%
+  tidyr::spread(key=Sample,value=Exp) %>%
+  as.data.frame() ->progene.exp
 sample_info <- data.frame(group=substr(colnames(progene.exp)[-1],1,1) %>% as.character()) 
 rownames(sample_info) <- colnames(progene.exp)[-1]
 
@@ -36,11 +48,13 @@ rownames(progene.exp.mean) <- progene.exp.mean[,1]
 progene.exp.mean <- progene.exp.mean[,-1]
 
 DE_info %>%
-  dplyr::mutate(log2T_mean=log2(case_mean)) %>%
-  dplyr::mutate(log2N_mean=log2(con_mean)) %>%
-  dplyr::select(Gene_id,log2T_mean,log2N_mean,log2FC) -> DE_updown_info
+  # dplyr::mutate(log2T_mean=log2(case_mean)) %>%
+  # dplyr::mutate(log2N_mean=log2(con_mean)) %>%
+  dplyr::select(Gene_id,log2FC) -> DE_updown_info #log2T_mean,log2N_mean,
 rownames(DE_updown_info) <- DE_updown_info$Gene_id
-gene_info <- DE_updown_info[,-1]
+gene_info <- as.data.frame(DE_updown_info[,-1],ncol=1)
+rownames(gene_info) <- rownames(DE_updown_info)
+colnames(gene_info) <- "log2FC"
 # draw pic ----------------------------------------------------------------
 
 library(ComplexHeatmap)
@@ -49,17 +63,17 @@ gene_anno <- rowAnnotation(df=gene_info,
                                col = list(log2FC=circlize::colorRamp2(c(min(gene_info$log2FC),
                                                                         0,
                                                                         max(gene_info$log2FC)),
-                                                                      c("green","white","red")),
-                                          log2N_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
-                                                                        median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
-                                                                        max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
-                                                                      c("blue","white","red")),
-                                          log2T_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
-                                                                        median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
-                                                                        max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
-                                                                      c("blue","white", "red"))),
-                           width = unit(1.5, "cm"),
-                           gap = unit(c(1), "mm"))
+                                                                      c("green","white","red"))),
+                                          # log2N_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
+                                          #                               median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
+                                          #                               max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
+                                          #                             c("blue","white","red")),
+                                          # log2T_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
+                                          #                               median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
+                                          #                               max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
+                                          #                             c("blue","white", "red"))
+                                          
+                           width = unit(0.5, "cm"))
 draw(gene_anno,1:20)
 
 sample_anno <- HeatmapAnnotation(df = sample_info,
@@ -76,12 +90,12 @@ progene.exp.scaled <- apply(progene.exp,1,scale) %>% t()
 # rownames(progene.exp.scaled) <- rownames(progene.exp)
 colnames(progene.exp.scaled) <- colnames(progene.exp)
 
-out_path <- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Figure/supplymentary"
+out_path <- "S:/åšæžœäº‘/æˆ‘çš„åšæžœäº‘/ENCODE-TCGA-LUAD/Figure/supplymentary"
 
 he = Heatmap(progene.exp.scaled,
         show_row_names = FALSE, 
         show_column_names = FALSE,
-        cluster_columns = TRUE,
+        cluster_columns = FALSE,
         top_annotation = sample_anno,
         heatmap_legend_param = list(title = c("Experssion")))
 pdf(file.path(out_path,"FC2_progene_exp_heatmap.pdf"),width = 6,height = 8)
