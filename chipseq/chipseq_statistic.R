@@ -8,6 +8,8 @@
 chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
 data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+
 library(magrittr)
 library(ggplot2)
 # laod data ---------------------------------------------------------------
@@ -25,6 +27,14 @@ progene <- readr::read_tsv(file.path(data_path_2,"NOISeq_DE_ProGene_FC2_cpm_30")
   dplyr::rename("gene_id"="Gene_id")
 TF %>%
   rbind(progene) -> all_gene_de_info
+TF_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_TF_cpm_1_noFDR")) 
+progene_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_ProGene_cpm_1_noFDR"))
+rbind(TF_nofil,progene_nofil) -> all_gene_nofil
+all_gene_nofil %>%
+  dplyr::filter(log2FC!="NA") %>%
+  dplyr::filter(abs(log2FC)>=0.585) %>%
+  dplyr::filter(prob>0.90) %>%
+  dplyr::filter(case_mean>=30|con_mean>=30) -> all_gene_prob0.99_FC1.5_exp30
 # statistic of target genes feature
 others <- c("3prime_overlapping_ncrna","antisense","IG_V_gene","misc_RNA","processed_transcript","sense_intronic","sense_overlapping","TEC","TR_V_gene","")
 pseudogene <- c("IG_V_pseudogene","polymorphic_pseudogene","processed_pseudogene","TR_V_pseudogene","transcribed_processed_pseudogene","transcribed_unprocessed_pseudogene","unitary_pseudogene","unprocessed_pseudogene")
@@ -155,6 +165,7 @@ CBX2_targets %>%
   dplyr::select(V5,V7) %>%
   unique() %>%
   .$V5 -> CBX2_targets_proteincoding
+
 vennplot <- venn.diagram(list(CBX2=CBX2_targets_proteincoding,EZH2=EZH2_targets_proteincoding),
              # file.path(out_path,"Venn_EHZ2_CBX2_targets_overlap.svg"),
              filename = NULL,
@@ -181,7 +192,7 @@ EHZ2_CBX2_common_targets %>%
   as.data.frame() %>%
   dplyr::as.tbl() %>%
   dplyr::mutate(gene_id=as.character(.))%>%
-  dplyr::left_join(all_gene_de_info,by="gene_id") %>%
+  dplyr::left_join(all_gene_prob0.99_FC1.5_exp30,by="gene_id") %>%
   dplyr::mutate(Class=ifelse(log2FC<0,"Down","Up")) %>%
   dplyr::mutate(Class=ifelse(is.na(log2FC),"non-DE",Class)) -> EHZ2_CBX2_common_targets.DE_info
 EHZ2_CBX2_common_targets.DE_info %>%
@@ -197,3 +208,64 @@ EHZ2_CBX2_common_targets.DE_info %>%
   unique() -> EHZ2_CBX2_common_targets.DE_statistic
 fn_pie(EHZ2_CBX2_common_targets.DE_statistic,"Per","Type","Class(13576)","Pastel2",2)
 ggsave(file.path(out_path,"EHZ2_CBX2_common_targets.DE_statistic.pdf"),width = 3,height = 3)
+
+
+# chisq test --------------------------------------------------------------
+
+TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+TSGene <- readr::read_tsv(file.path(TSG_onco_data_path,"TSGene","all_tumor_supressor.txt"))  %>%
+  dplyr::mutate(source="TSGene") %>%
+  dplyr::rename("symbol"="GeneSymbol","geneID"="GeneID") %>%
+  dplyr::select(symbol,geneID,source) 
+TSGene_luad <- readr::read_tsv(file.path(TSG_onco_data_path,"TSGene","LUAD_downregulate_TSG_in_TCGA-TSGeneDatabase.txt"))  %>%
+  dplyr::mutate(source="TSGene") %>%
+  dplyr::rename("symbol"="GeneSymbol","geneID"="GeneID") %>%
+  dplyr::select(symbol,geneID,source) 
+oncogene_database <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene database","oncogene_database-all_the_human_oncogenes.txt")) %>%
+  dplyr::mutate(source="oncogene_database") %>%
+  dplyr::rename("symbol"="OncogeneName","geneID"="OncogeneID") %>%
+  dplyr::select(symbol,geneID,source) 
+
+TSGene_luad %>%
+  dplyr::inner_join(oncogene_database,by="geneID") %>%
+  .$geneID -> confused_gene
+TSGene_luad %>%
+  dplyr::filter(! geneID %in% confused_gene) -> TSGene_noconfuse
+oncogene_database %>%
+  dplyr::filter(! geneID %in% confused_gene) -> oncogene_noconfuse
+library(clusterProfiler)
+library(org.Hs.eg.db)
+EHZ2_CBX2_common_targets.DE_info$gene_id %>%
+  bitr(fromType = "SYMBOL",
+       toType = c("ENTREZID"),
+       OrgDb = org.Hs.eg.db) -> EHZ2_CBX2_common_targets.gene_id
+
+EHZ2_CBX2_common_targets.gene_id %>%
+  dplyr::rename("gene_id"="ALIAS") %>%
+  dplyr::inner_join(EHZ2_CBX2_common_targets.DE_info,by="gene_id") %>%
+  dplyr::as.tbl() %>%
+  dplyr::group_by(gene_id) %>%
+  dplyr::mutate(n=n()) %>%
+  dplyr::arrange(desc(n)) -> EHZ2_CBX2_common_targets.info
+EHZ2_CBX2_common_targets.info %>%
+  readr::write_tsv(file.path(chip_path,"EHZ2_CBX2_common_targets.info"))
+
+EHZ2_CBX2_common_targets.info %>%
+  dplyr::filter(Class=="Up") %>%
+  dplyr::filter(ENTREZID %in% TSGene_noconfuse$geneID) %>%
+  nrow -> Up_TSG
+EHZ2_CBX2_common_targets.info %>%
+  dplyr::filter(Class=="Down") %>%
+  dplyr::filter(ENTREZID %in% TSGene_noconfuse$geneID) %>%
+  nrow -> Dwon_TSG
+EHZ2_CBX2_common_targets.info %>%
+  dplyr::filter(Class=="Down") %>%
+  dplyr::filter(ENTREZID %in% oncogene_noconfuse$geneID) %>%
+  nrow -> Dwon_oncogene
+EHZ2_CBX2_common_targets.info %>%
+  dplyr::filter(Class=="Up") %>%
+  dplyr::filter(ENTREZID %in% oncogene_noconfuse$geneID) %>%
+  nrow ->Up_oncogene
+
+matrix(c(Up_TSG,Dwon_TSG,Up_oncogene,Dwon_oncogene),nrow = 2) ->x
+chisq.test(x,correct = TRUE)
