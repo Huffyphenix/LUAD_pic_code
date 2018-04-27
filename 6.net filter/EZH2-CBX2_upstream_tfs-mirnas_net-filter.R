@@ -1,6 +1,6 @@
-FFL_data_path <- "S:/study/ENCODE-TCGA-LUAD/FFL/EZH2上游FC2_TF_mirna_FC4_pro"
-TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
-
+FFL_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/FFL/EZH2_CBX2_upstream"
+# TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
 .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
 
 # load data ---------------------------------------------------------------
@@ -11,10 +11,11 @@ rbind(TF_nofil,progene_nofil) %>%
   rbind(mirna_nofil) %>%
   dplyr::rename("SYMBOL"="gene_id") -> all_gene_nofil
 
-attribute <- readr::read_tsv(file.path(FFL_data_path,"attribute.txt.with_up_down_mark.txt"))
-network <- readr::read_tsv(file.path(FFL_data_path,"network.txt")) 
+attribute <- readr::read_tsv(file.path(FFL_data_path,"attribute.txt"),col_names = F)
+network <- readr::read_tsv(file.path(FFL_data_path,"network.txt"),col_names = F) 
 
 network %>% 
+  dplyr::rename("source"="X1","target"="X2","regulate_type"="X3") %>%
   readr::write_tsv(file.path(FFL_data_path,"network.txt"))
 TSGene <- readr::read_tsv(file.path(TSG_onco_data_path,"TSGene","LUAD_downregulate_TSG_in_TCGA-TSGeneDatabase.txt"))  %>%
   dplyr::mutate(source="TSGene") %>%
@@ -38,7 +39,7 @@ TSGene_noconfuse %>%
 # add hallmark info -------------------------------------------------------
 
 attribute %>%
-  dplyr::rename("symbol"="gene") %>%
+  dplyr::rename("symbol"="X1","gene_type"="X2") %>%
   dplyr::left_join(all_cancer_relate_genes_noconfused,by="symbol") %>%
   dplyr::rename("SYMBOL"="symbol") %>%
   dplyr::left_join(all_gene_nofil,by="SYMBOL") %>%
