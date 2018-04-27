@@ -2,12 +2,13 @@
 library(magrittr,ggplot2)
 # data path ---------------------------------------------------------------
 
-target_path <- "S:¼á¹ûÔÆ/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
-# target_path <- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
-exp_path <- "F:/data/TCGA/TCGA_data"
-clinical_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/Éú´æ·ÖÎö/data/LUAD"
-# survival_path <- "F:/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Figure/Figure5"
-survival_path <- "S:¼á¹ûÔÆ/ÎÒµÄ¼á¹ûÔÆ/ENCODE-TCGA-LUAD/Figure/Figure5"
+# target_path <- "S:??????/?ÒµÄ¼?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
+target_path <- "F:/æˆ‘çš„åšæžœäº‘/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
+exp_path <- "H:/data/TCGA/TCGA_data"
+clinical_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ç”Ÿå­˜åˆ†æž/data/LUAD"
+clinical_path_1 <- "F:/æˆ‘çš„åšæžœäº‘/ENCODE-TCGA-LUAD/survival"
+survival_path <- "F:/æˆ‘çš„åšæžœäº‘/ENCODE-TCGA-LUAD/Figure/Figure5"
+# survival_path <- "S:??????/?ÒµÄ¼?????/ENCODE-TCGA-LUAD/Figure/Figure5"
 # load data ---------------------------------------------------------------
 
 targets_tf <- readr::read_tsv(file.path(target_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.TF_LUAD-FC2.down"))
@@ -19,6 +20,8 @@ gene_exp <- readr::read_rds(file.path(exp_path,"pancan33_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest()
 clinical <- readr::read_tsv(file.path(clinical_path,"clinical_info_multi_survival.txt"))
+survival <- readr::read_tsv(file.path(clinical_path_1,"cancer_cell_survival_time_table.txt"))
+
 EZH2upstream_miRNA_list <- c("hsa-miR-101-3p","hsa-miR-30d-5p","hsa-let-7c-5p")
 targetsupstream_miRNA_list <- c("hsa-miR-210-3p","hsa-miR-183-5p","hsa-miR-151a-5p","hsa-miR-1307-3p","hsa-miR-93-5p",
                                 "hsa-miR-2355-5p","hsa-miR-141-5p","hsa-miR-141-92b-3p","hsa-miR-141-3p")
