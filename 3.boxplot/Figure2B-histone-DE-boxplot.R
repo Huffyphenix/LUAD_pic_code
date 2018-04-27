@@ -9,6 +9,9 @@ genelist <- c("CCNA2","CCNB1",
               "CCNE2","CDK1",
               "CDKN2A","CDC25C",
               "MCM2","MCM4","MCM6","MCM7")
+genelist <- c("JARID2","AEBP2","EED","SET","SUZ12","RBBP4","RBBP7","EZH1") #PRC2 complex
+genelist <- c("RYBP","RING1","RNF2","BMI1","PCGF2","PCGF1","PHC1","PHC2","PHC3") #PRC1 complex
+genelist <- c("CBX4","CBX6","CBX7","CBX8") # other CBX
 
 de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
@@ -64,10 +67,14 @@ genelist_exp %>%
                     facet.by = "title") +
   theme(legend.position = "none") +
   ggpubr::stat_compare_means(label.y = 16) -> p;p
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 8,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 8,height = 4)
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.cell_cycle_genes_boxplot.pdf",device = "pdf",width = 8,height = 5)
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure1/Figure1B.DE_histone_boxplot.pdf",device = "pdf",width = 6,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC2_boxplot.pdf",device = "pdf",width = 6,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC1_boxplot.pdf",device = "pdf",width = 6,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3/Figure S3.CBX_boxplot.pdf",device = "pdf",width = 5,height = 4)
+
 # by ggplot2 --------------------------------------------------------------
 
 library(ggplot2)
