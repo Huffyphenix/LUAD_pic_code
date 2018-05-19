@@ -2,7 +2,7 @@
 
 genelist_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 data_path<- "H:/data"
-
+library(magrittr)
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(genelist_path,"all_EHZ2_CBX2_common_targets.DE_info")) %>%
   dplyr::filter(prob>=0.99 & abs(log2FC)>=0.585)
