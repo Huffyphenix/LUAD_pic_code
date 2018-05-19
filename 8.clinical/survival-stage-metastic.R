@@ -1,5 +1,7 @@
 .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
 library(magrittr,ggplot2)
+library(org.Hs.eg.db)
+library(clusterProfiler)
 # data path ---------------------------------------------------------------
 
 # target_path <- "S:??????/?ҵļ?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
@@ -398,6 +400,196 @@ miRNA_survival_p %>%
 ggsave(file.path(survival_path,"all_miRNA_survival-point.pdf"),p,width = 6,height = 4)
 
 
+# 联合survival --------------------------------------------------------------
+# #### gene-gene -------------------
+data <- mRNA_clinical 
+  .up=50
+  .low=50
+  .gene1 = "EZH2"
+  .gene2 = "CBX2"
+  .gene3 = "CLDN11"
+  data %>%
+    dplyr::filter(symbol %in% .gene1) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group1=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group1=ifelse(exp<quantile(exp,probs =.low/100),"Low",group1)) -> .data1
+
+  data %>%
+    dplyr::filter(symbol %in% .gene2) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group2=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
+  data %>%
+    dplyr::filter(symbol %in% .gene3) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group3=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group3=ifelse(exp<quantile(exp,probs =.low/100),"Low",group3)) -> .data3
+  .data2 %>%
+    dplyr::inner_join(.data1,by="sample") %>%
+    dplyr::inner_join(.data3,by="sample") %>%
+    dplyr::mutate(group=ifelse(group1=="Up"&group2=="Up"&group3=="Up","Up","NA")) %>%
+    dplyr::mutate(group=ifelse(group1=="Low"&group2=="Low"&group3=="Low","Low",group)) %>%
+    dplyr::filter(! group=="NA")-> .data
+  
+  .data2 %>%
+    dplyr::inner_join(.data1,by="sample") %>%
+    dplyr::inner_join(.data3,by="sample") %>%
+    dplyr::mutate(group=ifelse(group1=="Up"&group2=="Up"&group3=="Low","Up","NA")) %>%
+    dplyr::mutate(group=ifelse(group1=="Low"&group2=="Low"&group3=="Up","Low",group)) %>%
+    dplyr::filter(! group=="NA")-> .data
+  ##### PFI survival ----
+  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data)
+  # print(.d_diff)
+  kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
+  # print(kmp)
+  # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
+  # print(coxp)
+  low_n=.data %>% dplyr::filter(group==paste("Low")) %>% nrow()
+  high_n=.data %>% dplyr::filter(group==paste("Up")) %>% nrow()
+  .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  # print(.fit)
+  # fn_sur_draw(.gene,kmp,.fit)
+  fig_name <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".pdf",sep="")
+  library(ggplot2)
+  survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
+                        surv.median.line = "hv",
+                        title = paste(paste(.gene1,.gene2,.gene3, sep = "-"), "Logrank P =", signif(kmp, 2),", PFI"),
+                        xlab = "Survival in days",
+                        ylab = 'Probability of survival',
+                        legend.title = "Expression group:",
+                        legend.labs = c(paste(.gene1,",",.gene2," ","Up","+",.gene3," ","Low", .low,"%",", n = ",low_n,sep=""),
+                                        paste(.gene1,",",.gene2," ","Low","+",.gene3," ","Up", .up,"%",", n = ",high_n,sep="")),
+                        legend= c(0.8,0.8),
+                        # risk.table = TRUE,
+                        # tables.height = 0.2,
+                        palette = c("#E7B800", "#2E9FDF"),
+                        ggtheme = theme_bw(),
+                        font.main = c(16),
+                        font.x = c(14),
+                        font.y = c(14),
+                        font.tickslab = c(12)
+  ) 
+  # dev.off()
+  ggsave(filename = fig_name, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)
+  
+  #### OS survival -----
+  .d_diff <- survival::survdiff(survival::Surv(OS.x, status.x) ~ group, data = .data)
+  # print(.d_diff)
+  kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
+  # print(kmp)
+  # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
+  # print(coxp)
+  low_n=.data %>% dplyr::filter(group==paste("Low")) %>% nrow()
+  high_n=.data %>% dplyr::filter(group==paste("Up")) %>% nrow()
+  .fit <- survival::survfit(survival::Surv(OS.x, status.x) ~ group, data = .data, na.action = na.exclude) 
+  # print(.fit)
+  # fn_sur_draw(.gene,kmp,.fit)
+  fig_name <- paste(.gene1,"-",.gene2,"-","OS",".pdf",sep="")
+  library(ggplot2)
+  survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
+                        surv.median.line = "hv",
+                        title = paste(paste(.gene1,.gene2, sep = "-"), "Logrank P =", signif(kmp, 2),", OS"),
+                        xlab = "Survival in days",
+                        ylab = 'Probability of survival',
+                        legend.title = "Expression group:",
+                        legend.labs = c(paste(.gene1,"-",.gene2," ","Low", .low,"%",", n = ",low_n,sep=""),
+                                        paste(.gene1,"-",.gene2," ","Up", .up,"%",", n = ",high_n,sep="")),
+                        legend= c(0.8,0.8),
+                        # risk.table = TRUE,
+                        # tables.height = 0.2,
+                        palette = c("#E7B800", "#2E9FDF"),
+                        ggtheme = theme_bw(),
+                        font.main = c(16),
+                        font.x = c(14),
+                        font.y = c(14),
+                        font.tickslab = c(12)
+  ) 
+  # dev.off()
+  ggsave(filename = fig_name, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 6, height = 5)
+  
+  # #### gene-miRNA -------------------
+  data1 <- mRNA_clinical 
+  data2 <- miRNA_clinical
+  .up=50
+  .low=50
+  .gene5 = "CBX2"
+  .gene1 = "EZH2"
+  .gene2 = "hsa-miR-101-3p"
+  .gene3 = "hsa-miR-30d-5p"
+  .gene4 = "hsa-let-7c-5p"
+  data1 %>%
+    dplyr::filter(symbol %in% .gene5) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group5=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group5=ifelse(exp<quantile(exp,probs =.low/100),"Low",group5)) -> .data5
+  
+  data1 %>%
+    dplyr::filter(symbol %in% .gene1) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group1=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group1=ifelse(exp<quantile(exp,probs =.low/100),"Low",group1)) -> .data1
+  
+  data2 %>%
+    dplyr::filter(name %in% .gene2) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group2=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
+  
+  data2 %>%
+    dplyr::filter(name %in% .gene3) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group3=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group3=ifelse(exp<quantile(exp,probs =.low/100),"Low",group3)) -> .data3
+  
+  data2 %>%
+    dplyr::filter(name %in% .gene4) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group4=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group4=ifelse(exp<quantile(exp,probs =.low/100),"Low",group4)) -> .data4
+  
+  .data2 %>%
+    dplyr::inner_join(.data1,by="sample") %>%
+    dplyr::inner_join(.data3,by="sample") %>%
+    dplyr::inner_join(.data4,by="sample") %>%
+    dplyr::inner_join(.data5,by="sample") %>%
+    dplyr::mutate(group=ifelse(group1=="Up"& group5=="Up"&group2=="Low" & group3=="Low" & group4=="Low","Up","NA")) %>%
+    dplyr::mutate(group=ifelse(group1=="Low"& group5=="Low"&group2=="Up" & group3=="Up" & group4=="Up","Low",group)) %>%
+    dplyr::filter(! group=="NA")-> .data
+  
+  ##### PFI survival ----
+  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data)
+  # print(.d_diff)
+  kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
+  # print(kmp)
+  # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
+  # print(coxp)
+  low_n=.data %>% dplyr::filter(group==paste("Low")) %>% nrow()
+  high_n=.data %>% dplyr::filter(group==paste("Up")) %>% nrow()
+  .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  # print(.fit)
+  # fn_sur_draw(.gene,kmp,.fit)
+  fig_name <- paste(.gene1,"+",.gene5,"+",.gene2,"+",.gene3,"+",.gene4,"-","PFI",".pdf",sep="")
+  library(ggplot2)
+  survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
+                        surv.median.line = "hv",
+                        title = paste(paste(.gene1,"+",.gene5,"+",.gene2,"+",.gene3,"+",.gene4, sep = ""), "Logrank P =", signif(kmp, 2),", PFI"),
+                        xlab = "Survival in days",
+                        ylab = 'Probability of survival',
+                        legend.title = "Expression group:",
+                        legend.labs = c(paste(.gene1,",",.gene5,"-","Low"," ", .low,"%"," + ",.gene2,",",.gene3,",",.gene4,"-","Up"," ", .low,"%",", n = ",low_n,sep=""),
+                                        paste(.gene1,",",.gene5,"-","Up"," ", .up,"%"," + ",.gene2,",",.gene3,",",.gene4,"-","Up"," ", .up,"%",", n = ",high_n,sep="")),
+                        legend= c(0.8,0.8),
+                        # risk.table = TRUE,
+                        # tables.height = 0.2,
+                        palette = c("#E7B800", "#2E9FDF"),
+                        ggtheme = theme_bw(),
+                        font.main = c(16),
+                        font.x = c(14),
+                        font.y = c(14),
+                        font.tickslab = c(12)
+  ) 
+  # dev.off()
+  ggsave(filename = fig_name, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)  
 # stage -------------------------------------------------------------------
 fn_kruskal <- function(.data){
   .data %>%
