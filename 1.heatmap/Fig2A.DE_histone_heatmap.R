@@ -1,10 +1,10 @@
 # configuration -----------------------------------------------------------
 
-# data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/??ͼ/20160519.FC2"
-# de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/????????data"
-
-data_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
-de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+gene_info <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info"
+# data_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+# de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 
 
 # loading data ------------------------------------------------------------
@@ -12,20 +12,25 @@ de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942
 TF.exp <- read.table(file.path(data_path,"NOISeq_DE_TF_cpm_30_FC2_all.exp.xls"),sep = '\t',header = T)
 progene.exp <- read.table(file.path(data_path,"NOISeq_DE_ProGene_FC2_cpm_30.exp.xls"),sep = '\t',header = T)
 rbind(TF.exp,progene.exp) -> all_gene_de_exp
-
+library(magrittr)
 TF_DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::rename("Gene_id"="gene_id")
 progene_DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
 rbind(TF_DE_info,progene_DE_info) -> all_DE_info
 
-histone <- read.table("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/hisone/histone-methylation/all_histone_methylation.idmap.symbol") %>%
-  t() %>% as.character()
+histone <- readr::read_tsv("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/hisone/histone-methylation/all_histone_methylation.idmap",col_names = F)
 
+tcga_geneinfo <- readr::read_tsv(file.path(gene_info,"TCGA_all_gene_id.txt"))
+ncbi_geneinfo_9606 <- readr::read_tsv(file.path(gene_info,"Homo_sapiens.gene_info.filter.20180423download-ncbi"))
+ncbi_geneinfo_9606 %>%
+  dplyr::filter(Symbol %in% histone$X1) -> histone_geneID_normorlize
+tcga_geneinfo %>%
+  dplyr::filter(entrez_id %in% histone_geneID_normorlize$GeneID) -> histone_tcga_geneID_normorlize
 # data manage -------------------------------------------------------------
 all_gene_de_exp %>%
-  dplyr::filter(gene_id %in% histone) -> histone_exp
+  dplyr::filter(gene_id %in% histone_tcga_geneID_normorlize$gene_id) -> histone_exp
 all_DE_info %>%
-  dplyr::filter(Gene_id %in% histone) -> histone_de_info
+  dplyr::filter(Gene_id %in% histone_tcga_geneID_normorlize$gene_id) -> histone_de_info
 
 library(magrittr)
 colnames(histone_exp) %>% grep(".01",.) -> tumor.pos
