@@ -3,14 +3,17 @@
 
 # data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 # de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
-data_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
-de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+# data_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+data_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+
+# de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 
 # loading data ------------------------------------------------------------
 
 progene.exp <- read.table(file.path(data_path,"NOISeq_DE_TF_cpm_30_FC2_all.exp.xls"),sep = '\t',header = T)
 
-DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T)
+DE_info <- read.table(file.path(data_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T)
 
 # data manage -------------------------------------------------------------
 library(magrittr)
@@ -36,7 +39,7 @@ DE_info %>%
   # dplyr::mutate(log2T_mean=log2(case_mean)) %>%
   # dplyr::mutate(log2N_mean=log2(con_mean)) %>%
   dplyr::select(gene_id,log2FC) -> DE_updown_info #log2T_mean,log2N_mean,
-rownames(DE_updown_info) <- DE_updown_info$Gene_id
+rownames(DE_updown_info) <- DE_updown_info$gene_id
 gene_info <- as.data.frame(DE_updown_info[,-1],ncol=1)
 rownames(gene_info) <- rownames(DE_updown_info)
 colnames(gene_info) <- "log2FC"
@@ -48,7 +51,7 @@ gene_anno <- rowAnnotation(df=gene_info,
                            col = list(log2FC=circlize::colorRamp2(c(min(gene_info$log2FC),
                                                                     0,
                                                                     max(gene_info$log2FC)),
-                                                                  c("#6495ED","white","#FF7F24"))
+                                                                  c("green","white","red"))
                                       # log2N_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
                                       #                                   median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
                                       #                                   max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
@@ -82,6 +85,7 @@ he = Heatmap(progene.exp.scaled,
              show_column_names = FALSE,
              cluster_columns = FALSE,
              top_annotation = sample_anno,
+             show_row_dend = FALSE, # whether show row clusters.
              heatmap_legend_param = list(title = c("Experssion")))
 pdf(file.path(out_path,"FC2_progene_exp_heatmap.pdf"),width = 6,height = 6)
 he+gene_anno

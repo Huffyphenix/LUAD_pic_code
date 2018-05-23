@@ -1,8 +1,12 @@
 # configuration -----------------------------------------------------------
-
-data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
-de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+# 
+# data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+# de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+data_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 gene_info <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info"
+gene_info <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info"
+
 # data_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 # de_path <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 
@@ -13,24 +17,23 @@ TF.exp <- read.table(file.path(data_path,"NOISeq_DE_TF_cpm_30_FC2_all.exp.xls"),
 progene.exp <- read.table(file.path(data_path,"NOISeq_DE_ProGene_FC2_cpm_30.exp.xls"),sep = '\t',header = T)
 rbind(TF.exp,progene.exp) -> all_gene_de_exp
 library(magrittr)
-TF_DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
-  dplyr::rename("Gene_id"="gene_id")
-progene_DE_info <- read.table(file.path(de_path,"FC2","NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
+TF_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) 
+progene_DE_info <- read.table(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
 rbind(TF_DE_info,progene_DE_info) -> all_DE_info
 
-histone <- readr::read_tsv("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/hisone/histone-methylation/all_histone_methylation.idmap",col_names = F)
-
+# histone <- readr::read_tsv("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/hisone/histone-methylation/all_histone_methylation.idmap",col_names = F)
+histone <- c("CBX2","EZH2","CBX7","CBX3","DNMT3A","CBX8","SUV39H2","UHRF1")
 tcga_geneinfo <- readr::read_tsv(file.path(gene_info,"TCGA_all_gene_id.txt"))
 ncbi_geneinfo_9606 <- readr::read_tsv(file.path(gene_info,"Homo_sapiens.gene_info.filter.20180423download-ncbi"))
 ncbi_geneinfo_9606 %>%
-  dplyr::filter(Symbol %in% histone$X1) -> histone_geneID_normorlize
+  dplyr::filter(Symbol %in% histone) -> histone_geneID_normorlize
 tcga_geneinfo %>%
   dplyr::filter(entrez_id %in% histone_geneID_normorlize$GeneID) -> histone_tcga_geneID_normorlize
 # data manage -------------------------------------------------------------
 all_gene_de_exp %>%
   dplyr::filter(gene_id %in% histone_tcga_geneID_normorlize$gene_id) -> histone_exp
 all_DE_info %>%
-  dplyr::filter(Gene_id %in% histone_tcga_geneID_normorlize$gene_id) -> histone_de_info
+  dplyr::filter(gene_id %in% histone_tcga_geneID_normorlize$gene_id) -> histone_de_info
 
 library(magrittr)
 colnames(histone_exp) %>% grep(".01",.) -> tumor.pos
@@ -43,6 +46,7 @@ histone_exp %>%
   tidyr::gather(-gene_id,key="Sample",value="Exp") %>%
   dplyr::arrange(Sample) %>%
   tidyr::spread(key=Sample,value=Exp) %>%
+  dplyr::arrange(gene_id) %>%
   as.data.frame() -> histone_exp
 
 sample_info <- data.frame(group=substr(colnames(histone_exp)[-1],1,1) %>% as.character()) 
@@ -52,18 +56,16 @@ rownames(sample_info) <- colnames(histone_exp)[-1]
 histone_de_info %>%
   # dplyr::mutate(log2T_mean=log2(case_mean)) %>%
   # dplyr::mutate(log2N_mean=log2(con_mean)) %>%
-  dplyr::select(Gene_id,log2FC) %>%
+  dplyr::select(gene_id,log2FC) %>%
   dplyr::arrange(log2FC) -> DE_updown_info #log2T_mean,log2N_mean,
-rownames(DE_updown_info) <- DE_updown_info$Gene_id
+rownames(DE_updown_info) <- DE_updown_info$gene_id
 gene_info <- as.data.frame(DE_updown_info[,-1],ncol=1)
 rownames(gene_info) <- rownames(DE_updown_info)
 colnames(gene_info) <- "log2FC"
 histone_exp %>%
-  dplyr::rename("Gene_id"="gene_id") %>%
-  dplyr::inner_join(DE_updown_info,by="Gene_id") %>%
+  dplyr::inner_join(DE_updown_info,by="gene_id") %>%
   dplyr::arrange(log2FC) %>%
-  dplyr::select(-log2FC) %>%
-  dplyr::rename("gene_id"="Gene_id") -> histone_exp
+  dplyr::select(-log2FC)  -> histone_exp
 # draw pic ----------------------------------------------------------------
 library(ComplexHeatmap)
 # gene row annotation
@@ -71,7 +73,7 @@ gene_anno <- rowAnnotation(df=gene_info,
                            col = list(log2FC=circlize::colorRamp2(c(min(gene_info$log2FC),
                                                                     0,
                                                                     max(gene_info$log2FC)),
-                                                                  c("#6495ED","white","#FF7F24"))
+                                                                  c("green","white","red"))
                                       # log2N_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
                                       #                                   median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
                                       #                                   max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
@@ -81,12 +83,16 @@ gene_anno <- rowAnnotation(df=gene_info,
                                       #                                   max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
                                       #                                 c("#00C5CD","white", "#D15FEE"))
                                       ),
+                           annotation_legend_param = list(title = c("log2(FC)")),
+                           # annotation_name_side = "bottom",
+                           # annotation_name_rot = 180,
                            width = unit(0.5, "cm"))
 draw(gene_anno,1:20)
 
 sample_anno <- HeatmapAnnotation(df = sample_info,
                                  col = list(group=c("T" = "#8C8C8C", "N" = c("#FFC1C1"))),
                                  width = unit(0.5, "cm"),
+                                 annotation_legend_param = list(title = c("Group")),
                                  name = "Group")
 draw(sample_anno,1:118)
 
@@ -107,7 +113,7 @@ he = Heatmap(histone_exp.scaled,
              cluster_columns = FALSE,
              cluster_rows = FALSE,
              top_annotation = sample_anno,
-             heatmap_legend_param = list(title = c("Experssion")))
-pdf(file.path(out_path,"DE_histone_heatmap.pdf"),width = 5,height = 5)
-he+gene_anno
+             heatmap_legend_param = list(title = c("Scaled Exp")))
+pdf(file.path(out_path,"DE_histone_heatmap.pdf"),width = 6,height = 3)
+gene_anno+he
 dev.off()
