@@ -1,15 +1,20 @@
-data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+# data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"c
 # data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-data_path_1<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-data_path_2 <- "H:/WDc Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-# data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-# data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+# data_path_1<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+data_path_2 <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+# data_path_2 <- "H:/WDc Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+# data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene.xls"
+data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+data_path_4<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+data_path_5<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
+
 # data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 # data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 
 # laod pac ----------------------------------------------------------------
-
+.libPaths("E:/library")
 library(magrittr)
 library(clusterProfiler)
 
@@ -18,8 +23,7 @@ library(clusterProfiler)
 TF <- readr::read_tsv(file.path(data_path_2,"NOISeq_DE_TF_FC2_cpm_30")) %>%
   dplyr::select(gene_id,log2FC) 
 progene <- readr::read_tsv(file.path(data_path_2,"NOISeq_DE_ProGene_FC2_cpm_30")) %>%
-  dplyr::select(Gene_id,log2FC) %>%
-  dplyr::rename("gene_id"="Gene_id")
+  dplyr::select(gene_id,log2FC) 
 TF %>%
   rbind(progene) -> all_gene_de_info
 
@@ -97,12 +101,20 @@ dotplot(ego, showCategory=30)
 
 go <- enrichGO(up_gene_info$ENTREZID, OrgDb = "org.Hs.eg.db", ont="all")
 library(ggplot2)
-dotplot(go, split="ONTOLOGY") + facet_grid(ONTOLOGY~., scale="free")
+dotplot(go, split="ONTOLOGY") + 
+  facet_grid(ONTOLOGY~., scale="free") +
+  guides(color=guide_colourbar(title = "FDR"))+
+  theme(legend.position = "left")
+ggsave(file.path(data_path_5,"LUAD_FC2_up-GO-Rplot.pdf"),width = 8,height = 8)
 
 ## down gene ---
 ego_down <- enrichGO(down_gene_info$ENTREZID, OrgDb = "org.Hs.eg.db", ont="all", readable=TRUE)
 ego_down_si <- simplify(ego_down)
-dotplot(ego_down, split="ONTOLOGY") + facet_grid(ONTOLOGY~., scale="free")
+dotplot(ego_down, split="ONTOLOGY") +
+  facet_grid(ONTOLOGY~., scale="free")+
+  guides(color=guide_colourbar(title = "FDR"))+
+  theme(legend.position = "left")
+ggsave(file.path(data_path_4,"LUAD-down_FC2-Rplot.pdf"),width = 8,height = 8)
 
 ## remove redundent GO terms
 # ego2 <- simplify(ego)
@@ -201,7 +213,7 @@ all_gene_prob0.9_info %>%
   dplyr::filter(log2FC>0) -> all_gene_prob0.9up_info
 all_gene_prob0.9_info[,6] ->y
 names(y) = all_gene_prob0.9_info$ENTREZID
-sort(y,decreasing = TRUE) ->y
+sort(y,decreasing = TRUE) ->y # 8797 genes
 # all_gene_prob0.9up_info[,6] ->y
 # names(y) = all_gene_prob0.9up_info$ENTREZID
 # sort(y,decreasing = TRUE) ->y
@@ -242,12 +254,17 @@ library(ggplot2)
 kk_nofc_plotready %>%
   ggplot(aes(x=log2FC,y=Description)) +
   ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
-  scale_fill_gradientn(colours=c("#CAE1FF","#FF7F50"),
+  scale_fill_gradientn(colours=c("#ffcdd2","#d32f2f"),
                        name = "enrichmentScore") + #"#00BFFF"
+  guides(fill = guide_colorbar(title.position = "left"))+
   scale_y_discrete(limits=kk_nofc_rank$Description) +
   ylab("KEGG pathway") +
   theme(panel.background = element_blank(),
+        legend.background = element_blank(),
+        legend.title = element_text(angle = 90),
         panel.grid = element_line(colour = "grey", linetype = "dashed"),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
         panel.grid.major = element_line(
           colour = "grey",
           linetype = "dashed",
@@ -256,35 +273,101 @@ kk_nofc_plotready %>%
         panel.border =element_rect(fill='transparent', color='black'))
 ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-UP-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
 
+#### for down pathway
+kk_nofc_info %>%
+  dplyr::filter(p.adjust<=0.05) %>%
+  dplyr::filter(enrichmentScore<0) %>%
+  dplyr::select(Description,enrichmentScore,p.adjust,SYMBOL,log2FC) %>%
+  unique() %>%
+  dplyr::mutate(color=ifelse(log2FC>0,"red","blue"))-> kk_nofc_plotready.down
+
+
+kk_nofc_plotready.down %>%
+  dplyr::arrange(enrichmentScore) %>%
+  dplyr::select(Description) %>%
+  unique() -> kk_nofc_description_rank.down
+
+
+library(ggplot2)
+kk_nofc_plotready.down %>%
+  ggplot(aes(x=log2FC,y=Description)) +
+  ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
+  scale_fill_gradientn(colours=c("#039BE5","#B3E5FC"),
+                       name = "enrichmentScore") + #"#00BFFF"
+  scale_y_discrete(limits=kk_nofc_description_rank.down$Description) +
+  guides(fill = guide_colorbar(title.position = "left"))+
+  ylab("KEGG pathway") +
+  theme(panel.background = element_blank(),
+        legend.title = element_text(angle = 90),
+        panel.grid = element_line(colour = "grey", linetype = "dashed"),
+        panel.grid.major = element_line(
+          colour = "grey",
+          linetype = "dashed",
+          size = 0.2
+        ),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        panel.border =element_rect(fill='transparent', color='black'))
+ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-DOWN-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+
+
 # heatmap 
 cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication","Homologous recombination")
+
+kk_nofc_plotready %>%
+  dplyr::filter(Description %in% cell_cycle_relate) %>%
+  dplyr::filter(log2FC >=1) %>%
+  dplyr::group_by(Description) %>%
+  dplyr::mutate(n=n()) %>%
+  dplyr::arrange(n) %>%
+  dplyr::select(Description,n) %>%
+  dplyr::ungroup() %>%
+  unique()->pathway.rank
 kk_nofc_plotready %>%
   dplyr::filter(Description %in% cell_cycle_relate) %>%
   dplyr::filter(log2FC >=1) %>%
   dplyr::group_by(SYMBOL) %>%
   dplyr::mutate(n=n()) %>%
-  dplyr::arrange(n) %>%
-  dplyr::select(SYMBOL,n) -> symbol.rank
+  # dplyr::select(SYMBOL,n) %>%
+  dplyr::ungroup() %>%
+  dplyr::inner_join(pathway.rank,by="Description")%>%
+  dplyr::group_by(SYMBOL) %>%
+  dplyr::do(
+    n=max(.$n.y),
+    n.x=.$n.x %>% unique(),
+    log2fc=.$log2FC %>% unique()
+  ) %>%
+  dplyr::ungroup() %>%
+  tidyr::unnest() %>%
+  dplyr::arrange(desc(n.x),desc(n),desc(log2fc)) %>%
+  unique()-> symbol.rank
 symbol.rank %>%
   readr::write_tsv(file.path(data_path_1,"gseaKEGG_cellcycle-related-DEgene.txt"))
 kk_nofc_plotready %>%
   dplyr::filter(Description %in% cell_cycle_relate) %>%
   dplyr::filter(log2FC >=1) %>% 
   ggplot(aes(x=SYMBOL,y=Description)) +
-  geom_tile(aes(fill = log2FC)) +
-  scale_fill_gradientn(colours=c(c("#BFEFFF"), "#FF0000"),
-                       name = "log2FC",
-                       breaks=c(0,2,4,6)) +
-  # scale_x_discrete(limits=symbol.rank$SYMBOL) +
+  geom_tile(aes(fill = log2FC),color="white") +
+  scale_fill_gradientn(colours=c(c("#ffcdd2"), "#FF0000"),
+                       name = "log2(FC)",
+                       limits = c(1,5),
+                       breaks=c(1,2,3,4,5),
+                       labels = c("1","2","3","4","5")) +
+  scale_x_discrete(limits=symbol.rank$SYMBOL) +
+  scale_y_discrete(limits=pathway.rank$Description) +
+  guides(fill=guide_colorbar(title.position = "top",direction = "horizontal"))+
   theme(
     axis.text.x = element_text(angle = 45,hjust = 1),
+    legend.title.align = 0.5,
+    legend.position = c(0.9,0.7),
+    legend.background = element_blank(),
     panel.background = element_blank(),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
-    panel.grid.major = element_line(
-      colour = "grey",
-      linetype = "dashed",
-      size = 0.2
-    ),
+    # panel.grid.major = element_line(
+    #   colour = "grey",
+    #   linetype = "dashed",
+    #   size = 0.2
+    # ),
     panel.border =element_rect(fill='transparent', color='black'))
 ggsave(file.path(data_path_1,"gseaKEGG_cellcycle-related-gene-heatmap.pdf"),width = 14,height = 2)
 gseaplot(kk, geneSetID = 3, title = kk$Description[3])
