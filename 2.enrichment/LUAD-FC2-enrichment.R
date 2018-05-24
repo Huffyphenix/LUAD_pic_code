@@ -1,15 +1,16 @@
 # data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"c
 # data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-# data_path_1<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-data_path_2 <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
-data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-# data_path_2 <- "H:/WDc Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-# data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene.xls"
-data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-data_path_4<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-data_path_5<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
-
+data_path_1<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+# data_path_2 <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+# data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+# data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene.xls"
+# data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+# data_path_4<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+# data_path_5<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
+data_path_4<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+data_path_5<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
 # data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 # data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 
@@ -23,6 +24,7 @@ library(clusterProfiler)
 TF <- readr::read_tsv(file.path(data_path_2,"NOISeq_DE_TF_FC2_cpm_30")) %>%
   dplyr::select(gene_id,log2FC) 
 progene <- readr::read_tsv(file.path(data_path_2,"NOISeq_DE_ProGene_FC2_cpm_30")) %>%
+  dplyr::rename("gene_id"="Gene_id") %>%
   dplyr::select(gene_id,log2FC) 
 TF %>%
   rbind(progene) -> all_gene_de_info
@@ -101,19 +103,61 @@ dotplot(ego, showCategory=30)
 
 go <- enrichGO(up_gene_info$ENTREZID, OrgDb = "org.Hs.eg.db", ont="all")
 library(ggplot2)
+go %>%
+  as.data.frame() %>%
+  tidyr::separate(geneID,paste("gene",1:100,sep="_"),"/") %>%
+  dplyr::select(-ONTOLOGY,-ID,-GeneRatio,-BgRatio,-pvalue,-Count) %>%
+  tidyr::gather(-Description,-p.adjust,-qvalue,key="title",value="ENTREZID") %>%
+  # tidyr::drop_na() %>%
+  dplyr::inner_join(all_gene_prob0.9_info,by="ENTREZID") -> go_up_info
+go %>% 
+  as.data.frame() -> go_up_info.tible
+go_up_info %>%
+  dplyr::select(Description,title,SYMBOL) %>%
+  tidyr::spread(key = title,value=SYMBOL) %>%
+  tidyr::unite("enriched_genes",go_up_info$title %>% unique(),sep="/") %>%
+  dplyr::mutate(enriched_genes=gsub("/NA","",enriched_genes)) %>%
+  dplyr::inner_join(go_up_info.tible,by="Description") %>%
+  dplyr::mutate(Counts = strsplit(enriched_genes,"/") %>%  lapply(length) %>% unlist()) %>%
+  tidyr::separate(BgRatio,c("setSize","Backgroud"),sep="/") %>%
+  dplyr::mutate(`Percent (%)`=round(Counts*100/as.numeric(setSize),0)) %>%
+  dplyr::select(ONTOLOGY,Description,ID,setSize,Counts,`Percent (%)`,enriched_genes,pvalue,p.adjust,qvalue) %T>%
+  readr::write_tsv(file.path(data_path_5,"GO_UP_results.tsv")) -> go_up_info.1
+
 dotplot(go, split="ONTOLOGY") + 
   facet_grid(ONTOLOGY~., scale="free") +
   guides(color=guide_colourbar(title = "FDR"))+
-  theme(legend.position = "left")
+  theme(legend.position = c(0.8,0.3),
+        legend.background = element_blank()) -> p1;p1
+
 ggsave(file.path(data_path_5,"LUAD_FC2_up-GO-Rplot.pdf"),width = 8,height = 8)
 
 ## down gene ---
 ego_down <- enrichGO(down_gene_info$ENTREZID, OrgDb = "org.Hs.eg.db", ont="all", readable=TRUE)
-ego_down_si <- simplify(ego_down)
+ego_down %>%
+  as.data.frame() %>%
+  tidyr::separate(geneID,paste("gene",1:100,sep="_"),"/") %>%
+  dplyr::select(-ONTOLOGY,-ID,-GeneRatio,-BgRatio,-pvalue,-Count) %>%
+  tidyr::gather(-Description,-p.adjust,-qvalue,key="title",value="SYMBOL") %>%
+  tidyr::drop_na() -> go_down_info
+ego_down %>% 
+  as.data.frame() -> go_down_info.tible
+go_down_info %>%
+  dplyr::select(Description,title,SYMBOL) %>%
+  tidyr::spread(key = title,value=SYMBOL) %>%
+  tidyr::unite("enriched_genes",go_down_info$title %>% unique(),sep="/") %>%
+  dplyr::mutate(enriched_genes=gsub("/NA","",enriched_genes)) %>%
+  dplyr::inner_join(go_down_info.tible,by="Description") %>%
+  dplyr::mutate(Counts = strsplit(enriched_genes,"/") %>%  lapply(length) %>% unlist()) %>%
+  tidyr::separate(BgRatio,c("setSize","Backgroud"),sep="/") %>%
+  dplyr::mutate(`Percent (%)`=round(Counts*100/as.numeric(setSize),0)) %>%
+  dplyr::select(ONTOLOGY,Description,ID,setSize,Counts,`Percent (%)`,enriched_genes,pvalue,p.adjust,qvalue) %T>%
+  readr::write_tsv(file.path(data_path_5,"GO_UP_results.tsv")) -> go_down_info.1
 dotplot(ego_down, split="ONTOLOGY") +
   facet_grid(ONTOLOGY~., scale="free")+
   guides(color=guide_colourbar(title = "FDR"))+
-  theme(legend.position = "left")
+  theme(legend.position = c(0.8,0.3),
+        legend.background = element_blank())
 ggsave(file.path(data_path_4,"LUAD-down_FC2-Rplot.pdf"),width = 8,height = 8)
 
 ## remove redundent GO terms
@@ -225,8 +269,21 @@ kk_nofc %>%
   dplyr::select(-ID,-setSize,-NES,-pvalue,-rank,-leading_edge) %>%
   tidyr::gather(-Description,-enrichmentScore,-p.adjust,-qvalues,key="title",value="ENTREZID") %>%
   tidyr::drop_na() %>%
-  dplyr::select(-title) %>%
+  # dplyr::select(-title) %>%
   dplyr::inner_join(all_gene_prob0.9_info,by="ENTREZID") -> kk_nofc_info
+kk_nofc %>% 
+  as.data.frame() -> kk_nofc.tible
+kk_nofc_info %>%
+  dplyr::select(Description,title,SYMBOL) %>%
+  tidyr::spread(key = title,value=SYMBOL) %>%
+  tidyr::unite("enriched_genes",paste("gene",1:100,sep="_"),sep="/") %>%
+  dplyr::mutate(enriched_genes=gsub("/NA","",enriched_genes)) %>%
+  dplyr::inner_join(kk_nofc.tible,by="Description") %>%
+  dplyr::mutate(Counts = strsplit(enriched_genes,"/") %>%  lapply(length) %>% unlist()) %>%
+  dplyr::mutate(`Percent (%)`=round(Counts*100/setSize,0)) %>%
+  dplyr::select(Description,ID,setSize,enrichmentScore,enriched_genes,Counts,`Percent (%)`,pvalue,p.adjust,qvalues) %T>%
+  readr::write_tsv(file.path(data_path_1,"gseaKEGG_results.tsv")) -> kk_nofc_info.1
+
 library(RColorBrewer)
 Colormap<- colorRampPalette(rev(brewer.pal(11,'Spectral')))(32)
 kk_nofc_info %>%
@@ -251,6 +308,8 @@ readr::write_tsv(kk_nofc_description_rank,file.path(data_path_1,"kk_nofc_descrip
 kk_nofc_rank <- readr::read_tsv(file.path(data_path_1,"kk_nofc_description_rank_padjust0.05"))
 
 library(ggplot2)
+library(grid)
+library(scales)
 kk_nofc_plotready %>%
   ggplot(aes(x=log2FC,y=Description)) +
   ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
@@ -270,8 +329,32 @@ kk_nofc_plotready %>%
           linetype = "dashed",
           size = 0.2
         ),
-        panel.border =element_rect(fill='transparent', color='black'))
-ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-UP-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+        legend.position = c(0.8,0.8),
+        panel.border =element_rect(fill='transparent', color='black')) -> p1;p1
+kk_nofc_info.1 %>%
+  dplyr::filter(p.adjust<=0.05) %>%
+  dplyr::filter(enrichmentScore>0) %>%
+  ggplot(aes(y=`Percent (%)`,x=Description,fill=enrichmentScore)) +
+  geom_bar(stat = "identity", position = "stack", color = NA) +
+  scale_fill_gradientn(colours=c("#ffcdd2","#d32f2f"),
+                       name = "enrichmentScore") +
+  scale_x_discrete(limits=c(kk_nofc_rank$Description)) +
+  guides(fill=FALSE) +
+  geom_text(aes(label = Counts)) +
+  coord_flip()+
+  theme(
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black",fill = NA),
+    axis.line.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )  -> p2;p2
+pdf(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-UP-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+grid.arrange(p1, p2, ncol=2,nrow=1,widths=c(4,1), heights=c(1))
+dev.off()
 
 #### for down pathway
 kk_nofc_info %>%
@@ -295,10 +378,13 @@ kk_nofc_plotready.down %>%
   scale_fill_gradientn(colours=c("#039BE5","#B3E5FC"),
                        name = "enrichmentScore") + #"#00BFFF"
   scale_y_discrete(limits=kk_nofc_description_rank.down$Description) +
+  expand_limits(x=c(-8,0)) +
   guides(fill = guide_colorbar(title.position = "left"))+
   ylab("KEGG pathway") +
   theme(panel.background = element_blank(),
         legend.title = element_text(angle = 90),
+        legend.position = c(0.15,0.9),
+        legend.background = element_blank(),
         panel.grid = element_line(colour = "grey", linetype = "dashed"),
         panel.grid.major = element_line(
           colour = "grey",
@@ -307,8 +393,31 @@ kk_nofc_plotready.down %>%
         ),
         axis.text = element_text(size = 12),
         axis.title = element_text(size = 14),
-        panel.border =element_rect(fill='transparent', color='black'))
-ggsave(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-DOWN-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+        panel.border =element_rect(fill='transparent', color='black')) -> p1;p1
+kk_nofc_info.1 %>%
+  dplyr::filter(p.adjust<=0.05) %>%
+  dplyr::filter(enrichmentScore<0) %>%
+  ggplot(aes(y=`Percent (%)`,x=Description,fill=enrichmentScore)) +
+  geom_bar(stat = "identity", position = "stack", color = NA) +
+  scale_fill_gradientn(colours=c("#039BE5","#B3E5FC"),
+                       name = "enrichmentScore") +
+  scale_x_discrete(limits=c(kk_nofc_description_rank.down$Description)) +
+  guides(fill=FALSE) +
+  geom_text(aes(label = Counts)) +
+  coord_flip()+
+  theme(
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black",fill = NA),
+    axis.line.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )  -> p2;p2
+pdf(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-DOWN-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+grid.arrange(p1, p2, ncol=2,nrow=1,widths=c(4,1), heights=c(1))
+dev.off()
 
 
 # heatmap 
