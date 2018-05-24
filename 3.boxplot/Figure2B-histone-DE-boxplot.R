@@ -13,16 +13,15 @@ genelist <- c("JARID2","AEBP2","EED","SET","SUZ12","RBBP4","RBBP7","EZH1") #PRC2
 genelist <- c("RYBP","RING1","RNF2","BMI1","PCGF2","PCGF1","PHC1","PHC2","PHC3") #PRC1 complex
 genelist <- c("CBX4","CBX6","CBX7","CBX8") # other CBX
 
-# de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/????????data"
-de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+# de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 
-data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-# data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+# data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 library(magrittr)
 TF_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::rename("Gene_id"="gene_id")
-progene_DE_info <- read.table(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) %>%
-  dplyr::rename("Gene_id"="gene_id")
+progene_DE_info <- read.table(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
 rbind(TF_DE_info,progene_DE_info) -> all_DE_info
 # all gene no filter: cpm>1
 TF_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_TF_cpm_1_noFDR")) 
@@ -66,28 +65,33 @@ library(ggplot2)
 genelist_exp %>%
   dplyr::inner_join(genelist_FC,by="gene_id") %>%
   dplyr::arrange(Group) %>%
-  dplyr::mutate(Group=ifelse(Group=="Normal","Normal(TA)",Group)) %>%
-  ggpubr::ggboxplot(x = "Group", y = "log2Exp",
-                    color = "Group", palette = "npg", add = "jitter",
-                    facet.by = "title") +
-  geom_line() +
-  theme(legend.position = "none") +
-  ggpubr::stat_compare_means(label.y = 16) -> p;p
-genelist_exp %>%
-  dplyr::inner_join(genelist_FC,by="gene_id") %>%
-  dplyr::arrange(Group) %>%
-  ggplot(aes(x=Group,y=log2Exp)) +
-  geom_boxplot(aes(fill=Group),alpha = 0.5) +
-  geom_line(aes(group=interaction(Group,title))) +
-  facet_wrap( ~ title)
+  dplyr::mutate(Group=ifelse(Group=="Normal",as.integer(2),as.integer(1))) %>%
+  dplyr::group_by(Group) %>%
+  dplyr::mutate(ID=substr(sample,1,4)) -> df
+b <- runif(nrow(df), -0.2, 0.2)
 
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 8,height = 4)
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.cell_cycle_genes_boxplot.pdf",device = "pdf",width = 8,height = 5)
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/Figure1/Figure1B.DE_histone_boxplot.pdf",device = "pdf",width = 6,height = 5)
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC2_boxplot.pdf",device = "pdf",width = 6,height = 5)
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC1_boxplot.pdf",device = "pdf",width = 6,height = 5)
-ggsave("F:/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/Figure3/Figure S3.CBX_boxplot.pdf",device = "pdf",width = 5,height = 4)
+df %>%
+  ggpubr::ggboxplot(x = "Group", y = "log2Exp",
+                    color = "Group", palette = "npg", #add = "jitter",
+                    facet.by = "title") +
+  geom_point(aes(x=as.numeric(Group)+b,y=log2Exp,color=Group)) +
+  geom_line(aes(x=as.numeric(Group)+b,y=log2Exp,group=ID),linetype="11",color="grey") +
+  theme(legend.position = "none") +
+  facet_wrap( ~ title) +
+  ggpubr::stat_compare_means(label.y = 12,paired = TRUE) +
+  scale_x_discrete(breaks = c(1,2),
+                     labels = c("Tumor","Normal"),
+                     expand = c(0.2,0.2)) -> p;p
+
+
+
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.tiff",device = "tiff",width = 6,height = 3)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.cell_cycle_genes_boxplot.pdf",device = "pdf",width = 8,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure1/Figure1B.DE_histone_boxplot.pdf",device = "pdf",width = 6,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC2_boxplot.pdf",device = "pdf",width = 6,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC1_boxplot.pdf",device = "pdf",width = 6,height = 5)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3/Figure S3.CBX_boxplot.pdf",device = "pdf",width = 5,height = 4)
 
 # by ggplot2 --------------------------------------------------------------
 
