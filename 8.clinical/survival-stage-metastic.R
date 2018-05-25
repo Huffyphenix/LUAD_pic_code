@@ -49,7 +49,8 @@ survival <- readr::read_tsv(file.path(clinical_path_1,"cancer_cell_survival_time
 survival %>%
   dplyr::mutate(sample=substr(bcr_patient_barcode,9,12)) %>%
   dplyr::select(sample,PFI.1,PFI.time.1) %>%
-  dplyr::mutate(PFI.time.1=as.numeric(PFI.time.1)) -> PFI_survival_time
+  dplyr::mutate(PFI.time.1=as.numeric(PFI.time.1)/30) %>%
+  dplyr::filter(PFI.time.1<=60) -> PFI_survival_time
   
 EZH2upstream_miRNA_list <- c("hsa-miR-101-3p","hsa-miR-30d-5p","hsa-let-7c-5p")
 targetsupstream_miRNA_list <- c("hsa-miR-210-3p","hsa-miR-183-5p","hsa-miR-151a-5p","hsa-miR-1307-3p","hsa-miR-93-5p",
@@ -407,7 +408,7 @@ data <- mRNA_clinical
   .low=50
   .gene1 = "EZH2"
   .gene2 = "CBX2"
-  .gene3 = "CLDN11"
+  .gene3 = "RBMS3"
   data %>%
     dplyr::filter(symbol %in% .gene1) %>%
     tidyr::unnest() %>%
@@ -444,22 +445,26 @@ data <- mRNA_clinical
   # print(kmp)
   # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
   # print(coxp)
-  low_n=.data %>% dplyr::filter(group==paste("Low")) %>% nrow()
-  high_n=.data %>% dplyr::filter(group==paste("Up")) %>% nrow()
+  
   .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  low_n=.fit$n[1]
+  high_n=.fit$n[2]
   # print(.fit)
   # fn_sur_draw(.gene,kmp,.fit)
   fig_name <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".pdf",sep="")
+  fig_name <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".tiff",sep="")
   library(ggplot2)
   survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
                         surv.median.line = "hv",
-                        title = paste(paste(.gene1,.gene2,.gene3, sep = "-"), "Logrank P =", signif(kmp, 2),", PFI"),
-                        xlab = "Survival in days",
+                        title = paste("Logrank P =", signif(kmp, 2),", PFI"),
+                        xlab = "Survival in months",
                         ylab = 'Probability of survival',
                         legend.title = "Expression group:",
-                        legend.labs = c(paste(.gene1,",",.gene2," ","Up","+",.gene3," ","Low", .low,"%",", n = ",low_n,sep=""),
-                                        paste(.gene1,",",.gene2," ","Low","+",.gene3," ","Up", .up,"%",", n = ",high_n,sep="")),
-                        legend= c(0.8,0.8),
+                        # legend.labs = c(paste(.gene1,",",.gene2,",",.gene3,"-","Low", .low,"%",", n = ",low_n,sep=""),
+                        #                 paste(.gene1,",",.gene2,",",.gene3,"-","Up", .up,"%",", n = ",high_n,sep="")),
+                        legend.labs = c(paste(.gene1,",",.gene2,"-","Low", .low,"%","+\n",.gene3,"-","Up", .up,"%",", n = ",low_n,"\n",sep=""),
+                                        paste(.gene1,",",.gene2,"-","Up", .up,"%","+\n",.gene3,"-","Low", .low,"%",", n = ",high_n,sep="")),
+                        legend= c(0.7,0.8),
                         # risk.table = TRUE,
                         # tables.height = 0.2,
                         palette = c("#E7B800", "#2E9FDF"),
@@ -470,9 +475,9 @@ data <- mRNA_clinical
                         font.tickslab = c(12)
   ) 
   # dev.off()
-  ggsave(filename = fig_name, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)
-  
-  #### OS survival -----
+  ggsave(filename = fig_name, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"), width = 5, height = 4)
+  ggsave(filename = fig_name, device = "tiff", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"), width = 5, height = 4)
+  ### OS survival -----
   .d_diff <- survival::survdiff(survival::Surv(OS.x, status.x) ~ group, data = .data)
   # print(.d_diff)
   kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
@@ -563,22 +568,24 @@ data <- mRNA_clinical
   # print(kmp)
   # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
   # print(coxp)
-  low_n=.data %>% dplyr::filter(group==paste("Low")) %>% nrow()
-  high_n=.data %>% dplyr::filter(group==paste("Up")) %>% nrow()
   .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  low_n=.fit$n[1]
+  high_n=.fit$n[2]
   # print(.fit)
   # fn_sur_draw(.gene,kmp,.fit)
   fig_name <- paste(.gene1,"+",.gene5,"+",.gene2,"+",.gene3,"+",.gene4,"-","PFI",".pdf",sep="")
+  fig_name <- paste(.gene1,"+",.gene5,"+",.gene2,"+",.gene3,"+",.gene4,"-","PFI",".tiff",sep="")
+  
   library(ggplot2)
   survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
                         surv.median.line = "hv",
-                        title = paste(paste(.gene1,"+",.gene5,"+",.gene2,"+",.gene3,"+",.gene4, sep = ""), "Logrank P =", signif(kmp, 2),", PFI"),
+                        title = paste("Logrank P =", signif(kmp, 2),", PFI"),
                         xlab = "Survival in days",
                         ylab = 'Probability of survival',
                         legend.title = "Expression group:",
-                        legend.labs = c(paste(.gene1,",",.gene5,"-","Low"," ", .low,"%"," + ",.gene2,",",.gene3,",",.gene4,"-","Up"," ", .low,"%",", n = ",low_n,sep=""),
-                                        paste(.gene1,",",.gene5,"-","Up"," ", .up,"%"," + ",.gene2,",",.gene3,",",.gene4,"-","Up"," ", .up,"%",", n = ",high_n,sep="")),
-                        legend= c(0.8,0.8),
+                        legend.labs = c(paste(.gene1,",",.gene5,"-","Low"," ", .low,"%"," + ",.gene2,",\n",.gene3,",",.gene4,"-","Up"," ", .low,"%",", n = ",low_n,"\n",sep=""),
+                                        paste(.gene1,",",.gene5,"-","Up"," ", .up,"%"," + ",.gene2,",\n",.gene3,",",.gene4,"-","Up"," ", .up,"%",", n = ",high_n,sep="")),
+                        legend= c(0.7,0.85),
                         # risk.table = TRUE,
                         # tables.height = 0.2,
                         palette = c("#E7B800", "#2E9FDF"),
@@ -587,9 +594,11 @@ data <- mRNA_clinical
                         font.x = c(14),
                         font.y = c(14),
                         font.tickslab = c(12)
-  ) 
+  )
   # dev.off()
   ggsave(filename = fig_name, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)  
+  ggsave(filename = fig_name, device = "tiff", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)  
+  
 # stage -------------------------------------------------------------------
 fn_kruskal <- function(.data){
   .data %>%
