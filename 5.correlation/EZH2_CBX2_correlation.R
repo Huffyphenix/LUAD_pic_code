@@ -78,8 +78,7 @@ EZH2_CBX2_exp.gather.gtex %>%
     x = "EZH2 mRNA (log2)",
     y = "CBX2 mRNA (log2)"
   ) -> p;p
-ggsave(filename = "EZH2_CBX2_immunechemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
-ggsave(filename = "EZH2_CBX2_immunechemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
-ave(filename = "EZH2_CBX2_mRNA_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
+ggsave(filename = "EZH2_CBX2_GTEx_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
+ggsave(filename = "EZH2_CBX2_GTEx_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
 ggsave(filename = "EZH2_CBX2_mRNA_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
 ggsave(filename = "EZH2_CBX2_mRNA_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
