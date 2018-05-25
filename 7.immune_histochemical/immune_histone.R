@@ -2,22 +2,22 @@ library(magrittr)
 data_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
 result_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
 immune_histone<-read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",header = T) %>%
-  dplyr::mutate(sample_type=ifelse(sample_type=="T","Tumor","Normal"))
+  dplyr::mutate(sample_type=ifelse(sample_type=="T","1Tumor","2Normal"))
 hist(immune_histone$EZH2_karyon)
 
 #####################################
 #correlation analysis
 #pearson 
 immune_histone %>%
-  dplyr::filter(sample_type=="Tumor") -> immune_histone.T
+  dplyr::filter(sample_type=="1Tumor") -> immune_histone.T
 immune_histone %>%
-  dplyr::filter(sample_type=="Normal") -> immune_histone.N
+  dplyr::filter(sample_type=="2Normal") -> immune_histone.N
 broom::tidy(
     cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_cytoplsm,method = "pearson")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
-  dplyr::mutate(x=1,y=1.8,sample_type="Tumor") %>%
+  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
   dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"     \n",
                             "n = ",nrow(immune_histone.T),
                             "                    ",sep="")) ->CBX2_EZH2_cytoplsm.T
@@ -26,16 +26,23 @@ broom::tidy(
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
-  dplyr::mutate(x=0.41,y=0.8,sample_type="Normal") %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>%
   dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"    \n",
                             "n = ",nrow(immune_histone.N),
                             "                     ",sep=""))->CBX2_EZH2_cytoplsm.N
 rbind(CBX2_EZH2_cytoplsm.T,CBX2_EZH2_cytoplsm.N) ->CBX2_EZH2_cytoplsm
+facet_names <- list(
+  '1Tumor'="Tumor",
+  '2Normal'="Normal"
+)
+facet_labeller <- function(variable,value){
+  return(facet_names[value])
+}
 immune_histone %>%
   ggplot(aes(x=EZH2_cytoplsm,y=CBX2_cytoplsm)) +
   geom_point(aes(color = sample_type)) +
   geom_smooth(se = FALSE, fullrange=TRUE, color = "#039BE5") +
-  facet_wrap(~sample_type,scales = "free") +
+  facet_wrap(~sample_type,scales = "free",labeller=facet_labeller) +
   theme_bw() +
   theme(panel.border = element_blank(),
         panel.grid.major = element_blank(),
@@ -55,7 +62,7 @@ broom::tidy(
   cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_karyon,method = "pearson")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=1,y=1.8,sample_type="Tumor") %>%
+  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
   dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"     \n",
                             "n = ",nrow(immune_histone.T),
                             "                     ",sep="")) ->CBX2_EZH2_karyon.T
@@ -63,7 +70,7 @@ broom::tidy(
   cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_karyon,method = "pearson")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=0.41,y=0.8,sample_type="Normal") %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>%
   dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"   \n",
                             "n = ",nrow(immune_histone.N),
                             "                    ",sep="")) ->CBX2_EZH2_karyon.N
@@ -74,7 +81,7 @@ immune_histone %>%
   ggplot(aes(x=EZH2_karyon,y=CBX2_cytoplsm)) +
   geom_point(aes(color = sample_type)) +
   geom_smooth(se = FALSE, fullrange=TRUE, color = "#039BE5") +
-  facet_wrap(~sample_type,scales = "free") +
+  facet_wrap(~sample_type,scales = "free",labeller = facet_labeller) +
   theme_bw() +
   theme(panel.border = element_blank(),
         panel.grid.major = element_blank(),

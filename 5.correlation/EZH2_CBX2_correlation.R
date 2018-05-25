@@ -64,7 +64,7 @@ abline(lm.x)
 # EZH2 have no correlation with CBX2 in normal tissues (GTEx data)
 EZH2_CBX2_exp.gather.gtex %>%
   ggplot(aes(x=log2(EZH2),y=log2(CBX2))) +
-  geom_point(color = "#ff8a80") +
+  geom_point(color = "#00BCD4") +
   geom_smooth(span = 0.8, se = FALSE, fullrange=TRUE, color = "#039BE5") +
   facet_wrap(~sample_type,scales = "free") +
   theme_bw() +
