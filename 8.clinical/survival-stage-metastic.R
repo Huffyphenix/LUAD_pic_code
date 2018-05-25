@@ -110,6 +110,13 @@ clinical %>%
 clinical_data %>%
   dplyr::full_join(PFI_survival_time,by="sample") -> clinical_data
 
+miRNA_exp.gather %>%
+  dplyr::inner_join(clinical_data,by="sample") %>%
+  tidyr::nest(-name) -> miRNA_clinical
+
+mRNA_exp.gather %>%
+  dplyr::inner_join(clinical_data,by="sample") %>%
+  tidyr::nest(-symbol) -> mRNA_clinical
 # Survival ----------------------------------------------------------------
 
 #### miRNA ----
@@ -159,9 +166,7 @@ fn_survival_PFI <- function(.gene,.data,.up,.low){
 }
 
 ### miRNA OS ----
-miRNA_exp.gather %>%
-  dplyr::inner_join(clinical_data,by="sample") %>%
-  tidyr::nest(-name) -> miRNA_clinical
+
 miRNA_clinical %>%
   dplyr::group_by(name) %>%
   dplyr::mutate(survival=purrr::map2(name,data,.up=75,.low=25,fn_survival)) %>%
@@ -252,9 +257,7 @@ for(i in 1:nrow(miRNA_survival_p_PFI)){
   ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 4)
 }
 #### mRNA ----
-mRNA_exp.gather %>%
-  dplyr::inner_join(clinical_data,by="sample") %>%
-  tidyr::nest(-symbol) -> mRNA_clinical
+
 
 ### for OS ----
 mRNA_clinical %>%
@@ -670,8 +673,8 @@ fn_wilcoxon <- function(.data){
     dplyr::select(sample,exp,metastasis) %>%
     tidyr::drop_na() %>%
     dplyr::mutate(stage=as.factor(metastasis))-> .data
-  broom::tidy(wilcox.test(exp~metastasis,data=.data)) -> .out
-}
+  broom::tidy(kruskal.test(exp~metastasis,data=.data)) -> .out
+}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 mRNA_clinical %>%
   dplyr::group_by(symbol) %>%
   dplyr::mutate(kruskal=purrr::map(data,fn_wilcoxon)) %>%
