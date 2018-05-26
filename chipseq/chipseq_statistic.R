@@ -2,22 +2,32 @@
 # For chipseq data visulization
 ######################################################
 .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
+.libPaths("D:/jianguoyun/library")
 # data path ---------------------------------------------------------------
 
 # chip_path <- "F:/?ҵļ?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
-
-chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
-out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
-data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+# HUST path ------
+# chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+# out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
+# data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+# data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 
 # chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 # out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
+
+# E Zhou path -----
 # chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 # out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
 # data_path<- "H:/data"
 # # data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 # data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+
+# Home path -----
+chip_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+out_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
+data_path_2 <- "Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path<- "Z:/data"
 
 
 library(magrittr)
@@ -68,9 +78,9 @@ all_gene_nofil %>%
 # biotypes group comes from：ensembl.
 # https://asia.ensembl.org/Help/Faq?id=468
 # http://vega.archive.ensembl.org/info/about/gene_and_transcript_types.html
-protein_coding <- c("protein_coding","IG_V_gene","TR_V_gene","polymorphic_pseudogene")
+protein_coding <- c("protein_coding","IG_V_gene","TR_V_gene")
 Pseudogene <- c("IG_V_pseudogene","TR_V_pseudogene","pseudogene","transcribed_unprocessed_pseudogene","transcribed_processed_pseudogene",
-                "unprocessed_pseudogene","processed_pseudogene")
+                "unprocessed_pseudogene","processed_pseudogene","polymorphic_pseudogene")
 Long_noncoding <- c("3prime_overlapping_ncrna","antisense","lincRNA","processed_transcript","sense_overlapping","sense_intronic")
 Short_noncoding <- c("miRNA","misc_RNA","Mt_tRNA","Mt_rRNA","rRNA","snoRNA","snRNA")
 # others <- c("3prime_overlapping_ncrna","antisense","IG_V_gene","misc_RNA","processed_transcript","sense_intronic","sense_overlapping","TEC","TR_V_gene","")
@@ -86,7 +96,7 @@ CBX2_targets %>%
   dplyr::as.tbl() %>%
   dplyr::rename("Type"=".") %>%
   dplyr::mutate(Content="Content") %>%
-  dplyr::mutate(Class=ifelse(Type %in% pseudogene,"pseudogene","Others")) %>%
+  dplyr::mutate(Class=ifelse(Type %in% Pseudogene,"pseudogene","Others")) %>%
   dplyr::mutate(Class=ifelse(Type %in% protein_coding,"Protein_coding",Class)) %>%
   dplyr::mutate(Class=ifelse(Type %in% Long_noncoding,"Long_noncoding",Class)) %>%
   dplyr::mutate(Class=ifelse(Type %in% Short_noncoding,"Short_noncoding",Class)) %>%
@@ -128,7 +138,7 @@ EZH2_targets %>%
   dplyr::as.tbl() %>%
   dplyr::rename("Type"=".") %>%
   dplyr::mutate(Content="Content") %>%
-  dplyr::mutate(Class=ifelse(Type %in% pseudogene,"pseudogene","Others")) %>%
+  dplyr::mutate(Class=ifelse(Type %in% Pseudogene,"Pseudogene","Others")) %>%
   dplyr::mutate(Class=ifelse(Type %in% protein_coding,"Protein_coding",Class)) %>%
   dplyr::mutate(Class=ifelse(Type %in% Long_noncoding,"Long_noncoding",Class)) %>%
   dplyr::mutate(Class=ifelse(Type %in% Short_noncoding,"Short_noncoding",Class)) %>%
@@ -159,13 +169,19 @@ EZH2_targets %>%
   unique() -> EZH2_targets_proteincoding_statistic
 
 fn_pie <- function(data,y,fill,name,rcolor,n){
-  RColorBrewer::brewer.pal(n,rcolor) -> color
+  RColorBrewer::brewer.pal(n,rcolor) %>% rev() -> color
   data %>%
-    ggplot(aes_string(x='Content',y=y,fill=fill)) +
-    geom_bar(stat = 'identity', position = 'stack', width = 0.5) +
+    dplyr::arrange(desc(Per)) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(n=as.factor(1:n()))-> data
+  data %>%
+    ggplot(aes_string(x='Content',y=y)) +
+    geom_bar(aes(fill=n),stat = 'identity', position = 'stack', width = 0.5) +
     coord_polar(theta = 'y') +
     labs(x='',y='') +
-    scale_fill_manual(name=name,values=color) +
+    scale_fill_manual(breaks=data$n,
+                      labels=data$Type,
+                      name=name,values=color) +
     theme(
       panel.background = element_blank(),
       title = element_blank(),
@@ -173,15 +189,21 @@ fn_pie <- function(data,y,fill,name,rcolor,n){
       axis.ticks = element_blank()
     )
 }
-fn_pie(CBX2_targets_statistic,"Per","Type",name="Class(5313)","Paired",8)
-ggsave(file.path(out_path,"CBX2_targets_constitute.pdf"),width = 4,height = 4)
-fn_pie(EZH2_targets_statistic,"Per","Type","Class(13576)","Paired",8)
-ggsave(file.path(out_path,"EZH2_targets_constitute.pdf"),width = 4,height = 4)
+fn_pie(CBX2_targets_statistic,"Per","Type",name="Class(5313)","Blues",5)
+ggsave(file.path(out_path,"CBX2_targets_constitute.pdf"),width = 5,height = 3)
+ggsave(file.path(out_path,"CBX2_targets_constitute.tiff"),width = 5,height = 3)
+
+fn_pie(EZH2_targets_statistic,"Per","Type","Class(13576)","Reds",8)
+ggsave(file.path(out_path,"EZH2_targets_constitute.pdf"),width = 5,height = 3)
+ggsave(file.path(out_path,"EZH2_targets_constitute.tiff"),width = 5,height = 3)
+
 fn_pie(CBX2_targets_proteincoding_statistic,"Per","Type","Class(13576)","Pastel2",2)
 ggsave(file.path(out_path,"CBX2_targets_proteincoding_constitute.pdf"),width = 3,height = 3)
+ggsave(file.path(out_path,"CBX2_targets_proteincoding_constitute.tiff"),width = 3,height = 3)
+
 fn_pie(EZH2_targets_proteincoding_statistic,"Per","Type","Class(13576)","Pastel2",2)
 ggsave(file.path(out_path,"EZH2_targets_proteincoding_constitute.pdf"),width = 3,height = 3)
-
+ggsave(file.path(out_path,"EZH2_targets_proteincoding_constitute.tiff"),width = 3,height = 3)
 # overlap of CBX2 and EZH2 targets of protein coding genes
 library(VennDiagram)
 EZH2_targets %>%
@@ -234,6 +256,25 @@ vennplot <- venn.diagram(list(CBX2_All=CBX2_targets_proteincoding,
              cat.cex = 2.5)
 grid.draw(vennplot)
 #ggsave(file.path(out_path,"Venn_EHZ2_CBX2_targets_overlap.pdf"),width = 4,height = 4)
+vennplot <- venn.diagram(list(CBX2_targets=CBX2_targets_proteincoding,
+                              EZH2_targets=EZH2_targets_proteincoding),
+                         # file.path(out_path,"Venn_EHZ2_CBX2_targets_overlap.pdf"),
+                         filename = NULL,
+                         # imagetype = "pdf", 
+                         col = RColorBrewer::brewer.pal(6,"Paired")[c(2,6)],
+                         cat.col = RColorBrewer::brewer.pal(6,"Paired")[c(2,6)],
+                         cat.pos=c(5,-6),
+                         scaled = FALSE,
+                         # ext.text = TRUE,
+                         # ext.line.lwd = 2,
+                         # ext.dist = -0.15,
+                         # ext.length = 0.9,
+                         # ext.pos = -4,
+                         # inverted = TRUE,
+                         # rotation.degree = 45,
+                         cex = 2,
+                         cat.cex = 2)
+grid.draw(vennplot)
 
 ### overlap of CBX2 and EZH2 targets of protein coding genes
 intersect(EZH2_targets_proteincoding,CBX2_targets_proteincoding) -> EZH2_CBX2_common_targets
@@ -241,7 +282,7 @@ intersect(EZH2_targets_proteincoding_inoverlappeak,CBX2_targets_proteincoding_in
 setdiff(EZH2_targets_proteincoding_inoverlappeak,CBX2_targets_proteincoding_inoverlappeak)
 
 
-EZH2data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 TF_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_TF_cpm_1_noFDR")) 
 progene_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_ProGene_cpm_1_noFDR"))
 rbind(TF_nofil,progene_nofil) -> all_gene_nofil
@@ -251,6 +292,7 @@ rbind(TF_nofil,progene_nofil) -> all_gene_nofil
 
 
 tcga_geneid <- readr::read_tsv("F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt")
+tcga_geneid <- readr::read_tsv("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt")
 all_gene_nofil %>%
   dplyr::inner_join(tcga_geneid,by="gene_id") %>%
   dplyr::mutate(entrez_id=as.character(entrez_id)) -> all_gene_nofil.entrez
@@ -290,7 +332,7 @@ EHZ2_CBX2_common_targets.DE_info %>%
   unique() -> EHZ2_CBX2_common_targets.DE_statistic
 fn_pie(EHZ2_CBX2_common_targets.DE_statistic,"Per","Type","Class(13576)","Pastel2",2)
 ggsave(file.path(out_path,"EHZ2_CBX2_common_targets.DE_statistic.pdf"),width = 3,height = 3)
-
+ggsave(file.path(out_path,"EHZ2_CBX2_common_targets.DE_statistic.tiff"),width = 3,height = 3)
 
 # pathway enrichemnt ------------------------------------------------------
 library(clusterProfiler)
@@ -325,6 +367,7 @@ Down_Go_enrichment %>%
   dplyr::select(-title) %>%
   dplyr::inner_join(EHZ2_CBX2_common_targets.DE,by="gene_id.x") %>%
   dplyr::mutate(Description_p=paste(Description," (",round(percent,2),"%)",sep="")) -> Down_Go_enrichment.plotready
+
 Down_Go_enrichment %>%
   as.data.frame() %>%
   dplyr::arrange(p.adjust) %>%
@@ -332,23 +375,51 @@ Down_Go_enrichment %>%
   dplyr::left_join(Down_Go_enrichment.plotready,by="Description") %>%
   dplyr::select(Description,Description_p) %>%
   unique() -> Down_Go_enrichment.up20
+
+Down_Go_enrichment.plotready %>%
+  dplyr::filter(Description %in% Down_Go_enrichment.up20$Description) %>%
+  dplyr::group_by(Description) %>%
+  dplyr::mutate(n=n()) %>%
+  dplyr::arrange(n) %>%
+  dplyr::select(Description,n) %>%
+  dplyr::ungroup() %>%
+  unique() %>%
+  dplyr::inner_join(Down_Go_enrichment.up20,by="Description")->pathway.rank
+
 Down_Go_enrichment.plotready %>%
   dplyr::filter(Description %in% Down_Go_enrichment.up20$Description) %>%
   dplyr::group_by(gene_id.x) %>%
   dplyr::mutate(n=n()) %>%
   dplyr::arrange(desc(n)) %>%
   dplyr::select(gene_id.x,n) %>% unique() -> generank
-generank %>%
-  dplyr::filter(gene_id.x %in% EZH2_CBX2_common_peak_common_targets)
+
+Down_Go_enrichment.plotready %>%
+  dplyr::filter(Description %in% Down_Go_enrichment.up20$Description) %>%
+  dplyr::group_by(gene_id.x) %>%
+  dplyr::mutate(n=n()) %>%
+  # dplyr::select(SYMBOL,n) %>%
+  dplyr::ungroup() %>%
+  dplyr::inner_join(pathway.rank,by="Description")%>%
+  dplyr::group_by(gene_id.x) %>%
+  dplyr::do(
+    n=max(.$n.y),
+    n.x=.$n.x %>% unique(),
+    log2fc=.$log2FC %>% unique()
+  ) %>%
+  dplyr::ungroup() %>%
+  tidyr::unnest() %>%
+  dplyr::arrange(desc(n.x),desc(n),desc(log2fc)) %>%
+  unique()-> symbol.rank
+
 Down_Go_enrichment.plotready %>%
   dplyr::filter(Description %in% Down_Go_enrichment.up20$Description) %>%
   ggplot(aes(x=gene_id.x,y=Description_p)) +
   geom_tile(aes(fill = log2FC),colour = "white") +
-  scale_y_discrete(limits=Down_Go_enrichment.up20$Description_p) +
-  scale_x_discrete(limits=generank$gene_id.x) +
-  scale_fill_gradientn(colours=c("#00BFFF","red"),
+  scale_y_discrete(limits=pathway.rank$Description_p) +
+  scale_x_discrete(limits=symbol.rank$gene_id.x) +
+  scale_fill_gradientn(colours=c("#039BE5","#BBDEFB"),
                        name = "log2FC",
-                       breaks=c(-2,0,2,4)) +
+                       breaks=c(-0.6,-2,-4)) +
   theme(axis.text.x = element_text(angle = 45,hjust = 1),
         panel.background = element_blank(),
         # panel.grid.minor =element_line(color = "black",size=0.2),
