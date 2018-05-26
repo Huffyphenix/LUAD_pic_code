@@ -684,10 +684,11 @@ fn_wilcoxon <- function(.data){
   .data %>%
     dplyr::select(sample,exp,metastasis) %>%
     tidyr::drop_na() %>%
-    dplyr::mutate(stage=as.factor(metastasis))-> .data
+    dplyr::mutate(metastasis=as.factor(metastasis)) -> .data
   broom::tidy(kruskal.test(exp~metastasis,data=.data)) -> .out
-}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+}
 mRNA_clinical %>%
+  dplyr::filter(symbol %in% c("CBX2","EZH2")) %>%
   dplyr::group_by(symbol) %>%
   dplyr::mutate(kruskal=purrr::map(data,fn_wilcoxon)) %>%
   dplyr::select(-data) %>%
@@ -704,7 +705,7 @@ miRNA_clinical %>%
 readr::write_tsv(miRNA_metastic_p,file.path(survival_path,"resulttable","miRNA_metastic_pvalue.txt"))
 
 # draw pic ----
-comp_list_metas <- list(c("Normal(TA)","m0"),c("m0", "m1"))
+comp_list_metas <- list(c("Normal","m0"),c("m0", "m1"))
 miRNA_clinical %>%
   tidyr::unnest() %>%
   dplyr::select(name,sample,exp,metastasis) %>%
@@ -734,7 +735,7 @@ mRNA_clinical %>%
   tidyr::drop_na() %>%
   dplyr::filter(metastasis=="m1") %>%
   dplyr::select(symbol,sample,exp,metastasis) -> mRNA_clinical.metas.m1
-
+library(ggplot2)
 mRNA_exp_normal.gather.filter %>%
   rbind(mRNA_clinical.metas.m0) %>%
   rbind(mRNA_clinical.metas.m1) %>%
@@ -754,14 +755,21 @@ mRNA_exp_normal.gather.filter %>%
   rbind(mRNA_clinical.metas.m0) %>%
   rbind(mRNA_clinical.metas.m1) %>%
   dplyr::filter(symbol %in% c("EZH2","CBX2")) %>%
+  dplyr::mutate(metastasis=ifelse(metastasis=="Normal(TA)","Normal",metastasis)) %>%
   dplyr::mutate(log2exp=log2(exp)) %>%
   ggpubr::ggboxplot(x = "metastasis", y = "log2exp",
                     color = "metastasis", palette = "npg", add = "jitter",
                     facet.by = "symbol") +
-  theme(legend.position = "none") +
-  ggpubr::stat_compare_means(label.y = 20) +
-  ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label.y = c(16,17,18))->p;p
-ggsave(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.pdf"),p,width = 5,height = 3)
+  ylab("log2 (mRNA exp)") +
+  scale_color_manual(values = c("#039BE5","#F08080","#f44336")) +
+  scale_x_discrete(breaks=c("Normal","m0","m1"),
+                   labels=c("Normal","DMF","DM")) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank()) +
+  ggpubr::stat_compare_means(label.y = 15) +
+  ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label = "p.signif",label.y = c(13,14,15))->p;p
+ggsave(file.path("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.pdf"),p,width = 5,height = 3)
+ggsave(file.path("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.tiff"),p,width = 5,height = 3)
 
 #### for E2F1 and SOX4 ----
 mRNA_exp_normal.gather.filter %>%
