@@ -1,4 +1,8 @@
 library(magrittr)
+# HOME -----
+data_path<-"Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
+
+# E Zhou -----
 data_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
 result_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
 immune_histone<-read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",header = T) %>%
@@ -102,8 +106,13 @@ library(grid)
 library(gridExtra)
 library(scales)
 p2 + theme(axis.title.y = element_blank()) ->p2
+# E Zhou -----
 pdf(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2_CBX2_immunehistochemistry_correlation.pdf"),width = 8,height = 3)
 tiff(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2_CBX2_immunehistochemistry_correlation.tiff"),width = 8,height = 3,units ="in",res=400)
+
+# Home ------
+pdf(file.path("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2_CBX2_immunehistochemistry_correlation.pdf"),width = 8,height = 3)
+tiff(file.path("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2_CBX2_immunehistochemistry_correlation.tiff"),width = 8,height = 3,units ="in",res=400)
 
 grid.arrange(p1, p2, ncol=2,nrow=1,widths=c(1,1), heights=c(1))
 dev.off()
