@@ -1,10 +1,19 @@
 .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
+.libPaths("D:/jianguoyun/library")
 library(magrittr,ggplot2)
 library(org.Hs.eg.db)
 library(clusterProfiler)
 # data path ---------------------------------------------------------------
+# HOME -----
+target_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
+exp_path <- "Z:/data/TCGA/TCGA_data"
+clinical_path <- "Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/生存分析/data/LUAD"
+clinical_path_1 <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/survival"
+survival_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5"
+data_path<- "Z:/data"
+chip_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
-# target_path <- "S:??????/?ҵļ?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
+# e zhou -----
 target_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 exp_path <- "H:/data/TCGA/TCGA_data"
 clinical_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/生存分析/data/LUAD"
@@ -13,7 +22,10 @@ survival_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5"
 data_path<- "H:/data"
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
+# HUST -----
 # survival_path <- "S:??????/?ҵļ?????/ENCODE-TCGA-LUAD/Figure/Figure5"
+# target_path <- "S:??????/?ҵļ?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
+
 # load data ---------------------------------------------------------------
 Animal_TF <-  readr::read_tsv(file.path(data_path,"AnimalTFDB","Homo_sapiens_transcription_factors_gene_list.txt"))
 enzyme_lsit <- readr::read_tsv(file.path(chip_path,"enzyme_list.symbol.xls")) %>%
