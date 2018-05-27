@@ -3,17 +3,19 @@
 ######################################################
 .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
 .libPaths("D:/jianguoyun/library")
+.libPaths("E:/library")
 # data path ---------------------------------------------------------------
 
 # chip_path <- "F:/?ҵļ?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 # HUST path ------
-# chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
-# out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
-# data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-# data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
+data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path<- "F:/data"
 
-# chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
-# out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
 
 # E Zhou path -----
 # chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
