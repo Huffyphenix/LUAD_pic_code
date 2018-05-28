@@ -5,8 +5,9 @@ library(magrittr)
 
 miRNA_list_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 miRNA_exp_path <- "H:/data/TCGA/TCGA_data"
-gene_list_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
 
+
+gene_list_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 # output data -------------------------------------------------------------
 out_path_sup <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
 out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
@@ -14,29 +15,35 @@ out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 # laod data ---------------------------------------------------------------
 
 miRNA_list <- readr::read_tsv(file.path(miRNA_list_path,"NOISeq_DE_mirna_FC2_cpm30.mirnaid.up.id"))
+mirna_fc1.5_cpm5000 <- readr::read_tsv(file.path("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/no_FC/NOISeq_DE_mirna_noFC_cpm30.mirnaid")) %>%
+  dplyr::filter(abs(log2FC)>=0.585) %>%
+  dplyr::filter(case_mean>5000|con_mean>5000) %>%
+  dplyr::select(mirna)
 miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest() 
 gene_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest() 
-genelist_pro <- readr::read_tsv(file.path(gene_list_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.protein_coding_LUAD-FC2_down"))
-genelist_TF <- readr::read_tsv(file.path(gene_list_path,"CBX2-pva3_H3K27me3-pva3_OVERLAP-100bp_GRCh38-hg38_TSS-5kb.gene_symbol.TF_LUAD-FC2.down"))
+genelist_TF <- readr::read_tsv(file.path(gene_list_path,"DOWN1.5_allexp30_TF_EHZ2_CBX2_common_targets.DE_info"))
+genelist_pro <- readr::read_tsv(file.path(gene_list_path,"DOWN1.5_exp30_pro_EHZ2_CBX2_common_targets.DE_info"))
 
 # data manage -------------------------------------------------------------
 miRNA_exp %>%
-  dplyr::filter(name %in% miRNA_list$mirna_id) %>%
+  dplyr::filter(name %in% c(miRNA_list$mirna_id,mirna_fc1.5_cpm5000$mirna)) %>%
   dplyr::select(-cancer_types,-gene) %>%
   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
   dplyr::mutate(sample=substr(sample,9,16)) %>%
+  dplyr::filter(substr(sample,6,6)=="0") %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-name) -> miRNA_exp.gather
 
 gene_exp %>%
-  dplyr::filter(symbol %in% c(genelist_pro$gene_id,genelist_TF$gene_id)) %>%
+  dplyr::filter(symbol %in% c(genelist_pro$gene_id.x,genelist_TF$gene_id.x)) %>%
   dplyr::select(-cancer_types,-entrez_id) %>%
   tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
   dplyr::mutate(sample=substr(sample,9,16)) %>%
+  dplyr::filter(substr(sample,6,6)=="0") %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-symbol) -> gene_exp.gather
 
@@ -49,36 +56,42 @@ gene_exp %>%
   tidyr::nest(-symbol) -> EZH2_CBX2_exp.gather
 
 gene_exp %>%
-  dplyr::filter(symbol %in% c("EZH2","E2F1","SOX9","EGR2","EGR1","NEGR1","E2F3","KLF6","FOXP3","SOX4")) %>%
+  dplyr::filter(symbol %in% c("E2F1","SOX9","EGR2","EGR1","NEGR1","E2F3","KLF6","FOXP3","SOX4")) %>%
   dplyr::select(-cancer_types,-entrez_id) %>%
   tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
   dplyr::mutate(sample=substr(sample,9,16)) %>%
   dplyr::as_tibble() %>%
   tidyr::nest(-symbol) -> EZH2_CBX2_upstreamTF_exp.gather
 
-CBX2_upstreamMIR<- c("hsa-miR-331-3p","hsa-let-7f-5p","hsa-miR-93-5p","hsa-miR-629-5p","hsa-miR-338-3p","hsa-miR-1-3p","hsa-miR-30a-5p",
-  "hsa-miR-193b-3p","hsa-miR-128-3p","hsa-miR-183-5p","hsa-miR-1287-5p","hsa-let-7c-5p","hsa-miR-195-5p","hsa-miR-424-5p",
-  "hsa-miR-2355-5p")
-EZH2_upstreamMIR<- c("hsa-miR-200a-3p","hsa-miR-139-5p","hsa-miR-93-5p","hsa-miR-193b-3p","hsa-miR-128-3p","hsa-let-7c-5p",
-                     "hsa-miR-195-5p","hsa-miR-429","hsa-miR-92b-3p")
-CBX2_upstreamMIR %>%
-  intersect(EZH2_upstreamMIR) -> EZH2_CBX2_common_miR
+# CBX2_upstreamMIR<- c("hsa-miR-331-3p","hsa-let-7f-5p","hsa-miR-93-5p","hsa-miR-629-5p","hsa-miR-338-3p","hsa-miR-1-3p","hsa-miR-30a-5p",
+#   "hsa-miR-193b-3p","hsa-miR-128-3p","hsa-miR-183-5p","hsa-miR-1287-5p","hsa-let-7c-5p","hsa-miR-195-5p","hsa-miR-424-5p",
+#   "hsa-miR-2355-5p")
+# EZH2_upstreamMIR<- c("hsa-miR-200a-3p","hsa-miR-139-5p","hsa-miR-93-5p","hsa-miR-193b-3p","hsa-miR-128-3p","hsa-let-7c-5p",
+#                      "hsa-miR-195-5p","hsa-miR-429","hsa-miR-92b-3p")
+EZH2_CBX2_common_miR <- c("hsa-let-7a-5p","hsa-let-7c-5p","hsa-miR-30d-5p","hsa-miR-101-3p","hsa-miR-193b-3p","hsa-miR-128-3p",
+                          "hsa-miR-93-5p","hsa-miR-195-5p","hsa-miR-92a-3p")
 
+# miRNA_exp %>%
+#   dplyr::filter(name %in% CBX2_upstreamMIR) %>%
+#   dplyr::select(-cancer_types,-gene) %>%
+#   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+#   dplyr::mutate(sample=substr(sample,9,16)) %>%
+#   dplyr::as_tibble() %>%
+#   tidyr::nest(-name) -> CBX2_upstreamMIR_exp.gather
+# miRNA_exp %>%
+#   dplyr::filter(name %in% EZH2_upstreamMIR) %>%
+#   dplyr::select(-cancer_types,-gene) %>%
+#   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+#   dplyr::mutate(sample=substr(sample,9,16)) %>%
+#   dplyr::as_tibble() %>%
+#   tidyr::nest(-name) -> EZH2_upstreamMIR_exp.gather
 miRNA_exp %>%
-  dplyr::filter(name %in% CBX2_upstreamMIR) %>%
+  dplyr::filter(name %in% EZH2_CBX2_common_miR) %>%
   dplyr::select(-cancer_types,-gene) %>%
   tidyr::gather(-name,key="sample",value="mirna_exp") %>%
   dplyr::mutate(sample=substr(sample,9,16)) %>%
   dplyr::as_tibble() %>%
-  tidyr::nest(-name) -> CBX2_upstreamMIR_exp.gather
-miRNA_exp %>%
-  dplyr::filter(name %in% EZH2_upstreamMIR) %>%
-  dplyr::select(-cancer_types,-gene) %>%
-  tidyr::gather(-name,key="sample",value="mirna_exp") %>%
-  dplyr::mutate(sample=substr(sample,9,16)) %>%
-  dplyr::as_tibble() %>%
-  tidyr::nest(-name) -> EZH2_upstreamMIR_exp.gather
-
+  tidyr::nest(-name) -> EZH2_CBX2_upstreamMIR_exp.gather
 # calculation -------------------------------------------------------------
 
 # miRNA and EZH2&CBX2 targets ----
@@ -120,6 +133,8 @@ miRNA_exp.gather %>%
   dplyr::ungroup() %>%
   tidyr::unnest() -> mirna_gene_spm_cor
 mirna_gene_spm_cor %>%
+  readr::write_tsv(file.path(out_path_sup,"correlation-table","mirna_EZH2-CBX2-targets_spm_cor.tsv"))
+mirna_gene_spm_cor %>%
   dplyr::select(name,symbol,Cor) %>%
   tidyr::spread(symbol,Cor) %>%
   as.data.frame() -> gene_Cor_matrix
@@ -139,7 +154,7 @@ library(pheatmap)
 pdf(file.path(out_path_sup,"Supplementary-Fig4.EZH2-CBX2_upFC2-miRNA_spearman.pdf"),height = 8,width = 15)
 pheatmap(gene_Cor_matrix,color = colorRampPalette(c("deepskyblue3","white","lightcoral"))(30),
          kmeans_k = NA,border_color = "grey60",cutree_rows = 2,cutree_cols = 2,
-         treeheight_row=30,treeheight_col = 30,
+         treeheight_row=0,treeheight_col = 0,
          fontsize =15,fontsize_row = 10,fontsize_col = 10, cellwidth = 10,cellheight = 10,legend = TRUE,
          display_numbers = gene_sig_matrix)
 dev.off()
@@ -181,7 +196,7 @@ EZH2_CBX2_exp.gather %>%
   dplyr::ungroup() %>%
   tidyr::unnest() -> EZH2_CBX2_targets_spm_cor
 EZH2_CBX2_targets_spm_cor %>%
-  readr::write_tsv(file.path(out_path_sup,"EZH2_CBX2_targets_spm_cor.tsv"))
+  readr::write_tsv(file.path(out_path_sup,"correlation-table","EZH2_CBX2_targets_spm_cor.tsv"))
 
 EZH2_CBX2_targets_spm_cor %>%
   dplyr::select(symbol1,symbol,Cor) %>%
@@ -202,12 +217,12 @@ EZH2_CBX2_targets_sig_matrix <- EZH2_CBX2_targets_sig_matrix[,-1]
 pdf(file.path(out_path_sup,"Supplementary-Fig5.EZH2-CBX2_targets_spearman.pdf"),height = 10,width = 4)
 pheatmap(head(EZH2_CBX2_targets_spm_cor_matrix,44),color = colorRampPalette(c("deepskyblue3","white"))(30),
          kmeans_k = NA,border_color = "grey60",cutree_rows = 2,#cutree_cols = 2,
-         treeheight_row=30,treeheight_col = 30,
+         treeheight_row=0,treeheight_col = 0,
          fontsize =15,fontsize_row = 10,fontsize_col = 10, cellwidth = 8,cellheight = 8,legend = TRUE,
          display_numbers = head(EZH2_CBX2_targets_sig_matrix,44))
 pheatmap(EZH2_CBX2_targets_spm_cor_matrix[45:88,],color = colorRampPalette(c("deepskyblue3","white"))(30),
          kmeans_k = NA,border_color = "grey60",cutree_rows = 2,#cutree_cols = 2,
-         treeheight_row=30,treeheight_col = 30,
+         treeheight_row=0,treeheight_col = 0,
          fontsize =15,fontsize_row = 10,fontsize_col = 10, cellwidth = 8,cellheight = 8,legend = TRUE,
          display_numbers = EZH2_CBX2_targets_sig_matrix[45:88,])
 dev.off()
@@ -219,6 +234,8 @@ EZH2_CBX2_exp.gather %>%
   dplyr::select(-data) %>%
   dplyr::ungroup() %>%
   tidyr::unnest() -> EZH2_CBX2_upstreamTF_spm_cor
+EZH2_CBX2_upstreamTF_spm_cor %>%
+  readr::write_tsv(file.path(out_path_sup,"correlation-table","EZH2_CBX2_upstreamTF_spm_cor.tsv"))
 #pic drawing
 EZH2_CBX2_upstreamTF_spm_cor %>%
   dplyr::select(symbol1,symbol,Cor) %>%
@@ -239,9 +256,44 @@ EZH2_CBX2_upstreamTF_sig_matrix <- EZH2_CBX2_upstreamTF_sig_matrix[,-1]
 pdf(file.path(out_path_fig,"Figure2","Figure2C.EZH2-CBX2_upstream_TFs_spearman.pdf"),height = 4,width = 4)
 pheatmap(EZH2_CBX2_upstreamTF_spm_cor_matrix,color = colorRampPalette(c("deepskyblue3","white","lightcoral"))(20),
          kmeans_k = NA,border_color = "grey60",cutree_rows = 2,#cutree_cols = 2,
-         treeheight_row=30,treeheight_col = 30,
+         treeheight_row=0,treeheight_col = 0,
          fontsize =15,fontsize_row = 10,fontsize_col = 10, cellwidth = 10,cellheight = 10, legend = TRUE,
          display_numbers = EZH2_CBX2_upstreamTF_sig_matrix)
+dev.off()
+
+# EZH2 and CBX2 with common upstream miRs ------
+EZH2_CBX2_upstreamMIR_exp.gather %>%
+  dplyr::group_by(name) %>%
+  dplyr::mutate(spm=purrr::map(data,g_exp= EZH2_CBX2_exp.gather,fn_get_spm_a)) %>%
+  dplyr::select(-data) %>%
+  dplyr::ungroup() %>%
+  tidyr::unnest() -> CBX2_EZH2_upstreamMIR_spm_cor
+
+CBX2_EZH2_upstreamMIR_spm_cor %>%
+  readr::write_tsv(file.path(out_path_sup,"correlation-table","CBX2_EZH2_upstreamMIR_spm_cor.tsv"))
+#pic drawing
+CBX2_EZH2_upstreamMIR_spm_cor %>%
+  dplyr::select(name,symbol,Cor) %>%
+  tidyr::spread(symbol,Cor) %>%
+  as.data.frame() -> CBX2_EZH2_upstreamMIR_spm_cor_matrix
+rownames(CBX2_EZH2_upstreamMIR_spm_cor_matrix) <- CBX2_EZH2_upstreamMIR_spm_cor_matrix$name
+CBX2_EZH2_upstreamMIR_spm_cor_matrix <- CBX2_EZH2_upstreamMIR_spm_cor_matrix[,-1]
+
+CBX2_EZH2_upstreamMIR_spm_cor %>%
+  dplyr::mutate(Sig=ifelse(Cor <= 0 & p.value<=0.05,"*","")) %>%
+  dplyr::mutate(Sig=ifelse(Cor <= -0.4 & p.value<=0.05,"**",Sig)) %>%
+  dplyr::select(name,symbol,Sig) %>%
+  tidyr::spread(symbol,Sig) %>%
+  as.data.frame() -> CBX2_EZH2_upstreamMIR_sig_matrix
+rownames(CBX2_EZH2_upstreamMIR_sig_matrix) <- CBX2_EZH2_upstreamMIR_sig_matrix$name
+CBX2_EZH2_upstreamMIR_sig_matrix <- CBX2_EZH2_upstreamMIR_sig_matrix[,-1]
+
+pdf(file.path(out_path_fig,"Figure2","Figure2C.EZH2-CBX2_upstream_miRs_spearman.pdf"),height = 4,width = 4)
+pheatmap(CBX2_EZH2_upstreamMIR_spm_cor_matrix,color = colorRampPalette(c("deepskyblue3","white","lightcoral"))(20),
+         kmeans_k = NA,border_color = "grey60",cutree_rows = 2,#cutree_cols = 2,
+         treeheight_row=0,treeheight_col = 0,
+         fontsize =15,fontsize_row = 10,fontsize_col = 10, cellwidth = 10,cellheight = 10, legend = TRUE,
+         display_numbers = CBX2_EZH2_upstreamMIR_sig_matrix)
 dev.off()
 
 # CBX2 with upstram miRs ----
