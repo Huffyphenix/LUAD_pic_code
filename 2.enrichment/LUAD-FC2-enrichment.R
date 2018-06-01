@@ -101,7 +101,7 @@ library(enrichplot)
 # barplot(ego, showCategory=20)
 dotplot(ego, showCategory=30)
 
-go <- enrichGO(up_gene_info$ENTREZID, OrgDb = "org.Hs.eg.db", ont="all")
+go <- enrichGO(up_gene_info$ENTREZID, OrgDb = "org.Hs.eg.db", ont="all", readable=TRUE)
 library(ggplot2)
 go %>%
   as.data.frame() %>%
@@ -112,6 +112,11 @@ go %>%
   dplyr::inner_join(all_gene_prob0.9_info,by="ENTREZID") -> go_up_info
 go %>% 
   as.data.frame() -> go_up_info.tible
+go_up_info %>%
+  dplyr::filter(p.adjust<0.05) %>%
+  dplyr::select(-title) %>%
+  readr::write_tsv(file.path(data_path_5,"GO_UP_padjust0.05.tsv"))
+
 go_up_info %>%
   dplyr::select(Description,title,SYMBOL) %>%
   tidyr::spread(key = title,value=SYMBOL) %>%
@@ -139,9 +144,21 @@ ego_down %>%
   tidyr::separate(geneID,paste("gene",1:100,sep="_"),"/") %>%
   dplyr::select(-ONTOLOGY,-ID,-GeneRatio,-BgRatio,-pvalue,-Count) %>%
   tidyr::gather(-Description,-p.adjust,-qvalue,key="title",value="SYMBOL") %>%
-  tidyr::drop_na() -> go_down_info
+  tidyr::drop_na() %>%
+  dplyr::inner_join(all_gene_prob0.9_info,by="SYMBOL") -> go_down_info
+go_down_info %>%
+  dplyr::filter(p.adjust<0.05) %>%
+  dplyr::select(-title) %>%
+  readr::write_tsv(file.path(data_path_4,"GO_DOWN_padjust0.05.tsv"))
 ego_down %>% 
   as.data.frame() -> go_down_info.tible
+go_down_info.tible %>%
+  readr::write_tsv(file.path(data_path_4,"GO_DOWN_result.tsv"))
+go_down_info %>%
+  dplyr::filter(p.adjust<0.05) %>%
+  dplyr::select(-title) %>%
+  readr::write_tsv(file.path(data_path_5,"GO_UP_padjust0.05.tsv"))
+
 go_down_info %>%
   dplyr::select(Description,title,SYMBOL) %>%
   tidyr::spread(key = title,value=SYMBOL) %>%
@@ -257,7 +274,7 @@ all_gene_prob0.9_info %>%
   dplyr::filter(log2FC>0) -> all_gene_prob0.9up_info
 all_gene_prob0.9_info[,6] ->y
 names(y) = all_gene_prob0.9_info$ENTREZID
-sort(y,decreasing = TRUE) ->y # 8797 genes
+sort(y,decreasing = TRUE) ->y # 8806 genes
 # all_gene_prob0.9up_info[,6] ->y
 # names(y) = all_gene_prob0.9up_info$ENTREZID
 # sort(y,decreasing = TRUE) ->y
@@ -271,6 +288,8 @@ kk_nofc %>%
   tidyr::drop_na() %>%
   # dplyr::select(-title) %>%
   dplyr::inner_join(all_gene_prob0.9_info,by="ENTREZID") -> kk_nofc_info
+kk_nofc_info %>%
+  readr::write_tsv(file.path(data_path_1,"gseaKEGG_result-gather.tsv"))
 kk_nofc %>% 
   as.data.frame() -> kk_nofc.tible
 kk_nofc_info %>%
@@ -283,6 +302,14 @@ kk_nofc_info %>%
   dplyr::mutate(`Percent (%)`=round(Counts*100/setSize,0)) %>%
   dplyr::select(Description,ID,setSize,enrichmentScore,enriched_genes,Counts,`Percent (%)`,pvalue,p.adjust,qvalues) %T>%
   readr::write_tsv(file.path(data_path_1,"gseaKEGG_results.tsv")) -> kk_nofc_info.1
+
+kk_nofc_info.1 %>%
+  dplyr::filter(p.adjust<=0.05) %>%
+  dplyr::filter(enrichmentScore<0) %>%
+  unique() %>%
+  dplyr::arrange(enrichmentScore) -> kk_nofc_plotready.down
+kk_nofc_plotready.down %>%
+  readr::write_tsv(file.path(data_path_1,"gseaKEGG_Down_results.tsv"))
 
 library(RColorBrewer)
 Colormap<- colorRampPalette(rev(brewer.pal(11,'Spectral')))(32)
@@ -329,7 +356,7 @@ kk_nofc_plotready %>%
           linetype = "dashed",
           size = 0.2
         ),
-        legend.position = c(0.8,0.8),
+        legend.position = c(0.8,0.9),
         panel.border =element_rect(fill='transparent', color='black')) -> p1;p1
 kk_nofc_info.1 %>%
   dplyr::filter(p.adjust<=0.05) %>%
@@ -352,6 +379,7 @@ kk_nofc_info.1 %>%
     axis.text.y = element_blank(),
     axis.ticks.y = element_blank()
   )  -> p2;p2
+library(gridExtra)
 pdf(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-UP-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
 grid.arrange(p1, p2, ncol=2,nrow=1,widths=c(4,1), heights=c(1))
 dev.off()
