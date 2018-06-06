@@ -11,7 +11,7 @@ genelist <- c("CCNA2","CCNB1",
               "MCM2","MCM4","MCM6","MCM7")
 genelist <- c("JARID2","AEBP2","EED","SET","SUZ12","RBBP4","RBBP7","EZH1") #PRC2 complex
 genelist <- c("RYBP","RING1","RNF2","BMI1","PCGF2","PCGF1","PHC1","PHC2","PHC3") #PRC1 complex
-genelist <- c("CBX4","CBX6","CBX7","CBX8") # other CBX
+genelist <- c("CBX2","CBX4","CBX6","CBX7","CBX8") # other CBX
 
 de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 # de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
