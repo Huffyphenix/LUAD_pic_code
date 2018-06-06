@@ -92,19 +92,42 @@ genelist_tf.methy %>%
   tidyr::unnest() %>%
   dplyr::inner_join(genelist_tf.tag_posi,by="tag") -> genelist_tf.median.methy
 
+# for CBX2 and EZH2 ------
 data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/图"
 cbx2 <- readr::read_tsv(file.path(data_path,"CBX2_promoter.txt"))
 ezh2 <- readr::read_tsv(file.path(data_path,"EZH2_promoter.txt"))
+gene_list <- c("EZH2","CBX2")
+
+# for other gene list ------
+gene_list=c("PPARG")
+pparg <- luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% "PPARG") %>%
+  dplyr::arrange(Genomic_Coordinate) %>% 
+  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[10]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
+  dplyr::select(tag)
+FABP5 <- luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% "FABP5") %>%
+  dplyr::arrange(Genomic_Coordinate) %>% 
+  dplyr::select(tag,Genomic_Coordinate) %>%
+  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[11] & Genomic_Coordinate>=Genomic_Coordinate[2]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
+  dplyr::select(tag)
+OLR1 <- luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% "OLR1") %>%
+  dplyr::arrange(Genomic_Coordinate) %>% 
+  dplyr::select(tag,Genomic_Coordinate) %>%
+  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[4]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
+  dplyr::select(tag)
+rbind(pparg,FABP5,OLR1) -> tags
+# get promoter tags from mEXPRESS ------
 luad_meth %>%
-  dplyr::filter(Gene_Symbol %in% c("EZH2","CBX2")) %>%
-  dplyr::filter(tag %in% c(cbx2$tag,ezh2$tag)) %>%
+  dplyr::filter(tag %in% tags$tag) %>%
   dplyr::select(-Genomic_Coordinate) %>%
   tidyr::gather(-tag,-Gene_Symbol,key="sample",value="methy") %>%
   dplyr::mutate(sample=substr(sample,9,16)) %>%
-  dplyr::mutate(group=ifelse(substr(sample,6,6)==1,"N","T")) -> EZH2_CBX2.methy
+  dplyr::mutate(group=ifelse(substr(sample,6,6)==1,"N","T")) -> gene_list.methy
 luad_meth %>%
-  dplyr::filter(Gene_Symbol %in% c("EZH2","CBX2")) %>%
-  dplyr::filter(tag %in% c(cbx2$tag,ezh2$tag)) %>%
+  dplyr::filter(tag %in% tags$tag) %>%
+  dplyr::arrange(Genomic_Coordinate) %>% 
   dplyr::select(tag,Genomic_Coordinate,Gene_Symbol) %>%
   dplyr::mutate(Genomic_Coordinate=as.numeric(Genomic_Coordinate)) %>%
   tidyr::nest(-Gene_Symbol) %>%
@@ -114,45 +137,47 @@ luad_meth %>%
   tidyr::unnest() %>%
   dplyr::ungroup() %>%
   dplyr::select(-Gene_Symbol) %>%
-  dplyr::mutate(Genomic_Direction=paste("P",Genomic_Direction,sep="_"))-> EZH2_CBX2.tag_posi
-EZH2_CBX2.methy %>%
+  dplyr::mutate(Genomic_Direction=paste("P",Genomic_Direction,sep="_"))-> gene_list.tag_posi
+gene_list.methy %>%
   dplyr::mutate(methy=as.numeric(methy)) %>%
   tidyr::nest(-tag,-group,-Gene_Symbol) %>%
   dplyr::group_by(tag,group) %>%
   dplyr::mutate(median=purrr::map(data,fn_median)) %>%
   dplyr::select(-data) %>%
   tidyr::unnest() %>%
-  dplyr::inner_join(EZH2_CBX2.tag_posi,by="tag") %>%
-  dplyr::ungroup()-> EZH2_CBX2.median.methy
+  dplyr::inner_join(gene_list.tag_posi,by="tag") %>%
+  dplyr::ungroup()-> gene_list.median.methy
 
 # calculation -------------------------------------------------------------
 
 # EZH2 and CBX2 -----------------------------------------------------------
-EZH2_CBX2.methy %>%
+gene_list.methy %>%
   tidyr::drop_na(methy) %>%
   dplyr::mutate(methy=as.numeric(methy)) %>%
   dplyr::group_by(tag) %>%
   dplyr::do(
     broom::tidy(
-      t.test(methy ~ group, data = .)
+      wilcox.test(methy ~ group, data = .)
     )
   ) %>%
   dplyr::mutate(sig=ifelse(p.value<=0.05,"*","")) %>%
   dplyr::mutate(sig=ifelse(p.value<=0.01,"**",sig)) %>%
-  dplyr::inner_join(EZH2_CBX2.methy,by="tag") %>%
-  dplyr::inner_join(EZH2_CBX2.tag_posi,by="tag") %>%
+  dplyr::inner_join(gene_list.methy,by="tag") %>%
+  dplyr::inner_join(gene_list.tag_posi,by="tag") %>%
   dplyr::mutate(laby=max(as.numeric(methy))+0.05) %>%
   dplyr::select(tag,Gene_Symbol,sig,Genomic_Direction,laby) %>%
   dplyr::ungroup() %>%
-  unique()-> EZH2_CBX2.ttest
+  unique()-> gene_list.ttest
 
-EZH2_CBX2.methy %>%
-  dplyr::inner_join(EZH2_CBX2.tag_posi,by="tag") %>%
+gene_list.methy %>%
+  dplyr::inner_join(gene_list.tag_posi,by="tag") %>%
   dplyr::mutate(methy=as.numeric(methy)) %>%
+  tidyr::drop_na(methy) %>%
   ggplot(aes(x=Genomic_Direction,y=methy,color=group)) +
   geom_boxplot() +
   geom_point(position = "jitter",size=1) +
-  geom_text(data=EZH2_CBX2.ttest,mapping=aes(x=Genomic_Direction,y=laby,label=sig),color="black") +
+  geom_text(data=gene_list.ttest,mapping=aes(x=Genomic_Direction,y=laby,label=sig),color="black") +
+  scale_color_manual(values = c("#5CACEE", "#FF82AB")) +
   # scale_x_discrete(limit = EZH2_CBX2.tag_posi$Genomic_Direction[1:27]) +
   facet_wrap(~Gene_Symbol,scales = "free") +
   ylab("Methylation level (Beta value)") +
@@ -166,10 +191,12 @@ EZH2_CBX2.methy %>%
     legend.title = element_blank(),
     text = element_text(size = 20),
     axis.ticks.x = element_blank(),
-    legend.position = c(0.8,0.8)
+    legend.position = c(0.9,0.8)
   ) -> EZH2_CBX2.box;EZH2_CBX2.box
 ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.pdf"),EZH2_CBX2.box,device = "pdf",width = 10,height = 6)
 ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.tiff"),EZH2_CBX2.box,device = "tiff",width = 10,height = 6)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","PPAR_Methy_boxplot.pdf"),EZH2_CBX2.box,device = "pdf",width = 10,height = 6)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","PPAR_Methy_boxplot.tiff"),EZH2_CBX2.box,device = "tiff",width = 10,height = 6)
 
 EZH2_CBX2.median.methy %>%
   dplyr::mutate(Genomic_Direction=as.numeric(Genomic_Direction)) %>%
