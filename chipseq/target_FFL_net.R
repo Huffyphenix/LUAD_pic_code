@@ -2,6 +2,8 @@
 
 genelist_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 data_path<- "H:/data"
+chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+
 library(magrittr)
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(genelist_path,"all_EHZ2_CBX2_common_targets.DE_info")) %>%
@@ -73,19 +75,19 @@ attribute <- readr::read_tsv(file.path(ffl_path,"attribute.txt"),col_names = F)
 # filter ------------------------------------------------------------------
 
 # only remain E2F1 and SOX4 as upstream of miRNAs, cause other TFs are all downregulate because of EZH2 and CBX2.
-TF2miRNA %>%
-  dplyr::filter(X1 %in% c("E2F1","SOX4")) %>%
-  dplyr::mutate(X4=1) -> E2F1_SOX4_2_miRNA
+# TF2miRNA %>%
+#   dplyr::filter(X1 %in% c("E2F1","SOX4")) %>%
+#   dplyr::mutate(X4=1) -> E2F1_SOX4_2_miRNA
 
 # only remain miRNAs which regulate by E2F1 and SOX4
 
 miRNA2TF %>%
-  dplyr::filter(X1 %in% unique(E2F1_SOX4_2_miRNA$X2)) %>%
+  dplyr::filter(X2 %in% unique(DOWN_commone_targets.TF$gene_id.x)) %>%
   dplyr::mutate(X3="notshow") %>%
   dplyr::mutate(X4=3) -> miRNA2TF.filter
 
 miRNA2gene %>%
-  dplyr::filter(X1 %in% unique(E2F1_SOX4_2_miRNA$X2)) %>%
+  # dplyr::filter(X1 %in% unique(E2F1_SOX4_2_miRNA$X2)) %>%
   dplyr::mutate(X3="notshow") %>%
   dplyr::mutate(X4=4) -> miRNA2gene.filter
 
@@ -97,14 +99,11 @@ TF2gene %>%
 
 # combine -----------------------------------------------------------------
 
-E2F1_SOX4_2_miRNA %>%
-  rbind(miRNA2TF.filter) %>%
+miRNA2TF.filter %>%
   rbind(miRNA2gene.filter) %>%
   rbind(TF2gene.filter) -> network
 
-data.frame(gene=E2F1_SOX4_2_miRNA$X1,type=1) %>%
-  rbind(data.frame(gene=E2F1_SOX4_2_miRNA$X2,type=2)) %>%
-  rbind(data.frame(gene=miRNA2TF.filter$X2,type=1)) %>%
+data.frame(gene=miRNA2TF.filter$X2,type=1) %>%
   rbind(data.frame(gene=miRNA2TF.filter$X1,type=2)) %>%
   rbind(data.frame(gene=miRNA2gene.filter$X1,type=2)) %>%
   rbind(data.frame(gene=miRNA2gene.filter$X2,type=3)) %>%
@@ -146,13 +145,51 @@ attribute.fc.tsg %>%
 network %>%
   readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","network.txt"))
 
+
+
+### mirna network select hub nodes from cytoNCA------
+cytonca <- readr::read_tsv(file.path(ffl_path,"√network.filter","cytoCNA.txt"),col_names=F)
+
+cytonca %>%
+  tidyr::separate(X3,c("group","Subgragh"),sep=": ") %>%
+  tidyr::separate(X4,c("group1","Degree"),sep=": ") %>%
+  tidyr::separate(X5,c("group2","Eigenvector"),sep=": ") %>%
+  tidyr::separate(X6,c("group3","Information"),sep=": ") %>%
+  tidyr::separate(X7,c("group4","LAC"),sep=": ") %>%
+  tidyr::separate(X8,c("group5","Betweenness"),sep=": ") %>%
+  tidyr::separate(X9,c("group6","Closeness"),sep=": ") %>%
+  tidyr::separate(X10,c("group7","Network"),sep=": ") %>%
+  dplyr::select(X2, Subgragh,Degree,Eigenvector,Information,LAC,Betweenness,Closeness,Network) %>%
+  tidyr::gather(-X2,key="group",value="value") %>%
+  dplyr::mutate(value=as.numeric(value)) %>%
+  dplyr::group_by(group) %>%
+  dplyr::mutate(rank=rank(value)) %>% # use average rank when a ties happened
+  dplyr::group_by(X2) %>%
+  dplyr::mutate(rank_g=sum(rank)) %>%
+  dplyr::ungroup() -> cytonca_rank
+
+
+cytonca_rank %>%
+  dplyr::select(-rank_g,-rank) %>%
+  tidyr::spread(key=group,value=value) -> cytonca_value
+
+cytonca_rank %>%
+  dplyr::select(-value) %>%
+  dplyr::mutate(group=paste(group,"rank",sep="_")) %>%
+  tidyr::spread(key=group,value=rank) %>%
+  dplyr::inner_join(cytonca_value,by="X2") %>%
+  dplyr::rename("Gene"="X2","Rank_sum"="rank_g")-> cytonca_rank_all
+
+cytonca_rank_all %>%
+  readr::write_tsv(file.path(ffl_path,"√network.filter","cytoCNA_rank.txt"))
+
 # genes out of control of CNV, methylation, and miRNA regulation -----
 # 1 methylation
 mthy_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 methy_regu_gene <- readr::read_tsv(file.path(mthy_path,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
 
 # 2 CNV 
-Down_common_targets.CNV <- readr::read_tsv(file.path(data_path,"Figure4/Figure5","Down_common_targets.CNV-percent.tsv"))
+Down_common_targets.CNV <- readr::read_tsv(file.path(mthy_path,"Figure4/Figure5","Down_common_targets.CNV-percent.tsv"))
 Down_common_targets.CNV %>%
   dplyr::filter(homo_del>5) -> Down_common_targets.CNV_dele_5
 
@@ -161,10 +198,14 @@ attribute %>%
   dplyr::filter(type %in% c(1,3)) %>%
   dplyr::filter(! gene %in% c("E2F1","SOX4")) -> miRNA_regu_genes
 
+cytonca_rank_all %>%
+  dplyr::arrange(desc(Rank_sum)) %>%
+  dplyr::filter(Rank_sum>Rank_sum[68]) -> miRNA_regu_genes
+
 # 4 filter
 genelist %>%
   dplyr::filter(log2FC<0) %>%
   dplyr::filter(! gene_id.x %in% methy_regu_gene$symbol) %>%
   dplyr::filter(! gene_id.x %in% Down_common_targets.CNV_dele_5$SAMPLE_ID) %>%
-  dplyr::filter(! gene_id.x %in% miRNA_regu_genes$gene) %>%
+  dplyr::filter(! gene_id.x %in% miRNA_regu_genes$Gene) %>%
   dplyr::filter(gene_id.x %in% TSGene_noconfuse$symbol)
