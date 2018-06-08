@@ -18,11 +18,12 @@ chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
 
 # E Zhou path -----
-# chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
-# out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
-# data_path<- "H:/data"
-# # data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-# data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
+data_path<- "H:/data"
+# data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 
 # Home path -----
 chip_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
@@ -56,6 +57,8 @@ enzyme_lsit <- readr::read_tsv(file.path(chip_path,"enzyme_list.symbol.xls")) %>
   bitr(fromType = "SYMBOL",toType = "ENTREZID",OrgDb = org.Hs.eg.db)
 Animal_TF %>%
   dplyr::filter(! Entrez_ID %in% enzyme_lsit$ENTREZID) -> Animal_TF
+library(clusterProfiler)
+library(org.Hs.eg.db)
 Animal_TF$Entrez_ID %>%
   bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = org.Hs.eg.db) -> Animal_TF_entrez
 
@@ -209,7 +212,7 @@ ggsave(file.path(out_path,"EZH2_targets_proteincoding_constitute.tiff"),width = 
 # overlap of CBX2 and EZH2 targets of protein coding genes
 library(VennDiagram)
 EZH2_targets %>%
-  dplyr::filter(X7 %in% protein_coding) %>%
+  dplyr::filter(X7 %in% protein_coding) %T>%
   dplyr::mutate(X7 = as.character(X7)) %>%
   dplyr::select(X7,X8) %>%
   unique() %>%
@@ -299,6 +302,7 @@ all_gene_nofil %>%
   dplyr::inner_join(tcga_geneid,by="gene_id") %>%
   dplyr::mutate(entrez_id=as.character(entrez_id)) -> all_gene_nofil.entrez
 
+#   for common targets -----
 EZH2_CBX2_common_targets %>%
   bitr(fromType = "SYMBOL",toType = "ENTREZID",OrgDb = org.Hs.eg.db) -> EZH2_CBX2_common_targets.entrez
 EZH2_CBX2_common_targets %>%
@@ -324,6 +328,58 @@ EHZ2_CBX2_common_targets.DE_info %>%
 EHZ2_CBX2_common_targets.DE_info %>%
   dplyr::filter(gene_id.x %in% EZH2_CBX2_common_peak_common_targets) %>%
   readr::write_tsv(file.path(chip_path,"common-targets-180426-new","only_EHZ2_CBX2_common_peaks-targets.DE_info"))
+
+# for EZH2 targets -----
+EZH2_targets_proteincoding %>%
+  bitr(fromType = "SYMBOL",toType = "ENTREZID",OrgDb = org.Hs.eg.db) -> EZH2_targets_proteincoding.entrez
+EZH2_targets_proteincoding %>%
+  as.data.frame() %>%
+  dplyr::as.tbl() %>%
+  dplyr::filter(! . %in% EZH2_targets_proteincoding.entrez$SYMBOL) %>%
+  .$. %>%
+  bitr(fromType = "ALIAS",toType = "ENTREZID",OrgDb = org.Hs.eg.db,drop = F) %>%
+  dplyr::rename("SYMBOL"="ALIAS") -> EZH2_targets_proteincoding.nomap.entrez
+
+EZH2_targets_proteincoding.entrez %>%
+  rbind(EZH2_targets_proteincoding.nomap.entrez) %>%
+  dplyr::rename("gene_id"="SYMBOL","entrez_id"="ENTREZID") %>%
+  dplyr::mutate(entrez_id=as.character(entrez_id))-> EZH2_targets_proteincoding.entrez.all
+
+EZH2_targets_proteincoding.entrez.all %>%
+  dplyr::as.tbl() %>%
+  dplyr::left_join(all_gene_nofil.entrez,by="entrez_id") %>%
+  dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99,"Down","non-DE")) %>%
+  dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99,"Up",Class)) %>%
+  dplyr::mutate(Class=ifelse(is.na(log2FC),"non-DE",Class)) -> EZH2_targets_proteincoding.DE_info
+EZH2_targets_proteincoding.DE_info %>%
+  readr::write_tsv(file.path(chip_path,"common-targets-180426-new","EZH2_targets_proteincoding.DE_info"))
+
+# for CBX2 targets -----
+CBX2_targets_proteincoding %>%
+  bitr(fromType = "SYMBOL",toType = "ENTREZID",OrgDb = org.Hs.eg.db) -> CBX2_targets_proteincoding.entrez
+CBX2_targets_proteincoding %>%
+  as.data.frame() %>%
+  dplyr::as.tbl() %>%
+  dplyr::filter(! . %in% CBX2_targets_proteincoding.entrez$SYMBOL) %>%
+  .$. %>%
+  bitr(fromType = "ALIAS",toType = "ENTREZID",OrgDb = org.Hs.eg.db,drop = F) %>%
+  dplyr::rename("SYMBOL"="ALIAS") -> CBX2_targets_proteincoding.nomap.entrez
+
+CBX2_targets_proteincoding.entrez %>%
+  rbind(CBX2_targets_proteincoding.nomap.entrez) %>%
+  dplyr::rename("gene_id"="SYMBOL","entrez_id"="ENTREZID") %>%
+  dplyr::mutate(entrez_id=as.character(entrez_id))-> CBX2_targets_proteincoding.entrez.all
+
+CBX2_targets_proteincoding.entrez.all %>%
+  dplyr::as.tbl() %>%
+  dplyr::left_join(all_gene_nofil.entrez,by="entrez_id") %>%
+  dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99,"Down","non-DE")) %>%
+  dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99,"Up",Class)) %>%
+  dplyr::mutate(Class=ifelse(is.na(log2FC),"non-DE",Class)) -> CBX2_targets_proteincoding.DE_info
+CBX2_targets_proteincoding.DE_info %>%
+  readr::write_tsv(file.path(chip_path,"common-targets-180426-new","CBX2_targets_proteincoding.DE_info"))
+
+
 EHZ2_CBX2_common_targets.DE_info %>%
   dplyr::mutate(Sum=n()) %>%
   dplyr::group_by(Class) %>%

@@ -10,6 +10,8 @@ gseaKEGG_result <- readr::read_tsv(file.path(data_path_1,"gseaKEGG_results.tsv")
 EZH2_CBX2_common_Pro <- readr::read_tsv(file.path(data_path_2,"common-targets-180426-new","DOWN1.5_allexp30_pro_EHZ2_CBX2_common_targets.DE_info"))
 EZH2_CBX2_common_TF <- readr::read_tsv(file.path(data_path_2,"common-targets-180426-new","DOWN1.5_allexp30_TF_EHZ2_CBX2_common_targets.DE_info"))
 EZH2_CBX2_common_targets <- rbind(EZH2_CBX2_common_Pro,EZH2_CBX2_common_TF)
+EZH2_targets <- readr::read_tsv(file.path(data_path_2,"common-targets-180426-new","EZH2_targets_proteincoding.DE_info"))
+CBX2_targets <- readr::read_tsv(file.path(data_path_2,"common-targets-180426-new","CBX2_targets_proteincoding.DE_info"))
 
 TF <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_TF_FC2_cpm_30")) %>%
   dplyr::select(gene_id,log2FC) 
@@ -54,15 +56,33 @@ gseaKEGG_result_all %>%
 PPAR %>%
   dplyr::filter(SYMBOL %in% EZH2_CBX2_common_targets$gene_id.y)
 
+##### common targets in downregulate pathway --------
 gseaKEGG_result_all %>%
   dplyr::filter(SYMBOL %in% EZH2_CBX2_common_targets$gene_id.y) %>%
   dplyr::filter(p.adjust<0.05 & enrichmentScore<0) %>%
   dplyr::arrange(Description) -> EZH2_CBX2_common_targets_in_down_kegg
 EZH2_CBX2_common_targets_in_down_kegg %>%
-  readr::write_tsv(file.path(data_path_1,"EZH2_CBX2_common_targets_in_down_kegg"))
+  readr::write_tsv(file.path(data_path_2,"common-targets-180426-new/overlap gseaKEGG","EZH2_CBX2_common_targets_in_down_kegg.tsv"))
 
-gseaKEGG_result %>%
-  dplyr::filter(p.adjust<0.05 & enrichmentScore<0)
+##### EZH2 targets in downregulate pathway --------
+PPAR %>%
+  dplyr::filter(SYMBOL %in% EZH2_targets$gene_id.y)
+
+gseaKEGG_result_all %>%
+  dplyr::filter(SYMBOL %in% EZH2_targets$gene_id.y) %>%
+  dplyr::filter(p.adjust<0.05 & enrichmentScore<0) %>%
+  dplyr::arrange(Description) -> EZH2_targets_in_down_kegg
+EZH2_targets_in_down_kegg %>%
+  readr::write_tsv(file.path(data_path_2,"common-targets-180426-new/overlap gseaKEGG","EZH2_targets_in_down_kegg.tsv"))
+
+##### CBX2 targets in downregulate pathway --------
+gseaKEGG_result_all %>%
+  dplyr::filter(SYMBOL %in% CBX2_targets$gene_id.y) %>%
+  dplyr::filter(p.adjust<0.05 & enrichmentScore<0) %>%
+  dplyr::arrange(Description) -> CBX2_targets_in_down_kegg
+CBX2_targets_in_down_kegg %>%
+  readr::write_tsv(file.path(data_path_2,"common-targets-180426-new/overlap gseaKEGG","CBX2_targets_in_down_kegg.tsv"))
+
 # pathview ----------------------------------------------------------------
 
 .libPaths("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
