@@ -1,16 +1,27 @@
-
+.libPaths("E:/library")
 # load package ------------------------------------------------------------
 
 library(magrittr)
 library(ggplot2)
 # data path ---------------------------------------------------------------
+# E Zhou -----
 data_path <- "H:/data/TCGA/LUAD_methylation"
 gene_list_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
 miRNA_exp_path <- "H:/data/TCGA/TCGA_data"
 
+# Hust -----
+data_path <- "G:/data/TCGA/LUAD_methylation"
+gene_list_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/FC2_De_in_LUAD"
+miRNA_exp_path <- "G:/data/TCGA/TCGA_data"
+
 # output data -------------------------------------------------------------
+# E Zhou -----
 out_path_sup <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
 out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
+# Hust -----
+out_path_sup <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
+out_path_fig <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # load data ---------------------------------------------------------------
 
