@@ -5,9 +5,16 @@ data_path<-"Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942
 # E Zhou -----
 data_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
 result_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
+
+# HUST ----
+data_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
+result_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
+
 immune_histone<-read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",header = T) %>%
   dplyr::mutate(sample_type=ifelse(sample_type=="T","1Tumor","2Normal"))
 hist(immune_histone$EZH2_karyon)
+
+
 
 #####################################
 #correlation analysis
@@ -22,7 +29,7 @@ broom::tidy(
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
   dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
-  dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"     \n",
+  dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n p = ",format(p.value,scientific=TRUE,digit=2),"     \n",
                             "n = ",nrow(immune_histone.T),
                             "                    ",sep="")) ->CBX2_EZH2_cytoplsm.T
 broom::tidy(
