@@ -527,8 +527,13 @@ for(.gene3 in CBX2_target_ppar){
     tidyr::unnest() %>%
     dplyr::mutate(group2=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
     dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
-  # for(.gene3 in c(targets_down_TF$gene_id.x,targets_down_pro$gene_id.x)){
-  for(.gene3 in c("OLR1","FABP5")){ 
+  
+  targets_down <- c(targets_down_TF$gene_id.x,targets_down_pro$gene_id.x)
+  targets_down<-targets_down[targets_down!="NDNF"]
+  tmp <- data.frame(symbol="test",EZH2_CBX2_kmp=1)
+  for(.gene3 in targets_down){
+  # for(.gene3 in c("OLR1","FABP5")){ 
+    print(.gene3)
     data %>%
     dplyr::filter(symbol %in% .gene3) %>%
     tidyr::unnest() %>%
@@ -541,50 +546,55 @@ for(.gene3 in CBX2_target_ppar){
       dplyr::mutate(group=ifelse(group1=="Low"&group2=="Low"&group3=="Up","Low",group)) %>%
       dplyr::filter(! group=="NA")-> .data
     ##### PFI survival ----
-    .d_diff <- survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data)
+    .d_diff <- try(survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data),silent = T)
     # print(.d_diff)
     kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
-    print(paste(.gene3,",",kmp))
+    rbind(tmp,data.frame(symbol=.gene3,EZH2_CBX2_kmp=kmp))->tmp
     # print(kmp)
     # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
     # print(coxp)
-    if(kmp <= 0.05){
-      .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
-      low_n=.fit$n[1]
-      high_n=.fit$n[2]
-      # print(.fit)
-      # fn_sur_draw(.gene,kmp,.fit)
-      fig_name1 <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".pdf",sep="")
-      fig_name2 <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".tiff",sep="")
-      library(ggplot2)
-      survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
-                            surv.median.line = "hv",
-                            title = paste("Logrank P =", signif(kmp, 2),", PFI"),
-                            xlab = "Survival in months",
-                            ylab = 'Probability of survival',
-                            legend.title = "Expression group:",
-                            # legend.labs = c(paste(.gene1,",",.gene2,",",.gene3,"-","Low", .low,"%",", n = ",low_n,sep=""),
-                            #                 paste(.gene1,",",.gene2,",",.gene3,"-","Up", .up,"%",", n = ",high_n,sep="")),
-                            legend.labs = c(paste(.gene1,",",.gene2,"-","Low", .low,"%","+\n",.gene3,"-","Up", .up,"%",", n = ",low_n,"\n",sep=""),
-                                            paste(.gene1,",",.gene2,"-","Up", .up,"%","+\n",.gene3,"-","Low", .low,"%",", n = ",high_n,sep="")),
-                            legend= c(0.7,0.8),
-                            # risk.table = TRUE,
-                            # tables.height = 0.2,
-                            palette = c("#E7B800", "#2E9FDF"),
-                            ggtheme = theme_bw(),
-                            font.main = c(16),
-                            font.x = c(14),
-                            font.y = c(14),
-                            font.tickslab = c(12)
-      ) 
-      # dev.off()
-      ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
-      ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
-      
-    }
+    # if(kmp <= 0.05){
+    #   .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+    #   low_n=.fit$n[1]
+    #   high_n=.fit$n[2]
+    #   # print(.fit)
+    #   # fn_sur_draw(.gene,kmp,.fit)
+    #   fig_name1 <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".pdf",sep="")
+    #   fig_name2 <- paste(.gene1,"+",.gene2,"+",.gene3,"-","PFI",".tiff",sep="")
+    #   library(ggplot2)
+    #   survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
+    #                         surv.median.line = "hv",
+    #                         title = paste("Logrank P =", signif(kmp, 2),", PFI"),
+    #                         xlab = "Survival in months",
+    #                         ylab = 'Probability of survival',
+    #                         legend.title = "Expression group:",
+    #                         # legend.labs = c(paste(.gene1,",",.gene2,",",.gene3,"-","Low", .low,"%",", n = ",low_n,sep=""),
+    #                         #                 paste(.gene1,",",.gene2,",",.gene3,"-","Up", .up,"%",", n = ",high_n,sep="")),
+    #                         legend.labs = c(paste(.gene1,",",.gene2,"-","Low", .low,"%","+\n",.gene3,"-","Up", .up,"%",", n = ",low_n,"\n",sep=""),
+    #                                         paste(.gene1,",",.gene2,"-","Up", .up,"%","+\n",.gene3,"-","Low", .low,"%",", n = ",high_n,sep="")),
+    #                         legend= c(0.7,0.8),
+    #                         # risk.table = TRUE,
+    #                         # tables.height = 0.2,
+    #                         palette = c("#E7B800", "#2E9FDF"),
+    #                         ggtheme = theme_bw(),
+    #                         font.main = c(16),
+    #                         font.x = c(14),
+    #                         font.y = c(14),
+    #                         font.tickslab = c(12)
+    #   ) 
+    #   # dev.off()
+    #   ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
+    #   ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
+    #   
+    # }
   }
-
-  ### OS survival -----
+mRNA_survival_p_PFI %>% 
+  dplyr::inner_join(tmp,by="symbol") %>%
+  dplyr::select(symbol,KMP,EZH2_CBX2_kmp) %>%
+  dplyr::mutate(group=ifelse(EZH2_CBX2_kmp<KMP & EZH2_CBX2_kmp<0.0054,"better in merge","worse in merge")) %>%
+  readr::write_tsv(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5","EZH2_CBX2_targets_merge_survival.tsv"))
+  
+### OS survival -----
   .d_diff <- survival::survdiff(survival::Surv(OS.x, status.x) ~ group, data = .data)
   # print(.d_diff)
   kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
