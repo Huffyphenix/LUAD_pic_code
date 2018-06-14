@@ -10,9 +10,9 @@
 # HUST path ------
 chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
-data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-data_path<- "F:/data"
+data_path_2 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path<- "G:/data"
 
 chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4"
@@ -297,7 +297,7 @@ rbind(TF_nofil,progene_nofil) -> all_gene_nofil
 
 
 tcga_geneid <- readr::read_tsv("F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt")
-tcga_geneid <- readr::read_tsv("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt")
+tcga_geneid <- readr::read_tsv("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt")
 all_gene_nofil %>%
   dplyr::inner_join(tcga_geneid,by="gene_id") %>%
   dplyr::mutate(entrez_id=as.character(entrez_id)) -> all_gene_nofil.entrez
@@ -320,8 +320,8 @@ EZH2_CBX2_common_targets.entrez %>%
 EZH2_CBX2_common_targets.entrez.all %>%
   dplyr::as.tbl() %>%
   dplyr::left_join(all_gene_nofil.entrez,by="entrez_id") %>%
-  dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99,"Down","non-DE")) %>%
-  dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99,"Up",Class)) %>%
+  dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99 & case_mean>=30,"Down","non-DE")) %>%
+  dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99 & con_mean>=30,"Up",Class)) %>%
   dplyr::mutate(Class=ifelse(is.na(log2FC),"non-DE",Class)) -> EHZ2_CBX2_common_targets.DE_info
 EHZ2_CBX2_common_targets.DE_info %>%
   readr::write_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
