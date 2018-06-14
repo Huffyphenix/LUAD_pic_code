@@ -13,11 +13,11 @@ genelist <- c("JARID2","AEBP2","EED","SET","SUZ12","RBBP4","RBBP7","EZH1") #PRC2
 genelist <- c("RYBP","RING1","RNF2","BMI1","PCGF2","PCGF1","PHC1","PHC2","PHC3") #PRC1 complex
 genelist <- c("CBX2","CBX4","CBX6","CBX7","CBX8") # other CBX
 
-de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+de_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 # de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 
 # data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+data_path_3 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 library(magrittr)
 TF_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::rename("Gene_id"="gene_id")
@@ -29,7 +29,7 @@ progene_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_ProGene_cpm_1_
 rbind(TF_nofil,progene_nofil) -> all_gene_nofil
 # load exp ----------------------------------------------------------------
 
-exp <- readr::read_tsv("H:/data/TCGA/lung_DE/CBX24678/all_genes_exp.confirm")
+exp <- readr::read_tsv("G:/data/TCGA/lung_DE/CBX24678/all_genes_exp.confirm")
 exp <- readr::read_tsv(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30.exp.xls"))
 
 # filter ------------------------------------------------------------------
