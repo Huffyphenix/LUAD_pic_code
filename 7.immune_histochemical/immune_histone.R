@@ -1,3 +1,4 @@
+.libPaths("E:/library")
 library(magrittr)
 # HOME -----
 data_path<-"Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
@@ -138,7 +139,7 @@ oneway.test(EZH2_karyon~stage,data = immune_histone)
 boxplot(EZH2_karyon~stage,data = immune_histone)
 
 library(ggplot2)
-comp_list <- list(c("Normal(TA)", "stage II"), c("stage II", "stage III"))
+comp_list <- list(c("Normal", "stage II"), c("stage II", "stage III"))
 immune_histone %>%
   dplyr::mutate(stage=as.character(stage)) %>%
   dplyr::mutate(stage=ifelse(is.na(stage),"Normal(TA)",stage)) %>%
@@ -171,8 +172,12 @@ ggsave(filename = "immune_histone-stage.pdf", plot = p, device = "pdf", path = "
 immune_histone %>%
   tidyr::gather(-c("sample","sample_type","stage"),key="group",value="PositiveRateXStainingIntensity") %>%
   dplyr::mutate(sample_type=as.character(sample_type)) %>%
-  dplyr::mutate(sample_type=ifelse(sample_type=="TA","2","1")) %>%
-  dplyr::arrange(sample_type) ->df
+  dplyr::mutate(sample_type=ifelse(sample_type=="2Normal","2","1")) %>%
+  dplyr::mutate(group=sub(pattern = "_",replacement = " ",group)) %>%
+  dplyr::arrange(sample_type) %>%
+  dplyr::group_by(group)->df
+b <- runif(nrow(df), -0.2, 0.2)
+comp_list <- list(c("2","1"))
 df %>%
   ggpubr::ggboxplot(x = "sample_type", y = "PositiveRateXStainingIntensity",
                     color = "sample_type", pallete = "npg",add = "jitter",
@@ -183,10 +188,13 @@ df %>%
   theme(
     axis.title.x = element_blank()
   ) +
-  ylab("PositiveRate X tainingIntensity") +
-  ggpubr::stat_compare_means(label.y = 2.3,method = "kruskal.test")->p;p
-ggsave(filename = "immune_histone.tiff", plot = p, device = "tiff", path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
-       width = 8, height = 3)
-
+  ylab("PositiveRate X StainingIntensity") +
+  scale_y_continuous(limits = c(0,2.5)) +
+  # ggpubr::stat_compare_means(label.y = 2.3,method = "wilcox.test",label = "p.format") +
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(2.2),label = "p.signif") ->p;p
+ggsave(filename = "immune_histone.tiff", plot = p, device = "tiff", path = "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
+       width = 4, height = 3)
+ggsave(filename = "immune_histone.pdf", plot = p, device = "pdf", path = "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
+       width = 4, height = 3)
 
 save.image(file = file.path(result_path,"immune_histone.rdata"))
