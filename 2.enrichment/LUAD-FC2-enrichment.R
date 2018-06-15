@@ -5,14 +5,15 @@ data_path_1<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.
 # data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-# data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene.xls"
-# data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-# data_path_4<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-# data_path_5<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
 data_path_4<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
 data_path_5<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
-# data_path_2 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
-# data_path_3 <- "F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+
+#### HUST -----
+data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+data_path_4<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+data_path_5<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
+data_path_2 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
+data_path_3 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 
 # laod pac ----------------------------------------------------------------
 .libPaths("E:/library")
@@ -290,6 +291,7 @@ kk_nofc %>%
   dplyr::inner_join(all_gene_prob0.9_info,by="ENTREZID") -> kk_nofc_info
 kk_nofc_info %>%
   readr::write_tsv(file.path(data_path_1,"gseaKEGG_result-gather.tsv"))
+kk_nofc_info <- readr::read_tsv(file.path(data_path_1,"gseaKEGG_result-gather.tsv"))
 kk_nofc %>% 
   as.data.frame() -> kk_nofc.tible
 kk_nofc_info %>%
@@ -338,9 +340,12 @@ library(ggplot2)
 library(grid)
 library(scales)
 kk_nofc_plotready %>%
+  dplyr::mutate(enrichmentScore=ifelse(enrichmentScore>0.6,0.6,enrichmentScore)) %>%
+  dplyr::mutate(enrichmentScore=ifelse(enrichmentScore<0.4,0.4,enrichmentScore)) %>%
   ggplot(aes(x=log2FC,y=Description)) +
   ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
   scale_fill_gradientn(colours=c("#ffcdd2","#d32f2f"),
+                       breaks = c(0.3,0.4,0.5,0.6,0.7),
                        name = "enrichmentScore") + #"#00BFFF"
   guides(fill = guide_colorbar(title.position = "left"))+
   scale_y_discrete(limits=kk_nofc_rank$Description) +
@@ -367,7 +372,7 @@ kk_nofc_info.1 %>%
                        name = "enrichmentScore") +
   scale_x_discrete(limits=c(kk_nofc_rank$Description)) +
   guides(fill=FALSE) +
-  geom_text(aes(label = Counts)) +
+  # geom_text(aes(label = Counts)) +
   coord_flip()+
   theme(
     panel.background = element_blank(),
@@ -394,13 +399,15 @@ kk_nofc_info %>%
 
 
 kk_nofc_plotready.down %>%
-  dplyr::arrange(enrichmentScore) %>%
+  dplyr::arrange(desc(enrichmentScore)) %>%
   dplyr::select(Description) %>%
   unique() -> kk_nofc_description_rank.down
 
 
 library(ggplot2)
 kk_nofc_plotready.down %>%
+  # dplyr::mutate(enrichmentScore=ifelse(enrichmentScore<= (-0.6),(-0.6),enrichmentScore)) %>%
+  # dplyr::mutate(enrichmentScore=ifelse(enrichmentScore>= (-0.3),(-0.3),enrichmentScore)) %>%
   ggplot(aes(x=log2FC,y=Description)) +
   ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
   scale_fill_gradientn(colours=c("#039BE5","#B3E5FC"),
@@ -431,7 +438,7 @@ kk_nofc_info.1 %>%
                        name = "enrichmentScore") +
   scale_x_discrete(limits=c(kk_nofc_description_rank.down$Description)) +
   guides(fill=FALSE) +
-  geom_text(aes(label = Counts)) +
+  # geom_text(aes(label = Counts)) +
   coord_flip()+
   theme(
     panel.background = element_blank(),
@@ -443,7 +450,7 @@ kk_nofc_info.1 %>%
     axis.text.y = element_blank(),
     axis.ticks.y = element_blank()
   )  -> p2;p2
-pdf(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-DOWN-prob0.9_padjust0.05.pdf"),width = 8,height = 8)
+pdf(file.path(data_path_1,"gseaKEGG_for_LUAD-noFC-DOWN-prob0.9_padjust0.05_new.pdf"),width = 8,height = 8)
 grid.arrange(p1, p2, ncol=2,nrow=1,widths=c(4,1), heights=c(1))
 dev.off()
 
