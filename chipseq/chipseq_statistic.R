@@ -408,6 +408,7 @@ EHZ2_CBX2_common_targets.DE_info %>%
 EHZ2_CBX2_common_targets.Down$entrez_id %>%
   enrichGO(OrgDb = "org.Hs.eg.db", ont="all", readable=TRUE) -> Down_Go_enrichment
 
+
 EHZ2_CBX2_common_targets.DE_info %>%
   dplyr::filter(Class=="Up") -> EHZ2_CBX2_common_targets.Up
 EHZ2_CBX2_common_targets.Down$entrez_id %>%
@@ -476,8 +477,7 @@ Down_Go_enrichment.plotready %>%
   scale_y_discrete(limits=pathway.rank$Description_p) +
   scale_x_discrete(limits=symbol.rank$gene_id.x) +
   scale_fill_gradientn(colours=c("#039BE5","#BBDEFB"),
-                       name = "log2FC",
-                       breaks=c(-0.6,-2,-4)) +
+                       name = "log2FC") +
   theme(axis.text.x = element_text(angle = 45,hjust = 1),
         panel.background = element_blank(),
         # panel.grid.minor =element_line(color = "black",size=0.2),
@@ -490,7 +490,68 @@ Down_Go_enrichment.plotready %>%
         panel.border =element_rect(fill='transparent', color='black'))
 ggsave(file.path(out_path,"Figure5","DOWN_EZH2-CBX2-targetgene-GOenrichment.heatmap.Rplot.pdf"),width = 12,height = 4)
 
-##  KEGG enrichment ----
+
+## KEGG enrichment ------
+EHZ2_CBX2_common_targets.Down$entrez_id %>%
+  enrichKEGG(pvalueCutoff=1,qvalueCutoff = 1) -> Down_KEGG_enrichment
+Down_KEGG_enrichment %>%
+  as.data.frame() %>%
+  dplyr::filter(pvalue<0.05) %>%
+  tidyr::separate(geneID,paste("gene",1:100,sep="_"),"/") %>%
+  dplyr::select(-ID,-GeneRatio,-BgRatio,-p.adjust,-qvalue) %>%
+  tidyr::gather(-Description,-pvalue,key="title",value="entrez_id") %>%
+  tidyr::drop_na() %>%
+  # dplyr::select(-title) %>%
+  dplyr::inner_join(EHZ2_CBX2_common_targets.Down,by="entrez_id")-> Down_KEGG_enrichment.info
+
+Down_KEGG_enrichment.info %>%
+  dplyr::arrange(desc(pvalue)) %>%
+  dplyr::select(Description) %>%
+  unique() -> Down_KEGG_enrichment_rank
+  
+Down_KEGG_enrichment.info %>%
+  dplyr::group_by(gene_id.x) %>%
+  dplyr::mutate(n=n()) %>%
+  dplyr::arrange(desc(n),log2FC) %>%
+  dplyr::select(gene_id.x,n,log2FC) %>% unique() -> generank
+
+#### heat plot
+Down_KEGG_enrichment.info %>%
+  ggplot(aes(x=gene_id.x,y=Description)) +
+  geom_tile(aes(fill = log2FC),colour = "white") +
+  scale_y_discrete(limits=Down_KEGG_enrichment_rank$Description) +
+  scale_x_discrete(limits=generank$gene_id.x) +
+  scale_fill_gradientn(colours=c("#039BE5","#BBDEFB"),
+                       name = "log2(FC)") +
+  ylab("KEGG pathway") +
+  theme(axis.text.x = element_text(angle = 45,hjust = 1,size = 13),
+        axis.text.y = element_text(size = 13),
+        axis.title.y = element_text(size=15),
+        panel.background = element_blank(),
+        legend.position = c(0.95,0.3),
+        legend.background = element_blank(),
+        axis.title.x = element_blank(),
+        # panel.grid.minor =element_line(color = "black",size=0.2),
+        # panel.grid = element_line(colour = "grey", linetype = "dashed"),
+        # panel.grid.major = element_line(
+        #   colour = "grey",
+        #   linetype = "dashed",
+        #   size = 0.2
+        # ),
+        panel.border =element_rect(fill='transparent', color='black'))
+ggsave(file.path(out_path,"Figure5","DOWN1.5_EZH2-CBX2-targetgene-KEGGenrichment.heatmap.pdf"),width = 12,height = 4)
+ggsave(device = "tiff",file.path(out_path,"Figure5","DOWN1.5_EZH2-CBX2-targetgene-KEGGenrichment.heatmap.tiff"),width = 12,height = 4)
+
+### pathview 
+EHZ2_CBX2_common_targets.Down %>%
+  dplyr::select(log2FC) %>%
+  as.matrix()-> gene.data
+rownames(gene.data) <- EHZ2_CBX2_common_targets.Down$entrez_id
+
+setwd("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5")
+pv.out <- pathview(gene.data = gene.data, pathway.id = "01521",species = "hsa", out.suffix = "EGFR_TKI",limit=list(gene=2))
+
+##  gseaKEGG enrichment ----
 EHZ2_CBX2_common_targets.DE_info %>%
   tidyr::drop_na() %>%
   dplyr::filter(prob>0.9) -> EHZ2_CBX2_common_targets.prob0.9
