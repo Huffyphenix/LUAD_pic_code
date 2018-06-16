@@ -1,4 +1,5 @@
-biocLite("Pathview")
+source("http://bioconductor.org/biocLite.R")
+biocLite("pathview")
 library(pathview)
 
 # data path ---------------------------------------------------------------
