@@ -15,7 +15,11 @@ immune_histone<-read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",
   dplyr::mutate(sample_type=ifelse(sample_type=="T","1Tumor","2Normal"))
 hist(immune_histone$EZH2_karyon)
 
-
+# Preleminary test to check the test assumptions
+shapiro.test(immune_histone$EZH2_cytoplsm) # p-value < 0.05, don't follow a normal distribution.
+shapiro.test(immune_histone$EZH2_karyon) # p-value < 0.05, don't follow a normal distribution.
+shapiro.test(immune_histone$CBX2_cytoplsm) # p-value < 0.05, don't follow a normal distribution.
+shapiro.test(immune_histone$CBX2_karyon) # p-value < 0.05, don't follow a normal distribution.
 
 #####################################
 #correlation analysis
@@ -25,23 +29,23 @@ immune_histone %>%
 immune_histone %>%
   dplyr::filter(sample_type=="2Normal") -> immune_histone.N
 broom::tidy(
-    cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_cytoplsm,method = "pearson")) %>%
+    cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_cytoplsm,method = "kendall")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
+  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
   dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
-  dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n p = ",format(p.value,scientific=TRUE,digit=2),"     \n",
+  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\n p = ",format(fdr,scientific=TRUE,digit=2),"     \n",
                             "n = ",nrow(immune_histone.T),
-                            "                    ",sep="")) ->CBX2_EZH2_cytoplsm.T
+                            "            ",sep="")) ->CBX2_EZH2_cytoplsm.T
 broom::tidy(
-  cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_cytoplsm,method = "pearson")) %>%
+  cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_cytoplsm,method = "kendall")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
+  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
   dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>%
-  dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"    \n",
+  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\n p = ",format(fdr,scientific=TRUE,digit=2),"       \n",
                             "n = ",nrow(immune_histone.N),
-                            "                     ",sep=""))->CBX2_EZH2_cytoplsm.N
+                            "               ",sep=""))->CBX2_EZH2_cytoplsm.N
 rbind(CBX2_EZH2_cytoplsm.T,CBX2_EZH2_cytoplsm.N) ->CBX2_EZH2_cytoplsm
 facet_names <- list(
   '1Tumor'="Tumor",
@@ -64,28 +68,30 @@ immune_histone %>%
   ) +
   geom_text(data=CBX2_EZH2_cytoplsm,aes(x=x,y=y,label=label),hjust=0.5) +
   labs(
-    x = "EZH2_cytoplsm",
-    y = "CBX2_cytoplsm"
+    x = "EZH2 cytoplsm",
+    y = "CBX2 cytoplsm"
   ) -> p1;p1
 ggsave(filename = "EZH2-cytoplsm_CBX2-cytoplsm_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
 ggsave(filename = "EZH2-cytoplsm_CBX2-cytoplsm_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
 
+
+  
 broom::tidy(
-  cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_karyon,method = "pearson")) %>%
+  cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_karyon,method = "kendall")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
+  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
   dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
-  dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"     \n",
+  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"       \n",
                             "n = ",nrow(immune_histone.T),
-                            "                     ",sep="")) ->CBX2_EZH2_karyon.T
+                            "               ",sep="")) ->CBX2_EZH2_karyon.T
 broom::tidy(
-  cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_karyon,method = "pearson")) %>%
+  cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_karyon,method = "kendall")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>%
-  dplyr::mutate(label=paste("Pearson Cor = ",round(estimate,2),"\n P.value = ",format(p.value,scientific=TRUE,digit=2),"   \n",
+  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>% 
+  dplyr::mutate(label=paste("kendall Cor = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"           \n",
                             "n = ",nrow(immune_histone.N),
-                            "                    ",sep="")) ->CBX2_EZH2_karyon.N
+                            "                   ",sep="")) ->CBX2_EZH2_karyon.N
 
 rbind(CBX2_EZH2_karyon.T,CBX2_EZH2_karyon.N) ->CBX2_EZH2_karyon
 
@@ -103,8 +109,8 @@ immune_histone %>%
   ) +
   geom_text(data=CBX2_EZH2_karyon,aes(x=x,y=y,label=label),hjust=0.5) +
   labs(
-    x = "EZH2_karyon",
-    y = "CBX2_cytoplsm"
+    x = "EZH2 karyon",
+    y = "CBX2 cytoplsm"
   ) -> p2;p2
 ggsave(filename = "EZH2-karyo_CBX2-cytoplsm_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
 ggsave(filename = "EZH2-karyo_CBX2-cytoplsm_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
@@ -125,6 +131,52 @@ tiff(file.path("D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","E
 grid.arrange(p1, p2, ncol=2,nrow=1,widths=c(1,1), heights=c(1))
 dev.off()
 
+# For CBX2 and EZH2 karyon
+immune_histone.T %>%
+  tidyr::drop_na() -> immune_histone.T.noNA
+broom::tidy(
+  cor.test(immune_histone.T.noNA$CBX2_karyon,immune_histone.T.noNA$EZH2_karyon,method = "kendall")) %>%
+  dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
+  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
+  dplyr::mutate(x=1.5,y=0.7,sample_type="1Tumor") %>%
+  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"        \n",
+                            "n = ",nrow(immune_histone.T.noNA),
+                            "                 ",sep="")) ->CBX2_EZH2_karyon.T
+immune_histone.N  %>%
+  dplyr::select(-stage)%>%
+  tidyr::drop_na()-> immune_histone.N.noNA
+broom::tidy(
+  cor.test(immune_histone.N.noNA$CBX2_karyon,immune_histone.N.noNA$EZH2_karyon,method = "kendall")) %>%
+  dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
+  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
+  dplyr::mutate(x=0.25,y=0.25,sample_type="2Normal") %>% 
+  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"    \n",
+                            "n = ",nrow(immune_histone.N.noNA),
+                            "             ",sep="")) ->CBX2_EZH2_karyon.N
+
+rbind(CBX2_EZH2_karyon.T,CBX2_EZH2_karyon.N) ->CBX2_EZH2_karyon
+
+immune_histone %>%
+  dplyr::select(-stage) %>%
+  tidyr::drop_na() %>%
+  ggplot(aes(x=EZH2_karyon,y=CBX2_karyon)) +
+  geom_point(aes(color = sample_type)) +
+  geom_smooth(se = FALSE, fullrange=TRUE, color = "#039BE5") +
+  facet_wrap(~sample_type,scales = "free",labeller = facet_labeller) +
+  theme_bw() +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black"),
+        legend.position = "none"
+  ) +
+  geom_text(data=CBX2_EZH2_karyon,aes(x=x,y=y,label=label),hjust=0.5) +
+  labs(
+    x = "EZH2 karyon",
+    y = "CBX2 karyon"
+  ) -> p2;p2
+ggsave(filename = "EZH2-karyo_CBX2-karyo_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
+ggsave(filename = "EZH2-karyo_CBX2-karyo_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
 
 
 #########################heatmap
