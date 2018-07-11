@@ -108,7 +108,7 @@ data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f9
 cbx2 <- readr::read_tsv(file.path(data_path,"CBX2_promoter.txt"))
 ezh2 <- readr::read_tsv(file.path(data_path,"EZH2_promoter.txt"))
 gene_list <- c("EZH2","CBX2")
-
+tags <- rbind(cbx2,ezh2)
 # for other gene list ------
 gene_list=c("PPARG")
 pparg <- luad_meth %>%
@@ -129,6 +129,7 @@ OLR1 <- luad_meth %>%
   dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[4]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
   dplyr::select(tag)
 rbind(pparg,FABP5,OLR1) -> tags
+
 # get promoter tags from mEXPRESS ------
 luad_meth %>%
   dplyr::filter(tag %in% tags$tag) %>%
@@ -204,8 +205,8 @@ gene_list.methy %>%
     axis.ticks.x = element_blank(),
     legend.position = c(0.9,0.8)
   ) -> EZH2_CBX2.box;EZH2_CBX2.box
-ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.pdf"),EZH2_CBX2.box,device = "pdf",width = 10,height = 6)
-ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.tiff"),EZH2_CBX2.box,device = "tiff",width = 10,height = 6)
+ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.pdf"),EZH2_CBX2.box,device = "pdf",width = 8,height = 3)
+ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.tiff"),EZH2_CBX2.box,device = "tiff",width = 8,height = 3)
 ggsave(file.path(out_path_fig,"Figure4/Figure5","PPAR_Methy_boxplot.pdf"),EZH2_CBX2.box,device = "pdf",width = 10,height = 6)
 ggsave(file.path(out_path_fig,"Figure4/Figure5","PPAR_Methy_boxplot.tiff"),EZH2_CBX2.box,device = "tiff",width = 10,height = 6)
 
