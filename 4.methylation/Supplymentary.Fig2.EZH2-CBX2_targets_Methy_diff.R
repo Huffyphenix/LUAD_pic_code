@@ -2,7 +2,8 @@
 # package prepair ---------------------------------------------------------
 
 library(magrittr,ggplot2)
-
+library(clusterProfiler)
+library(org.Hs.eg.db)
 # data path ---------------------------------------------------------------
 
 methy_data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
@@ -16,7 +17,7 @@ out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info")) %>%
-  dplyr::filter(prob>=0.99 & abs(log2FC)>=0.585)
+  dplyr::filter(prob>=0.99 & log2FC<=-0.585)
 genelist <- readr::read_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
   dplyr::filter(Description %in% "PPAR signaling pathway") 
 
@@ -43,13 +44,15 @@ methy %>%
   dplyr::filter(cancer_types=='LUAD') %>%
   tidyr::unnest() %>%
   # dplyr::inner_join(tcga_geneid,by="symbol") %>%
-  dplyr::filter(symbol %in% genelist$SYMBOL) -> LUAD_gene_methy
+  # dplyr::filter(symbol %in% genelist$SYMBOL) %>%
+  dplyr::filter(symbol %in% genelist$gene_id.x) -> LUAD_gene_methy
 
 methy_cor %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest() %>%
   dplyr::inner_join(tcga_geneid,by="symbol") %>%
-  dplyr::filter(entrez_id %in% genelist$ENTREZID) -> LUAD_gene_methy_cor
+  # dplyr::filter(entrez_id %in% genelist$ENTREZID) %>%
+  dplyr::filter(entrez_id %in% entrez_id) -> LUAD_gene_methy_cor
 
 LUAD_gene_methy %>%
   dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
@@ -57,31 +60,32 @@ LUAD_gene_methy %>%
 
 LUAD_gene_methy %>%
   dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  dplyr::filter(spm<=-0.4 & diff>0) %>%
+  dplyr::filter(spm<=-0.3 & diff>0) %>%
   readr::write_tsv(file.path(out_path_fig,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
 
 LUAD_gene_methy %>%
   dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  dplyr::filter(spm<=-0.4 & diff>0) -> LUAD_gene_methy.sig_gene
+  dplyr::filter(spm<=-0.3 & diff>0) -> LUAD_gene_methy.sig_gene
 
 LUAD_gene_methy_cor %>%
-  # dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
   dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
 # draw pic ----------------------------------------------------------------
 LUAD_gene_methy_cor %>%
-  # dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
   dplyr::rename("value"="spm") %>%
-  dplyr::mutate(group="Spearman Cor") -> LUAD_gene_methy_cor.pic
+  dplyr::mutate(group="Spearman r") -> LUAD_gene_methy_cor.pic
 LUAD_gene_methy %>%
   dplyr::rename("value"="diff","logfdr" = "fdr") %>%
   dplyr::mutate(group="Methylation diff (T - N)") %>%
-  # dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
   dplyr::select(-direction) -> LUAD_gene_methy.pic
 
 library(ggplot2)
 library(grid)
 CPCOLS <- c("red", "white", "blue")
 LUAD_gene_methy_cor.pic %>%
+  dplyr::select(-entrez_id) %>%
   rbind(LUAD_gene_methy.pic) %>%
   ggplot(aes(x=group,y=symbol)) +
   geom_point(aes(size=logfdr,color=value)) +
@@ -96,7 +100,7 @@ LUAD_gene_methy_cor.pic %>%
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
   scale_size_continuous(
-    name = "-log10(Pvalue)"
+    name = "-log10(p value)"
   ) +
   theme(#legend.position = "bottom",
         panel.background = element_rect(colour = "black", fill = "white"),
