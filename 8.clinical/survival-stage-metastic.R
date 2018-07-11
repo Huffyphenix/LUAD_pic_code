@@ -23,6 +23,7 @@ clinical_path_1 <- "F:/我的坚果云/ENCODE-TCGA-LUAD/survival"
 survival_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5"
 data_path<- "H:/data"
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
 
 # HUST -----
 target_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
@@ -594,6 +595,7 @@ mRNA_survival_p_PFI %>%
   dplyr::mutate(group=ifelse(EZH2_CBX2_kmp<KMP & EZH2_CBX2_kmp<0.0054,"better in merge","worse in merge")) %>%
   readr::write_tsv(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5","EZH2_CBX2_targets_merge_survival.tsv"))
   
+
 ### OS survival -----
   .d_diff <- survival::survdiff(survival::Surv(OS.x, status.x) ~ group, data = .data)
   # print(.d_diff)
