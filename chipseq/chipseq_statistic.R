@@ -2,7 +2,7 @@
 # For chipseq data visulization
 ######################################################
 .libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
-.libPaths("D:/jianguoyun/library")
+.libPaths("J:/library")
 .libPaths("E:/library")
 # data path ---------------------------------------------------------------
 
