@@ -5,9 +5,11 @@ data_path<- "H:/data"
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 library(magrittr)
+library(clusterProfiler)
+library(org.Hs.eg.db)
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(genelist_path,"all_EHZ2_CBX2_common_targets.DE_info")) %>%
-  dplyr::filter(prob>=0.99 & abs(log2FC)>=0.585)
+  dplyr::filter(Class=="Down")
 
 Animal_TF <-  readr::read_tsv(file.path(data_path,"AnimalTFDB","Homo_sapiens_transcription_factors_gene_list.txt"))
 enzyme_lsit <- readr::read_tsv(file.path(chip_path,"enzyme_list.symbol.xls")) %>%
@@ -19,13 +21,11 @@ Animal_TF$Entrez_ID %>%
   bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = org.Hs.eg.db) -> Animal_TF_entrez
 
 genelist %>%
-  dplyr::filter(entrez_id %in% Animal_TF_entrez$ENTREZID) %>%
-  dplyr::filter(log2FC<0) -> DOWN_commone_targets.TF 
+  dplyr::filter(entrez_id %in% Animal_TF_entrez$ENTREZID) -> DOWN_commone_targets.TF 
 DOWN_commone_targets.TF %>%
   readr::write_tsv(file.path(genelist_path,"FFL/input","DOWN_commone_targets.TF"))
 genelist %>%
-  dplyr::filter(! entrez_id %in% Animal_TF_entrez$ENTREZID) %>%
-  dplyr::filter(log2FC<0) -> DOWN_commone_targets.pro
+  dplyr::filter(! entrez_id %in% Animal_TF_entrez$ENTREZID) -> DOWN_commone_targets.pro
 DOWN_commone_targets.pro %>%
   readr::write_tsv(file.path(genelist_path,"FFL/input","DOWN_commone_targets.pro"))
 
@@ -112,8 +112,205 @@ data.frame(gene=miRNA2TF.filter$X2,type=1) %>%
   dplyr::mutate(gene=as.character(gene)) %>%
   unique()  -> attribute
 
+# spearman correlation analysis filter ------------------------------------
+
+# data path config
+miRNA_exp_path <- "H:/data/TCGA/TCGA_data"
+
+# load expression 
+miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
+  dplyr::filter(cancer_types=="LUAD") %>%
+  tidyr::unnest() 
+gene_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_expr.rds.gz")) %>%
+  dplyr::filter(cancer_types=="LUAD") %>%
+  tidyr::unnest() 
+
+# data manage
+net_TF <- attribute %>% dplyr::filter(type==1)
+net_miR <- attribute %>% dplyr::filter(type==2)
+net_gene <- attribute %>% dplyr::filter(type==3)
+
+miRNA_exp %>%
+  dplyr::filter(name %in% c(net_miR$gene)) %>%
+  dplyr::select(-cancer_types,-gene) %>%
+  tidyr::gather(-name,key="sample",value="mirna_exp") %>%
+  dplyr::mutate(sample=substr(sample,9,16)) %>%
+  dplyr::filter(substr(sample,6,6)=="0") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-name) -> net_miRNA_exp.gather
+
+gene_exp %>%
+  dplyr::filter(symbol %in% c(net_TF$gene)) %>%
+  dplyr::select(-cancer_types,-entrez_id) %>%
+  tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::mutate(sample=substr(sample,9,16)) %>%
+  dplyr::filter(substr(sample,6,6)=="0") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-symbol) -> net_TF_exp.gather
+
+gene_exp %>%
+  dplyr::filter(symbol %in% c(net_gene$gene,net_TF$gene)) %>%
+  dplyr::select(-cancer_types,-entrez_id) %>%
+  tidyr::gather(-symbol,key="sample",value="gene_exp") %>%
+  dplyr::mutate(sample=substr(sample,9,16)) %>%
+  dplyr::filter(substr(sample,6,6)=="0") %>%
+  dplyr::as_tibble() %>%
+  tidyr::nest(-symbol) -> net_gene_exp.gather
+
+# function for mirna2gene
+fn_get_spm_a <- function(m_data,g_exp){
+  # print(m_data)
+  g_exp %>%
+    dplyr::group_by(symbol) %>%
+    # dplyr::filter(gene_id %in% c("RBMS3")) %>%
+    dplyr::mutate(spm=purrr::map(data,m_data=m_data,fn_get_spm_b)) %>%
+    dplyr::select(-data) %>%
+    tidyr::unnest() %>%
+    dplyr::ungroup() %>%
+    dplyr::rename(Cor=estimate)-> .out
+  return(.out)
+}
+
+fn_get_spm_b <- function(g_data,m_data){
+  # print(g_data)
+  # print(m_data)
+  g_data %>%
+    dplyr::inner_join(m_data,by="sample") ->tmp
+  tmp %>%
+    dplyr::mutate(gene_exp=gene_exp+runif(nrow(tmp),min=0,max=0.001)) %>%
+    dplyr::mutate(mirna_exp=mirna_exp+runif(nrow(tmp),min=0,max=0.001)) ->tmp
+  broom::tidy(cor.test(tmp$gene_exp,tmp$mirna_exp,method = c("spearman")),
+              warning =function(e) 2 ,
+              error=function(e) 1) -> tmp.spm
+  if(length(tmp.spm)!=1){
+    return(tmp.spm)
+  }
+}
+
+# correlation for gene2gene
+fn_get_spm_a_g <- function(m_data,g_exp){
+  # print(m_data)
+  g_exp %>%
+    dplyr::group_by(symbol) %>%
+    # dplyr::filter(gene_id %in% c("RBMS3")) %>%
+    dplyr::mutate(spm=purrr::map(data,m_data=m_data,fn_get_spm_b_g)) %>%
+    dplyr::select(-data) %>%
+    tidyr::unnest() %>%
+    dplyr::ungroup() %>%
+    dplyr::rename(Cor=estimate)-> .out
+  return(.out)
+}
+
+fn_get_spm_b_g <- function(g_data,m_data){
+  # print(g_data)
+  # print(m_data)
+  g_data %>%
+    dplyr::inner_join(m_data,by="sample") ->tmp
+  tmp %>%
+    dplyr::mutate(gene_exp.x=gene_exp.x+runif(nrow(tmp),min=0,max=0.001)) %>%
+    dplyr::mutate(gene_exp.y=gene_exp.y+runif(nrow(tmp),min=0,max=0.001)) ->tmp
+  broom::tidy(cor.test(tmp$gene_exp.x,tmp$gene_exp.y,method = c("spearman")),
+              warning =function(e) 2 ,
+              error=function(e) 1) -> tmp.spm
+  if(length(tmp.spm)!=1){
+    return(tmp.spm)
+  }
+}
+
+# calculation 
+net_miRNA_exp.gather %>%
+  dplyr::group_by(name) %>%
+  dplyr::mutate(spm=purrr::map(data,g_exp=net_gene_exp.gather,fn_get_spm_a)) %>%
+  dplyr::select(-data) %>%
+  dplyr::ungroup() %>%
+  tidyr::unnest() %>%
+  dplyr::rename("regulator"="name","gene"="symbol") -> net_miR_gene_spm_cor
+
+net_TF_exp.gather %>%
+  dplyr::group_by(symbol) %>%
+  dplyr::mutate(spm=purrr::map(data,g_exp=net_gene_exp.gather,fn_get_spm_a_g)) %>%
+  dplyr::select(-data) %>%
+  dplyr::ungroup() %>%
+  tidyr::unnest() %>%
+  dplyr::rename("regulator"="symbol","gene"="symbol1") -> net_TF_gene_spm_cor
+
+net_net <- network
+net_net %>%
+  dplyr::rename("regulator"="X1","gene"="X2") -> net_net
+net_miR_gene_spm_cor %>%
+  rbind(net_TF_gene_spm_cor) %>%
+  dplyr::select(regulator,gene,Cor,p.value) %>%
+  dplyr::right_join(net_net,by="regulator") %>%
+  tidyr::drop_na() %>%
+  dplyr::filter(gene.x==gene.y) %>%
+  dplyr::select(regulator,gene.x,Cor,p.value,X3,X4) -> net_all_cor
+
+# correlation filter  
+net_all_cor %>%
+  dplyr::filter(p.value<=0.05 & abs(Cor)>0.3) %>%
+  dplyr::mutate(`-log10(P)`=-log10(p.value)) %>%
+  dplyr::mutate(`-log10(P)`=ifelse(`-log10(P)`=="Inf" |`-log10(P)`>5,5,`-log10(P)`)) %>%
+  dplyr::rename("gene"="gene.x")-> ready_draw
+
+# draw picture
+ready_draw %>%
+  dplyr::group_by(regulator) %>%
+  dplyr::mutate(cor_sum=sum(Cor)) %>%
+  dplyr::arrange(cor_sum) %>%
+  dplyr::select(regulator,cor_sum) %>%
+  dplyr::ungroup() %>%
+  unique() -> y_rank
+ready_draw %>%
+  dplyr::group_by(gene) %>%
+  dplyr::mutate(cor_sum=sum(Cor)) %>%
+  dplyr::arrange(cor_sum) %>%
+  dplyr::select(gene,cor_sum) %>%
+  dplyr::ungroup() %>%
+  unique() -> x_rank
+library(ggplot2)
+CPCOLS <- c("red", "white", "blue")
+ready_draw %>%
+  ggplot(aes(x=gene,y=regulator,color=Cor)) +
+  geom_tile(fill=c("#EDEDED"),colour = "grey") +
+  geom_point(size=3) +
+  guides(color=guide_colorbar(title.position="left")) +
+  scale_x_discrete(limits = x_rank$gene) +
+  scale_y_discrete(limits = y_rank$regulator) +
+  ylab("Regulators") +
+  xlab("CBX2/EZH2 targets (downreulate)") +
+  scale_color_gradient2(
+    name = "Spearman r", # "Methylation diff (T - N)",
+    low = CPCOLS[3],
+    mid = CPCOLS[2],
+    high = CPCOLS[1],
+    breaks=c(-0.3,0,0.3,0.6)
+  ) +
+  theme(
+    # legend.position = "bottom",
+    panel.background = element_rect(colour = "black", fill = "white"),
+    # panel.grid = element_line(colour = "grey", linetype = "dashed"),
+    # panel.grid.major = element_line(
+    #   colour = "grey",
+    #   linetype = "dashed",
+    #   size = 0.2
+    # ),
+    
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(vjust = 1, hjust = 1, angle = 40, size = 10),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 12,angle = 90),
+    legend.position = c(0.8,0.5),
+    legend.background = element_blank(),
+    legend.key = element_rect(fill = "white", colour = "black"),
+    plot.title = element_text(size = 20)
+  ) -> p;p
+out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+ggsave(file.path(out_path_fig,"Figure4/Figure5","Figue S7C.network.correlation.pdf"),device = "pdf",width = 10,height = 4)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","Figue S7C.network.correlation.tiff"),device = "tiff",width = 10,height = 4)
 
 # add fold change info ----------------------------------------------------
+ready_draw %>%
+  dplyr::select(regulator,gene,X3,X4) -> network.cor.filter
 data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 TF_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_TF_cpm_1_noFDR")) 
 progene_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_ProGene_cpm_1_noFDR"))
@@ -123,14 +320,12 @@ rbind(TF_nofil,progene_nofil) %>%
   dplyr::rename("SYMBOL"="gene_id") -> all_gene_nofil
 
 attribute %>%
+  dplyr::filter(gene %in% c(network.cor.filter$regulator,network.cor.filter$gene)) %>%
   dplyr::rename("SYMBOL"="gene") %>%
   dplyr::left_join(all_gene_nofil,by="SYMBOL") %>%
   dplyr::select(SYMBOL,type,log2FC) -> attribute.fc
 
-
 # add TSG info ------------------------------------------------------------
-
-
 
 attribute.fc %>%
   dplyr::rename("symbol"="SYMBOL") %>%
@@ -142,7 +337,7 @@ attribute.fc %>%
 
 attribute.fc.tsg %>%
   readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","attribute_fc_tsg.txt"))
-network %>%
+network.cor.filter %>%
   readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","network.txt"))
 
 
