@@ -1,7 +1,7 @@
 # configuration -----------------------------------------------------------
 # 
-# data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
-# de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
+data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
+de_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data"
 data_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 gene_info <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info"
@@ -17,8 +17,8 @@ TF.exp <- read.table(file.path(data_path,"NOISeq_DE_TF_cpm_30_FC2_all.exp.xls"),
 progene.exp <- read.table(file.path(data_path,"NOISeq_DE_ProGene_FC2_cpm_30.exp.xls"),sep = '\t',header = T)
 rbind(TF.exp,progene.exp) -> all_gene_de_exp
 library(magrittr)
-TF_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) 
-progene_DE_info <- read.table(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
+TF_DE_info <- read.table(file.path(data_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) 
+progene_DE_info <- read.table(file.path(data_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) 
 rbind(TF_DE_info,progene_DE_info) -> all_DE_info
 
 # histone <- readr::read_tsv("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/hisone/histone-methylation/all_histone_methylation.idmap",col_names = F)
@@ -106,14 +106,15 @@ histone_exp.scaled <- apply(histone_exp,1,scale) %>% t()
 colnames(histone_exp.scaled) <- colnames(histone_exp)
 
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"
+out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"
 
 he = Heatmap(histone_exp.scaled,
-             show_row_names = TRUE, 
+             show_row_names = FALSE, 
              show_column_names = FALSE,
              cluster_columns = FALSE,
              cluster_rows = FALSE,
              top_annotation = sample_anno,
              heatmap_legend_param = list(title = c("Scaled Exp")))
-pdf(file.path(out_path,"DE_histone_heatmap.pdf"),width = 6,height = 3)
-gene_anno+he
+pdf(file.path(out_path,"DE_histone_heatmap.pdf"),width = 6,height = 2)
+he + gene_anno
 dev.off()
