@@ -118,3 +118,14 @@ he = Heatmap(histone_exp.scaled,
 pdf(file.path(out_path,"DE_histone_heatmap.pdf"),width = 6,height = 2)
 he + gene_anno
 dev.off()
+
+he = Heatmap(histone_exp.scaled,
+             show_row_names = TRUE, 
+             show_column_names = FALSE,
+             cluster_columns = FALSE,
+             cluster_rows = FALSE,
+             top_annotation = sample_anno,
+             heatmap_legend_param = list(title = c("Scaled Exp")))
+pdf(file.path(out_path,"DE_histone_heatmap_1.pdf"),width = 6,height = 2)
+he + gene_anno
+dev.off()
