@@ -70,6 +70,7 @@ genelist_exp %>%
   dplyr::mutate(ID=substr(sample,1,4)) -> df
 b <- runif(nrow(df), -0.2, 0.2)
 
+comp_list <- list(c("2","1"))
 df %>%
   ggpubr::ggboxplot(x = "Group", y = "log2Exp",
                     color = "Group", palette = "npg", #add = "jitter",
@@ -80,14 +81,15 @@ df %>%
   theme(legend.position = "none",
         axis.title.x = element_blank()) +
   facet_wrap( ~ title) +
-  ggpubr::stat_compare_means(label.y = 14,paired = TRUE) +
+  # ggpubr::stat_compare_means(label.y = 14,paired = TRUE) +
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(12),label = "p.signif") +
   scale_x_discrete(breaks = c(1,2),
                      labels = c("Tumor","Normal"),
                      expand = c(0.2,0.2)) -> p;p
 
 
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 6,height = 3)
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.tiff",device = "tiff",width = 6,height = 3)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 5,height = 3)
+ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.tiff",device = "tiff",width = 5,height = 3)
 
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.cell_cycle_genes_boxplot.pdf",device = "pdf",width = 8,height = 5)
@@ -120,7 +122,7 @@ genelist_exp%>%
     axis.title.x = element_blank(),
     legend.title = element_blank(),
     text = element_text(size = 20)
-  ) -> p
+  ) -> p;p
 
 ann_text <- data.frame(Group = "Tumor",Expression = 2000,lab = genelist_stage_pvalue$label,
                        gene_id = factor(genelist_stage_pvalue$gene_id,levels = genelist_stage_pvalue$gene_id))
