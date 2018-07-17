@@ -111,6 +111,8 @@ gene_list <- c("EZH2","CBX2")
 tags <- rbind(cbx2,ezh2)
 # for other gene list ------
 gene_list=c("PPARG")
+
+
 pparg <- luad_meth %>%
   dplyr::filter(Gene_Symbol %in% "PPARG") %>%
   dplyr::arrange(Genomic_Coordinate) %>% 
@@ -130,6 +132,13 @@ OLR1 <- luad_meth %>%
   dplyr::select(tag)
 rbind(pparg,FABP5,OLR1) -> tags
 
+
+gene_list=c("CLDN11","RBMS3")
+tags <- luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% gene_list) %>%
+  dplyr::arrange(Genomic_Coordinate) %>% 
+  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[10]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
+  dplyr::select(tag)
 # get promoter tags from mEXPRESS ------
 luad_meth %>%
   dplyr::filter(tag %in% tags$tag) %>%
