@@ -34,27 +34,87 @@ EZH2_CBX2_exp.gather %>%
   dplyr::filter(sample_type=="TCGA Tumor") -> EZH2_CBX2_exp.gather.T
 EZH2_CBX2_exp.gather %>%
   dplyr::filter(sample_type=="TCGA Normal") -> EZH2_CBX2_exp.gather.N
+
+rbind(EZH2_CBX2_exp.gather.T,EZH2_CBX2_exp.gather.N) %>%
+  rbind(EZH2_CBX2_exp.gather.gtex) -> EZH2_CBX2_exp.gather.allsamples
 # calculation -------------------------------------------------------------
+human_read <- function(.x){
+  if (.x > 0.1) {
+    .x %>% signif(digits = 2) %>% toString()
+  } else if (.x < 0.1 && .x > 0.001 ) {
+    .x %>% signif(digits = 1) %>% toString()
+  } else {
+    .x %>% format(digits = 2, scientific = TRUE)
+  }
+}
 
 broom::tidy(
   cor.test(EZH2_CBX2_exp.gather.T$CBX2,EZH2_CBX2_exp.gather.T$EZH2,method = "spearman")
   ) %>% 
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  dplyr::mutate(x=8,y=11,sample_type="TCGA Tumor") %>%
-  dplyr::mutate(label=paste("Spearman Cor = ",round(estimate,2)," P.value = ",round(p.value,2),"\n","n = ",nrow(EZH2_CBX2_exp.gather.T),
-                            "                                         ",sep="")) -> text.T
+  dplyr::mutate(x=8,y=11,sample_type="TCGA Tumor",n=nrow(EZH2_CBX2_exp.gather.T), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(p.value = purrr::map_chr(p.value, human_read)) %>% 
+  dplyr::mutate(label=purrr::map(
+    .x = p.value,
+    .y = estimate,
+    .z = n,
+    .f = function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  ) )-> text.T
+  
 broom::tidy(
   cor.test(EZH2_CBX2_exp.gather.gtex$CBX2,EZH2_CBX2_exp.gather.gtex$EZH2,method = "spearman")
 ) %>% 
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  dplyr::mutate(x=2.7,y=3,sample_type="GTEx Normal") %>%
-  dplyr::mutate(label=paste("Spearman Cor = ",round(estimate,4)," P.value = ",round(p.value,2),"\n","n = ",nrow(EZH2_CBX2_exp.gather.gtex),
-                            "                                                  ",sep="")) -> text.N
- 
+  dplyr::mutate(x=2.7,y=3,sample_type="GTEx Normal", n=nrow(EZH2_CBX2_exp.gather.gtex), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(p.value = purrr::map_chr(p.value, human_read)) %>% 
+  dplyr::mutate(label=purrr::map(
+    .x = p.value,
+    .y = estimate,
+    .z = n,
+    .f = function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  ) ) -> text.GN
+broom::tidy(
+  cor.test(EZH2_CBX2_exp.gather.N$CBX2,EZH2_CBX2_exp.gather.N$EZH2,method = "spearman")
+) %>% 
+  dplyr::as_tibble() %>%
+  dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
+  dplyr::mutate(x=2.7,y=3,sample_type="TCGA Normal", n=nrow(EZH2_CBX2_exp.gather.N), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(p.value = purrr::map_chr(p.value, human_read)) %>% 
+  dplyr::mutate(label=purrr::map(
+    .x = p.value,
+    .y = estimate,
+    .z = n,
+    .f = function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  ) ) -> text.TN
 text.T %>%
-  rbind(text.N) ->text
+  rbind(text.TN) %>%
+  rbind(text.GN) %>%
+  dplyr::as.tbl() %>%
+  dplyr::arrange(sample_type)->text
+
 broom::tidy(
   lm(log2(EZH2_CBX2_exp.gather.T$EZH2) ~ log2(EZH2_CBX2_exp.gather.T$CBX2)) -> lm.x
 )
@@ -63,23 +123,24 @@ abline(lm.x)
 
 # EZH2 have no correlation with CBX2 in normal tissues (GTEx data)
 library(ggplot2)
-EZH2_CBX2_exp.gather.gtex %>%
+EZH2_CBX2_exp.gather.allsamples %>%
   ggplot(aes(x=log2(EZH2),y=log2(CBX2))) +
-  geom_point(color = "#00BCD4") +
+  geom_point(aes(color = sample_type)) +
   geom_smooth(span = 0.8, se = FALSE, fullrange=TRUE, color = "#039BE5") +
-  facet_wrap(~sample_type,scales = "free") +
   theme_bw() +
   theme(panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.line = element_line(color = "black")
   ) +
-  geom_text(data=text.N,aes(x=x,y=y,label=label),hjust=0.5) +
   labs(
     x = "EZH2 mRNA (log2)",
     y = "CBX2 mRNA (log2)"
-  ) -> p;p
-ggsave(filename = "EZH2_CBX2_GTEx_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
-ggsave(filename = "EZH2_CBX2_GTEx_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
-ggsave(filename = "EZH2_CBX2_mRNA_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
-ggsave(filename = "EZH2_CBX2_mRNA_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
+  ) +
+  scale_color_manual(
+    values = c("#00C5CD", "#00868B", "#EE6363"),
+    labels = text$label
+  ) +
+  facet_wrap(~sample_type,scales = "free") -> p;p
+ggsave(filename = "EZH2_CBX2_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 8,height = 3)
+ggsave(filename = "EZH2_CBX2_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 8,height = 3)
