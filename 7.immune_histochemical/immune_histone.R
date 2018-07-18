@@ -28,25 +28,57 @@ immune_histone %>%
   dplyr::filter(sample_type=="1Tumor") -> immune_histone.T
 immune_histone %>%
   dplyr::filter(sample_type=="2Normal") -> immune_histone.N
+
+human_read <- function(.x){
+  if (.x > 0.1) {
+    .x %>% signif(digits = 2) %>% toString()
+  } else if (.x < 0.1 && .x > 0.001 ) {
+    .x %>% signif(digits = 1) %>% toString()
+  } else {
+    .x %>% format(digits = 2, scientific = TRUE)
+  }
+}
+
 broom::tidy(
     cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_cytoplsm,method = "kendall")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
-  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
-  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\n p = ",format(fdr,scientific=TRUE,digit=2),"     \n",
-                            "n = ",nrow(immune_histone.T),
-                            "            ",sep="")) ->CBX2_EZH2_cytoplsm.T
+  dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
+  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor",n=nrow(immune_histone.T), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(label=purrr::map2(
+    .x=p.value,
+    .y=estimate,
+    .z=n,
+    .f=function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  )) ->CBX2_EZH2_cytoplsm.T
 broom::tidy(
   cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_cytoplsm,method = "kendall")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high) %>%
-  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>%
-  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\n p = ",format(fdr,scientific=TRUE,digit=2),"       \n",
-                            "n = ",nrow(immune_histone.N),
-                            "               ",sep=""))->CBX2_EZH2_cytoplsm.N
-rbind(CBX2_EZH2_cytoplsm.T,CBX2_EZH2_cytoplsm.N) ->CBX2_EZH2_cytoplsm
+  dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal",n=nrow(immune_histone.N), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(label=purrr::map2(
+    .x=p.value,
+    .y=estimate,
+    .z=n,
+    .f=function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  )) ->CBX2_EZH2_cytoplsm.N
+rbind(CBX2_EZH2_cytoplsm.T,CBX2_EZH2_cytoplsm.N) %>%
+  dplyr::as.tbl() ->CBX2_EZH2_cytoplsm
 facet_names <- list(
   '1Tumor'="Tumor",
   '2Normal'="Normal"
@@ -58,42 +90,64 @@ immune_histone %>%
   ggplot(aes(x=EZH2_cytoplsm,y=CBX2_cytoplsm)) +
   geom_point(aes(color = sample_type)) +
   geom_smooth(se = FALSE, fullrange=TRUE, color = "#039BE5") +
-  facet_wrap(~sample_type,scales = "free",labeller=facet_labeller) +
   theme_bw() +
   theme(panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.line = element_line(color = "black"),
-        legend.position = "none"
+        axis.line = element_line(color = "black")
   ) +
-  geom_text(data=CBX2_EZH2_cytoplsm,aes(x=x,y=y,label=label),hjust=0.5) +
+  scale_color_manual(
+    values = c("#EE6363","#00C5CD"),
+    labels = CBX2_EZH2_cytoplsm$label
+  ) +
   labs(
     x = "EZH2 cytoplsm",
     y = "CBX2 cytoplsm"
-  ) -> p1;p1
-ggsave(filename = "EZH2-cytoplsm_CBX2-cytoplsm_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
-ggsave(filename = "EZH2-cytoplsm_CBX2-cytoplsm_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
+  ) + facet_wrap(~sample_type,scales = "free",labeller=facet_labeller) -> p1;p1
+ggsave(filename = "EZH2-cytoplsm_CBX2-cytoplsm_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 6,height = 3)
+ggsave(filename = "EZH2-cytoplsm_CBX2-cytoplsm_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 6,height = 3)
 
 
   
 broom::tidy(
   cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_karyon,method = "kendall")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor") %>%
-  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"       \n",
-                            "n = ",nrow(immune_histone.T),
-                            "               ",sep="")) ->CBX2_EZH2_karyon.T
+  dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
+  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor",n=nrow(immune_histone.T), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(label=purrr::map2(
+    .x=p.value,
+    .y=estimate,
+    .z=n,
+    .f=function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  )) ->CBX2_EZH2_karyon.T
 broom::tidy(
   cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_karyon,method = "kendall")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal") %>% 
-  dplyr::mutate(label=paste("kendall Cor = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"           \n",
-                            "n = ",nrow(immune_histone.N),
-                            "                   ",sep="")) ->CBX2_EZH2_karyon.N
+  dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal",n=nrow(immune_histone.N), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(label=purrr::map2(
+    .x=p.value,
+    .y=estimate,
+    .z=n,
+    .f=function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  )) ->CBX2_EZH2_karyon.N
 
-rbind(CBX2_EZH2_karyon.T,CBX2_EZH2_karyon.N) ->CBX2_EZH2_karyon
+rbind(CBX2_EZH2_karyon.T,CBX2_EZH2_karyon.N) %>%
+  dplyr::arrange(sample_type) ->CBX2_EZH2_karyon
 
 immune_histone %>%
   ggplot(aes(x=EZH2_karyon,y=CBX2_cytoplsm)) +
@@ -104,16 +158,18 @@ immune_histone %>%
   theme(panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.line = element_line(color = "black"),
-        legend.position = "none"
+        axis.line = element_line(color = "black")
   ) +
-  geom_text(data=CBX2_EZH2_karyon,aes(x=x,y=y,label=label),hjust=0.5) +
   labs(
     x = "EZH2 karyon",
     y = "CBX2 cytoplsm"
+  ) +
+  scale_color_manual(
+    values = c("#EE6363","#00C5CD"),
+    labels = CBX2_EZH2_karyon$label
   ) -> p2;p2
-ggsave(filename = "EZH2-karyo_CBX2-cytoplsm_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
-ggsave(filename = "EZH2-karyo_CBX2-cytoplsm_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
+ggsave(filename = "EZH2-karyo_CBX2-cytoplsm_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 6,height = 3)
+ggsave(filename = "EZH2-karyo_CBX2-cytoplsm_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 6,height = 3)
 
 
 library(grid)
@@ -136,23 +192,43 @@ immune_histone.T %>%
   tidyr::drop_na() -> immune_histone.T.noNA
 broom::tidy(
   cor.test(immune_histone.T.noNA$CBX2_karyon,immune_histone.T.noNA$EZH2_karyon,method = "kendall")) %>%
-  dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=1.5,y=0.7,sample_type="1Tumor") %>%
-  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"        \n",
-                            "n = ",nrow(immune_histone.T.noNA),
-                            "                 ",sep="")) ->CBX2_EZH2_karyon.T
+  dplyr::mutate(fdr=p.adjust(p.value,method = "fdr"))%>%
+  dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
+  dplyr::mutate(x=1,y=1.8,sample_type="1Tumor",n=nrow(immune_histone.T.noNA), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(label=purrr::map2(
+    .x=p.value,
+    .y=estimate,
+    .z=n,
+    .f=function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  )) ->CBX2_EZH2_karyon.T
 immune_histone.N  %>%
   dplyr::select(-stage)%>%
   tidyr::drop_na()-> immune_histone.N.noNA
 broom::tidy(
   cor.test(immune_histone.N.noNA$CBX2_karyon,immune_histone.N.noNA$EZH2_karyon,method = "kendall")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
-  # dplyr::select(estimate,p.value,fdr,conf.low,conf.high)  %>%
-  dplyr::mutate(x=0.25,y=0.25,sample_type="2Normal") %>% 
-  dplyr::mutate(label=paste("Kendall r = ",round(estimate,2),"\np = ",format(fdr,scientific=TRUE,digit=2),"    \n",
-                            "n = ",nrow(immune_histone.N.noNA),
-                            "             ",sep="")) ->CBX2_EZH2_karyon.N
+  dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal",n=nrow(immune_histone.N), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(label=purrr::map2(
+    .x=p.value,
+    .y=estimate,
+    .z=n,
+    .f=function(.x,.y,.z){
+      if(grepl(pattern = "e",x=.x)){
+        sub("-0", "-", strsplit(split = "e", x = .x, fixed = TRUE)[[1]]) -> .xx
+        latex2exp::TeX(glue::glue("r = <<.y>>, p = $<<.xx[1]>> \\times 10^{<<.xx[2]>>}$, n = <<.z>>", .open = "<<", .close = ">>"))
+      } else {
+        latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
+      }
+    }
+  )) ->CBX2_EZH2_karyon.N
 
 rbind(CBX2_EZH2_karyon.T,CBX2_EZH2_karyon.N) ->CBX2_EZH2_karyon
 
@@ -167,16 +243,18 @@ immune_histone %>%
   theme(panel.border = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.line = element_line(color = "black"),
-        legend.position = "none"
+        axis.line = element_line(color = "black")
   ) +
-  geom_text(data=CBX2_EZH2_karyon,aes(x=x,y=y,label=label),hjust=0.5) +
   labs(
     x = "EZH2 karyon",
     y = "CBX2 karyon"
+  ) +
+  scale_color_manual(
+    values = c("#EE6363","#00C5CD"),
+    labels = CBX2_EZH2_karyon$label
   ) -> p2;p2
-ggsave(filename = "EZH2-karyo_CBX2-karyo_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 4,height = 3)
-ggsave(filename = "EZH2-karyo_CBX2-karyo_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 4,height = 3)
+ggsave(filename = "EZH2-karyo_CBX2-karyo_immunehistochemistry_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 6,height = 3)
+ggsave(filename = "EZH2-karyo_CBX2-karyo_immunehistochemistry_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 6,height = 3)
 
 
 #########################heatmap
