@@ -134,11 +134,18 @@ rbind(pparg,FABP5,OLR1) -> tags
 
 
 gene_list=c("CLDN11","RBMS3")
-tags <- luad_meth %>%
-  dplyr::filter(Gene_Symbol %in% gene_list) %>%
+cldn11 <- luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% "CLDN11") %>%
   dplyr::arrange(Genomic_Coordinate) %>% 
-  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[10]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
+  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[11]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
   dplyr::select(tag)
+rbms3 <- luad_meth %>%
+  dplyr::filter(Gene_Symbol %in% "RBMS3") %>%
+  dplyr::arrange(Genomic_Coordinate) %>% 
+  dplyr::filter(Genomic_Coordinate<=Genomic_Coordinate[7]) %>% # according to gene strand(+,-),and the infomation of promoter from MEXPRESS database.
+  dplyr::select(tag)
+rbind(cldn11,rbms3) -> tags
+
 # get promoter tags from mEXPRESS ------
 luad_meth %>%
   dplyr::filter(tag %in% tags$tag) %>%
@@ -201,7 +208,7 @@ gene_list.methy %>%
   scale_color_manual(values = c("#5CACEE", "#FF82AB")) +
   # scale_x_discrete(limit = EZH2_CBX2.tag_posi$Genomic_Direction[1:27]) +
   facet_wrap(~Gene_Symbol,scales = "free") +
-  ylab("Methylation level (Beta value)") +
+  ylab(latex2exp::TeX("Methylation ($\\beta$ value)")) +
   xlab("Promoter") +
   theme(
     axis.line = element_line(color = "black"),
@@ -214,10 +221,12 @@ gene_list.methy %>%
     axis.ticks.x = element_blank(),
     legend.position = c(0.9,0.8)
   ) -> EZH2_CBX2.box;EZH2_CBX2.box
-ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.pdf"),EZH2_CBX2.box,device = "pdf",width = 8,height = 3)
-ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.tiff"),EZH2_CBX2.box,device = "tiff",width = 8,height = 3)
+ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.pdf"),EZH2_CBX2.box,device = "pdf",width = 6,height = 3)
+ggsave(file.path(out_path_fig,"Figure3","Figure3B.Methy_histone.tiff"),EZH2_CBX2.box,device = "tiff",width = 6,height = 3)
 ggsave(file.path(out_path_fig,"Figure4/Figure5","PPAR_Methy_boxplot.pdf"),EZH2_CBX2.box,device = "pdf",width = 10,height = 6)
 ggsave(file.path(out_path_fig,"Figure4/Figure5","PPAR_Methy_boxplot.tiff"),EZH2_CBX2.box,device = "tiff",width = 10,height = 6)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","CLDN11_RBMS3_Methy_boxplot.pdf"),EZH2_CBX2.box,device = "pdf",width = 5,height = 3)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","CLDN11_RBMS3_Methy_boxplot.tiff"),EZH2_CBX2.box,device = "tiff",width = 5,height = 3)
 
 EZH2_CBX2.median.methy %>%
   dplyr::mutate(Genomic_Direction=as.numeric(Genomic_Direction)) %>%
