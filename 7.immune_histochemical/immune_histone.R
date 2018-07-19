@@ -215,7 +215,7 @@ broom::tidy(
   cor.test(immune_histone.N.noNA$CBX2_karyon,immune_histone.N.noNA$EZH2_karyon,method = "kendall")) %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
-  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal",n=nrow(immune_histone.N), estimate = signif(estimate,2)) %>%
+  dplyr::mutate(x=0.41,y=0.8,sample_type="2Normal",n=nrow(immune_histone.N.noNA), estimate = signif(estimate,2)) %>%
   dplyr::mutate(label=purrr::map2(
     .x=p.value,
     .y=estimate,
