@@ -31,24 +31,36 @@ DOWN_commone_targets.pro %>%
 
 # TSG and oncogene statistic ----------------------------------------------
 TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
-TSGene <- readr::read_tsv(file.path(TSG_onco_data_path,"TSGene","LUAD_downregulate_TSG_in_TCGA-TSGeneDatabase.txt"))  %>%
-  dplyr::mutate(source="TSGene") %>%
-  dplyr::rename("symbol"="GeneSymbol","geneID"="GeneID") %>%
-  dplyr::select(symbol,geneID,source) 
-oncogene_database <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene database","oncogene_database-all_the_human_oncogenes.txt")) %>%
-  dplyr::mutate(source="oncogene_database") %>%
-  dplyr::rename("symbol"="OncogeneName","geneID"="OncogeneID") %>%
-  dplyr::select(symbol,geneID,source) 
+TSG <- readr::read_tsv(file.path(TSG_onco_data_path,"TSG.source_clear(at least two evidence-no confuse).tsv")) %>%
+  dplyr::mutate(hallmark="TSG")
+oncogene <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene.source_clear(at least two evidence-no confuse).tsv")) %>%
+  dplyr::mutate(hallmark="oncogene")
+confuse_gene <- readr::read_tsv(file.path(TSG_onco_data_path,"confuse_gene.source_clear(at least two evidence).tsv")) %>%
+  dplyr::mutate(hallmark="confuse") %>%
+  dplyr::select(symbol,hallmark) %>%
+  dplyr::rename("SYMBOL"="symbol")
+TSG %>%
+  rbind(oncogene) %>%
+  dplyr::select(SYMBOL,hallmark) %>%
+  rbind(confuse_gene) -> all_cancer_relate_genes_noconfused
 
-TSGene %>%
-  dplyr::inner_join(oncogene_database,by="geneID") %>%
-  .$geneID -> confused_gene
-TSGene %>%
-  dplyr::filter(! geneID %in% confused_gene) -> TSGene_noconfuse
-oncogene_database %>%
-  dplyr::filter(! geneID %in% confused_gene) -> oncogene_noconfuse
-TSGene_noconfuse %>%
-  rbind(oncogene_noconfuse) -> all_cancer_relate_genes_noconfused
+# TSGene <- readr::read_tsv(file.path(TSG_onco_data_path,"TSGene","LUAD_downregulate_TSG_in_TCGA-TSGeneDatabase.txt"))  %>%
+#   dplyr::mutate(source="TSGene") %>%
+#   dplyr::rename("symbol"="GeneSymbol","geneID"="GeneID") %>%
+#   dplyr::select(symbol,geneID,source) 
+# oncogene_database <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene database","oncogene_database-all_the_human_oncogenes.txt")) %>%
+#   dplyr::mutate(source="oncogene_database") %>%
+#   dplyr::rename("symbol"="OncogeneName","geneID"="OncogeneID") %>%
+#   dplyr::select(symbol,geneID,source) 
+# TSGene %>%
+#   dplyr::inner_join(oncogene_database,by="geneID") %>%
+#   .$geneID -> confused_gene
+# TSGene %>%
+#   dplyr::filter(! geneID %in% confused_gene) -> TSGene_noconfuse
+# oncogene_database %>%
+#   dplyr::filter(! geneID %in% confused_gene) -> oncogene_noconfuse
+# TSGene_noconfuse %>%
+#   rbind(oncogene_noconfuse) -> all_cancer_relate_genes_noconfused
 
 genelist %>%
   dplyr::filter(log2FC<0) %>%
@@ -328,17 +340,17 @@ attribute %>%
 # add TSG info ------------------------------------------------------------
 
 attribute.fc %>%
+  dplyr::left_join(all_cancer_relate_genes_noconfused,by="SYMBOL") %>%
+  dplyr::mutate(mark=ifelse(hallmark=="TSGene",2,1)) %>%
+  dplyr::mutate(mark=ifelse(is.na(hallmark),0,mark)) %>%
   dplyr::rename("symbol"="SYMBOL") %>%
-  dplyr::left_join(all_cancer_relate_genes_noconfused,by="symbol") %>%
-  dplyr::mutate(mark=ifelse(source=="TSGene",2,1)) %>%
-  dplyr::mutate(mark=ifelse(is.na(source),0,mark)) %>%
   dplyr::select(symbol,type,log2FC,mark) -> attribute.fc.tsg
   
 
 attribute.fc.tsg %>%
-  readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","attribute_fc_tsg.txt"))
+  readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","attribute_fc_tsg_multuiple-source.txt"))
 network.cor.filter %>%
-  readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","network.txt"))
+  readr::write_tsv(file.path(genelist_path,"FFL/EZH2_CBX2_targets/√network.filter","network_multuiple-source.txt"))
 
 
 
@@ -403,4 +415,4 @@ genelist %>%
   dplyr::filter(! gene_id.x %in% methy_regu_gene$symbol) %>%
   dplyr::filter(! gene_id.x %in% Down_common_targets.CNV_dele_5$SAMPLE_ID) %>%
   dplyr::filter(! gene_id.x %in% miRNA_regu_genes$Gene) %>%
-  dplyr::filter(gene_id.x %in% TSGene_noconfuse$symbol)
+  dplyr::filter(gene_id.x %in% TSG$SYMBOL)
