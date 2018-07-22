@@ -339,7 +339,8 @@ kk_nofc_plotready %>%
   unique() -> kk_nofc_score
 kk_nofc_rank <- readr::read_tsv(file.path(data_path_1,"kk_nofc_description_rank_padjust0.05")) %>%
   dplyr::inner_join(kk_nofc_score,by="Description") %>%
-  dplyr::arrange(desc(Class,enrichmentScore))
+  dplyr::arrange(desc(Class,enrichmentScore)) %>%
+  dplyr::mutate(Description=ifelse(Description=="Alanine, aspartate and glutamate metabolism","Amino acids metablism",Description))
 
 library(ggplot2)
 library(grid)
@@ -347,6 +348,7 @@ library(scales)
 kk_nofc_plotready %>%
   dplyr::mutate(enrichmentScore=ifelse(enrichmentScore>0.6,0.6,enrichmentScore)) %>%
   dplyr::mutate(enrichmentScore=ifelse(enrichmentScore<0.4,0.4,enrichmentScore)) %>%
+  dplyr::mutate(Description=ifelse(Description=="Alanine, aspartate and glutamate metabolism","Amino acids metablism",Description)) %>%
   ggplot(aes(x=log2FC,y=Description)) +
   ggridges::geom_density_ridges_gradient(aes(fill = enrichmentScore), scale = 3, size = 0.1,rel_min_height = 0.01) +
   scale_fill_gradientn(colours=c("#ffcdd2","#d32f2f"),
@@ -371,6 +373,7 @@ kk_nofc_plotready %>%
 kk_nofc_info.1 %>%
   dplyr::filter(p.adjust<=0.05) %>%
   dplyr::filter(enrichmentScore>0) %>%
+  dplyr::mutate(Description=ifelse(Description=="Alanine, aspartate and glutamate metabolism","Amino acids metablism",Description)) %>%
   ggplot(aes(y=`Percent (%)`,x=Description,fill=enrichmentScore)) +
   geom_bar(stat = "identity", position = "stack", color = NA) +
   scale_fill_gradientn(colours=c("#ffcdd2","#d32f2f"),
