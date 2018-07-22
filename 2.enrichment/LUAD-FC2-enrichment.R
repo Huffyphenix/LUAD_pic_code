@@ -334,7 +334,12 @@ kk_nofc_plotready %>%
   dplyr::select(Description) %>%
   unique() -> kk_nofc_description_rank
 readr::write_tsv(kk_nofc_description_rank,file.path(data_path_1,"kk_nofc_description_rank_padjust0.05"))
-kk_nofc_rank <- readr::read_tsv(file.path(data_path_1,"kk_nofc_description_rank_padjust0.05"))
+kk_nofc_plotready %>%
+  dplyr::select(Description,enrichmentScore) %>%
+  unique() -> kk_nofc_score
+kk_nofc_rank <- readr::read_tsv(file.path(data_path_1,"kk_nofc_description_rank_padjust0.05")) %>%
+  dplyr::inner_join(kk_nofc_score,by="Description") %>%
+  dplyr::arrange(desc(Class,enrichmentScore))
 
 library(ggplot2)
 library(grid)
