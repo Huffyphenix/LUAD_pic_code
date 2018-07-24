@@ -464,7 +464,9 @@ dev.off()
 
 
 # heatmap 
-cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication","Homologous recombination")
+cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
+                       "Homologous recombination","p53 signaling pathway",
+                       "Progesterone-mediated oocyte maturation")
 
 kk_nofc_plotready %>%
   dplyr::filter(Description %in% cell_cycle_relate) %>%
@@ -508,6 +510,7 @@ kk_nofc_plotready %>%
   scale_x_discrete(limits=symbol.rank$SYMBOL) +
   scale_y_discrete(limits=pathway.rank$Description) +
   guides(fill=guide_colorbar(title.position = "top",direction = "horizontal"))+
+  ylab("Cell cycle related") +
   theme(
     axis.text.x = element_text(angle = 45,hjust = 1),
     legend.title.align = 0.5,
@@ -515,13 +518,8 @@ kk_nofc_plotready %>%
     legend.background = element_blank(),
     panel.background = element_blank(),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
-    # panel.grid.major = element_line(
-    #   colour = "grey",
-    #   linetype = "dashed",
-    #   size = 0.2
-    # ),
     panel.border =element_rect(fill='transparent', color='black'))
-ggsave(file.path(data_path_1,"gseaKEGG_cellcycle-related-gene-heatmap.pdf"),width = 14,height = 2)
+ggsave(file.path(data_path_1,"gseaKEGG_cellcycle-related-gene-heatmap.pdf"),width = 12,height = 2)
 gseaplot(kk, geneSetID = 3, title = kk$Description[3])
 heatplot(kk,foldChange = y)
 
