@@ -1,4 +1,6 @@
 FFL_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea/FFL/LUAD-noFC-prob0.9-kegg-gsea-ppar-relatedgenes"
+FFL_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea/FFL/LUAD-noFC-prob0.9-kegg-gsea-cellcycle-relatedgenes"
+
 TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
 data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
@@ -37,8 +39,13 @@ TSG %>%
   rbind(oncogene) %>%
   dplyr::select(SYMBOL,hallmark) %>%
   rbind(confuse_gene) -> all_cancer_relate_genes
+
+cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
+                       "Homologous recombination","p53 signaling pathway",
+                       "Progesterone-mediated oocyte maturation")
+ppar_relate <- c("PPAR signaling pathway")
 enrichment<- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv")) %>%
-  dplyr::filter(Description %in% "PPAR signaling pathway")
+  dplyr::filter(Description %in% cell_cycle_relate)
 
 # filter ------------------------------------------------------------------
 attribute %>%
@@ -60,4 +67,6 @@ attribute %>%
   
 attribute.hallmark %>%
   readr::write_tsv(file.path(FFL_data_path,"attribute.hallmark-added.txt"))
-                   
+
+
+
