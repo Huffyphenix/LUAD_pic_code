@@ -3,10 +3,34 @@ library(ggplot2)
 # data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 data_path<- "H:/data/GSCALite/TCGA/cnv"
 result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
+# gene list 1 -------------------------------------------------------------
+
 genelist_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 genelist <- readr::read_tsv(file.path(genelist_path,"all_EHZ2_CBX2_common_targets.DE_info")) %>%
   dplyr::filter(prob>=0.99 & abs(log2FC)>=0.585) %>%
-  dplyr::filter(log2FC<0)
+  dplyr::filter(log2FC<0) %>%
+  .$gene_id.x
+
+# gene list 2 -------------------------------------------------------------
+enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
+                                   "Homologous recombination","p53 signaling pathway",
+                                   "Progesterone-mediated oocyte maturation")
+genelist <- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv")) %>%
+  dplyr::filter(Description %in% cell_cycle_relate) %>%
+  .$SYMBOL
+
+
+# gene list 3 -------------------------------------------------------------
+enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+ppar_relate <- c("PPAR signaling pathway")
+genelist <- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv")) %>%
+  dplyr::filter(Description %in% ppar_relate) %>%
+  .$SYMBOL
+
+
+# load cnv data -----------------------------------------------------------
 
 luad_cnv <- readr::read_rds(file.path(data_path,"pancan34_cnv_percent.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
@@ -67,14 +91,15 @@ luad_cnv <- readr::read_rds(file.path(data_path,"pancan34_cnv_percent.rds.gz")) 
 # ggsave(file.path(data_path,"Figure4/Figure5","Down_common_targets.CNV-percent(del_5).pdf"))
 
 luad_cnv %>%
-  dplyr::filter(symbol %in% genelist$gene_id.x) %>%
+  dplyr::filter(symbol %in% genelist) %>%
   dplyr::select(symbol,a_homo,d_homo) %>%
   tidyr::gather(-symbol,key="type",value="CNV") %>%
   dplyr::mutate(Percent=CNV*100) %>%
   dplyr::mutate(type=ifelse(type=="a_homo","Amplification","Deletion"))-> plot_ready
 
 plot_ready %>%
-  dplyr::filter(type=="Deletion") %>%
+  # dplyr::filter(type=="Deletion") %>%
+  dplyr::filter(type=="Amplification") %>%
   dplyr::filter(CNV > 0.05) -> more_than5_percent
 
 plot_ready %>%
@@ -87,7 +112,7 @@ plot_ready %>%
   theme(
     panel.background = element_blank(),
     panel.border = element_rect(fill='transparent',colour = "black"),
-    legend.position = c(0.8,0.9),
+    legend.position = c(0.3,0.9),
     legend.background = element_blank(),
     axis.title.x = element_blank(),
     axis.title = element_text(size=14),
@@ -95,3 +120,7 @@ plot_ready %>%
   ) ->p;p
 ggsave(file.path(result_path,"Figure4/Figure5","Down_common_targets.CNV-percent(del_5).pdf"),width = 4,height = 3)
 ggsave(file.path(result_path,"Figure4/Figure5","Down_common_targets.CNV-percent(del_5).tiff"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure1","cellcycle.CNV-percent(Ampl_5).pdf"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure1","cellcycle.CNV-percent(Ampl_5).tiff"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure1","ppar.CNV-percent(Ampl_5).pdf"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure1","ppar.CNV-percent(Ampl_5).tiff"),width = 4,height = 3)
