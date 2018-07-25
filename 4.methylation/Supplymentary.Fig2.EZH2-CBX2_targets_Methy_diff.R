@@ -17,9 +17,17 @@ out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info")) %>%
-  dplyr::filter(prob>=0.99 & log2FC<=-0.585)
+  dplyr::filter(prob>=0.99 & log2FC<=-0.585) %>%
+  .$gene_id.x
 genelist <- readr::read_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
-  dplyr::filter(Description %in% "PPAR signaling pathway") 
+  dplyr::filter(Description %in% "PPAR signaling pathway")%>%
+  .$SYMBOL
+cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
+                       "Homologous recombination","p53 signaling pathway",
+                       "Progesterone-mediated oocyte maturation")
+genelist <- readr::read_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
+  dplyr::filter(Description %in% cell_cycle_relate)%>%
+  .$SYMBOL
 
 Animal_TF <-  readr::read_tsv(file.path(data_path,"AnimalTFDB","Homo_sapiens_transcription_factors_gene_list.txt"))
 enzyme_lsit <- readr::read_tsv(file.path(chip_path,"enzyme_list.symbol.xls")) %>%
@@ -45,19 +53,20 @@ methy %>%
   tidyr::unnest() %>%
   # dplyr::inner_join(tcga_geneid,by="symbol") %>%
   # dplyr::filter(symbol %in% genelist$SYMBOL) %>%
-  dplyr::filter(symbol %in% genelist$gene_id.x) -> LUAD_gene_methy
+  dplyr::filter(symbol %in% genelist) -> LUAD_gene_methy
 
 methy_cor %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest() %>%
   dplyr::inner_join(tcga_geneid,by="symbol") %>%
   # dplyr::filter(entrez_id %in% genelist$ENTREZID) %>%
-  dplyr::filter(entrez_id %in% entrez_id) -> LUAD_gene_methy_cor
+  dplyr::filter(symbol %in% genelist) -> LUAD_gene_methy_cor
 
 LUAD_gene_methy %>%
   dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  readr::write_tsv(file.path(out_path_sup,"correlation-table/PPAR_pathway_methy_diff_cor.tsv"))
+  readr::write_tsv(file.path(out_path_sup,"correlation-table/cellcycle_pathway_methy_diff_cor.tsv"))
 
+### For downregulate genes ------
 LUAD_gene_methy %>%
   dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
   dplyr::filter(spm<=-0.3 & diff>0) %>%
@@ -67,57 +76,122 @@ LUAD_gene_methy %>%
   dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
   dplyr::filter(spm<=-0.3 & diff>0) -> LUAD_gene_methy.sig_gene
 
-LUAD_gene_methy_cor %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
 # draw pic ----------------------------------------------------------------
 LUAD_gene_methy_cor %>%
   dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
+LUAD_gene_methy_cor %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
   dplyr::rename("value"="spm") %>%
-  dplyr::mutate(group="Spearman r") -> LUAD_gene_methy_cor.pic
+  dplyr::mutate(group="Cor.") -> LUAD_gene_methy_cor.pic
 LUAD_gene_methy %>%
   dplyr::rename("value"="diff","logfdr" = "fdr") %>%
-  dplyr::mutate(group="Methylation diff (T - N)") %>%
+  dplyr::mutate(group="Diff. (T - N)") %>%
   dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
   dplyr::select(-direction) -> LUAD_gene_methy.pic
 
 library(ggplot2)
 library(grid)
-CPCOLS <- c("red", "white", "blue")
+CPCOLS <- c("red", "white", "#1C86EE")
+
 LUAD_gene_methy_cor.pic %>%
   dplyr::select(-entrez_id) %>%
   rbind(LUAD_gene_methy.pic) %>%
+  dplyr::mutate(value=signif(value,3)) %>%
   ggplot(aes(x=group,y=symbol)) +
-  geom_point(aes(size=logfdr,color=value)) +
+  geom_tile(aes(fill = value),color="white") +
   scale_y_discrete(limit = cor_rank.genesymbol) +
   guides(size = guide_legend(title.position = "left",
                              title.theme = element_text(angle = 90))) +
-  scale_color_gradient2(
-    name = "Diff/Cor", #"Methylation diff (T - N)",
+  scale_fill_gradient2(
+    name = "Diff./Cor.", #"Methylation diff (T - N)",
     low = CPCOLS[3],
-    mid = CPCOLS[2],
     high = CPCOLS[1],
+    mid = CPCOLS[2],
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
-  scale_size_continuous(
-    name = "-log10(p value)"
-  ) +
+  geom_text(aes(label=value)) +
+  ylab("Symbol") +
   theme(#legend.position = "bottom",
-        panel.background = element_rect(colour = "black", fill = "white"),
-        panel.grid = element_line(colour = "grey", linetype = "dashed"),
-        panel.grid.major = element_line(
-          colour = "grey",
-          linetype = "dashed",
-          size = 0.2),
-        axis.text.x = element_text(size = 10),
-        axis.title.x = element_blank(),
-        axis.text.y = element_text(size = 10),
-        legend.text = element_text(size = 10),
-        legend.title = element_text(size = 12),
-        legend.key = element_rect(fill = "white", colour = "black") ,
-        plot.title = element_text(size=20)
+    panel.background = element_rect(colour = "black", fill = "white"),
+    panel.grid = element_line(colour = "grey", linetype = "dashed"),
+    panel.grid.major = element_line(
+      colour = "grey",
+      linetype = "dashed",
+      size = 0.2),
+    axis.text.x = element_text(size = 10),
+    axis.title.x = element_blank(),
+    axis.text.y = element_text(size = 10),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 12),
+    legend.key = element_rect(fill = "white", colour = "black") ,
+    plot.title = element_text(size=20)
   ) -> p;p
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 4)
+
 ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
 ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
 
+### For upregulate genes -------
+LUAD_gene_methy %>%
+  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
+  dplyr::filter(spm<=-0.3 & diff<0) %>%
+  readr::write_tsv(file.path(out_path_fig,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
+
+LUAD_gene_methy %>%
+  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
+  dplyr::filter(spm<=-0.3 & diff<0) -> LUAD_gene_methy.sig_gene
+
+LUAD_gene_methy_cor %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
+
+LUAD_gene_methy_cor %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::rename("value"="spm") %>%
+  dplyr::mutate(group="Cor.") -> LUAD_gene_methy_cor.pic
+LUAD_gene_methy %>%
+  dplyr::rename("value"="diff","logfdr" = "fdr") %>%
+  dplyr::mutate(group="Diff. (T - N)") %>%
+  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+  dplyr::select(-direction) -> LUAD_gene_methy.pic
+CPCOLS <- c("#00688B", "#00BFFF")
+
+LUAD_gene_methy_cor.pic %>%
+  dplyr::select(-entrez_id) %>%
+  rbind(LUAD_gene_methy.pic) %>%
+  dplyr::mutate(value=signif(value,3)) %>%
+  ggplot(aes(x=group,y=symbol)) +
+  geom_tile(aes(fill = value),color="white") +
+  scale_y_discrete(limit = cor_rank.genesymbol) +
+  guides(size = guide_legend(title.position = "left",
+                             title.theme = element_text(angle = 90))) +
+  scale_fill_gradient2(
+    name = "Diff./Cor.", #"Methylation diff (T - N)",
+    low = CPCOLS[2],
+    high = CPCOLS[1],
+    breaks = c(-0.6,-0.4,-0.2,0)
+  ) +
+  geom_text(aes(label=value)) +
+  ylab("Symbol") +
+  theme(#legend.position = "bottom",
+    panel.background = element_rect(colour = "black", fill = "white"),
+    panel.grid = element_line(colour = "grey", linetype = "dashed"),
+    panel.grid.major = element_line(
+      colour = "grey",
+      linetype = "dashed",
+      size = 0.2),
+    axis.text.x = element_text(size = 10),
+    axis.title.x = element_blank(),
+    axis.text.y = element_text(size = 10),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 12),
+    legend.key = element_rect(fill = "white", colour = "black") ,
+    plot.title = element_text(size=20)
+  ) -> p;p
+
+
+ggsave(file.path(out_path_fig,"Figure1","cellcycle.methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
+ggsave(file.path(out_path_fig,"Figure1","cellcycle.methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 4)
 
