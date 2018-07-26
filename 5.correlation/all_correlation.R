@@ -18,7 +18,7 @@ out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 miRNA_list <- readr::read_tsv(file.path(miRNA_list_path,"NOISeq_DE_mirna_FC2_cpm30.mirnaid.up.id"))
 mirna_fc1.5_cpm5000 <- readr::read_tsv(file.path("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/no_FC/NOISeq_DE_mirna_noFC_cpm30.mirnaid")) %>%
   dplyr::filter(abs(log2FC)>=0.585) %>%
-  dplyr::filter(case_mean>5000|con_mean>5000) %>%
+  dplyr::filter(case_mean>5000 & con_mean>5000) %>%
   dplyr::select(mirna)
 miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
@@ -379,8 +379,11 @@ mirna_gene_spm_cor %>%
 
 cellcycle_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea/FFL/LUAD-noFC-prob0.9-kegg-gsea-cellcycle-relatedgenes"
 cellcycle_genelist <- readr::read_tsv(file.path(cellcycle_path,"attribute.hallmark-added.txt"))
-cellcycle_TF <- cellcycle_genelist %>% dplyr::filter(gene_type==1)
-cellcycle_miR <- cellcycle_genelist %>% dplyr::filter(gene_type==2)
+cellcycle_TF <- cellcycle_genelist %>% dplyr::filter(gene_type==1) %>%
+  dplyr::filter(log2FC>0)
+cellcycle_miR <- cellcycle_genelist %>% dplyr::filter(gene_type==2) %>%
+  dplyr::filter(log2FC<0)
+
 cellcycle_gene <- cellcycle_genelist %>% dplyr::filter(gene_type==3)
 
 miRNA_exp %>%
@@ -471,7 +474,7 @@ ready_draw %>%
   ylab("Regulators") +
   xlab("Cell cycle genes") +
   scale_color_gradient2(
-    name = "Spearman r", # "Methylation diff (T - N)",
+    name = "Correlation", # "Methylation diff (T - N)",
     low = CPCOLS[3],
     mid = CPCOLS[2],
     high = CPCOLS[1],
@@ -491,7 +494,7 @@ ready_draw %>%
     axis.text.x = element_text(vjust = 1, hjust = 1, angle = 40, size = 10),
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 12,angle = 90),
-    legend.position = c(0.8,0.5),
+    legend.position = c(0.4,0.6),
     legend.background = element_blank(),
     legend.key = element_rect(fill = "white", colour = "black"),
     plot.title = element_text(size = 20)
@@ -504,8 +507,12 @@ ggsave(file.path(out_path_fig,"Figure1","Figue S2C.cell_cycle.correlation.tiff")
 
 ppar_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea/FFL/LUAD-noFC-prob0.9-kegg-gsea-ppar-relatedgenes"
 ppar_genelist <- readr::read_tsv(file.path(ppar_path,"attribute.hallmark-added.txt"))
-ppar_TF <- ppar_genelist %>% dplyr::filter(gene_type==1)
-ppar_miR <- ppar_genelist %>% dplyr::filter(gene_type==2)
+ppar_TF <- ppar_genelist %>% dplyr::filter(gene_type==1) %>%
+  dplyr::filter(log2FC<0)
+
+ppar_miR <- ppar_genelist %>% dplyr::filter(gene_type==2) %>%
+  dplyr::filter(log2FC>0)
+
 ppar_gene <- ppar_genelist %>% dplyr::filter(gene_type==3)
 
 miRNA_exp %>%
@@ -596,7 +603,7 @@ ready_draw %>%
   ylab("Regulators") +
   xlab("PPAR signaling pathway genes") +
   scale_color_gradient2(
-    name = "Spearman r", # "Methylation diff (T - N)",
+    name = "Correlation", # "Methylation diff (T - N)",
     low = CPCOLS[3],
     mid = CPCOLS[2],
     high = CPCOLS[1]
