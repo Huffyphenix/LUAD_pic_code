@@ -45,7 +45,7 @@ cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
                        "Progesterone-mediated oocyte maturation")
 ppar_relate <- c("PPAR signaling pathway")
 enrichment<- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv")) %>%
-  dplyr::filter(Description %in% cell_cycle_relate)
+  dplyr::filter(Description %in% ppar_relate)
 
 # filter ------------------------------------------------------------------
 attribute %>%
