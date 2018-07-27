@@ -91,7 +91,6 @@ attribute <- readr::read_tsv(file.path(ffl_path,"attribute.txt"),col_names = F)
 #   dplyr::filter(X1 %in% c("E2F1","SOX4")) %>%
 #   dplyr::mutate(X4=1) -> E2F1_SOX4_2_miRNA
 
-# only remain miRNAs which regulate by E2F1 and SOX4
 
 miRNA2TF %>%
   dplyr::filter(X2 %in% unique(DOWN_commone_targets.TF$gene_id.x)) %>%
@@ -103,7 +102,6 @@ miRNA2gene %>%
   dplyr::mutate(X3="notshow") %>%
   dplyr::mutate(X4=4) -> miRNA2gene.filter
 
-# only remain miRNAs which regulate by E2F1 and SOX4
 TF2gene %>%
   dplyr::filter(! X1 %in% c("E2F1","SOX4")) %>%
   dplyr::filter(X2 %in% unique(miRNA2gene.filter$X2)) %>%
@@ -289,9 +287,9 @@ ready_draw %>%
   scale_x_discrete(limits = x_rank$gene) +
   scale_y_discrete(limits = y_rank$regulator) +
   ylab("Regulators") +
-  xlab("CBX2/EZH2 targets (downreulate)") +
+  xlab("CBX2 and EZH2 targets (downreulate)") +
   scale_color_gradient2(
-    name = "Spearman r", # "Methylation diff (T - N)",
+    name = "Correlation", # "Methylation diff (T - N)",
     low = CPCOLS[3],
     mid = CPCOLS[2],
     high = CPCOLS[1],
@@ -398,21 +396,22 @@ methy_regu_gene <- readr::read_tsv(file.path(mthy_path,"Figure4/Figure5","genes_
 # 2 CNV 
 Down_common_targets.CNV <- readr::read_tsv(file.path(mthy_path,"Figure4/Figure5","Down_common_targets.CNV-percent.tsv"))
 Down_common_targets.CNV %>%
-  dplyr::filter(homo_del>5) -> Down_common_targets.CNV_dele_5
+  dplyr::filter(type== "Deletion") %>%
+  dplyr::filter(Percent > 5) -> Down_common_targets.CNV_dele_5
 
 # 3 miRNA regulation
-attribute %>%
+attribute.fc.tsg %>%
   dplyr::filter(type %in% c(1,3)) %>%
-  dplyr::filter(! gene %in% c("E2F1","SOX4")) -> miRNA_regu_genes
-
-cytonca_rank_all %>%
-  dplyr::arrange(desc(Rank_sum)) %>%
-  dplyr::filter(Rank_sum>Rank_sum[68]) -> miRNA_regu_genes
+  dplyr::filter(! symbol %in% c("E2F1","SOX4")) -> miRNA_regu_genes
+# 
+# cytonca_rank_all %>%
+#   dplyr::arrange(desc(Rank_sum)) %>%
+#   dplyr::filter(Rank_sum>Rank_sum[68]) -> miRNA_regu_genes
 
 # 4 filter
 genelist %>%
   dplyr::filter(log2FC<0) %>%
   dplyr::filter(! gene_id.x %in% methy_regu_gene$symbol) %>%
   dplyr::filter(! gene_id.x %in% Down_common_targets.CNV_dele_5$SAMPLE_ID) %>%
-  dplyr::filter(! gene_id.x %in% miRNA_regu_genes$Gene) %>%
+  dplyr::filter(! gene_id.x %in% miRNA_regu_genes$symbol) %>%
   dplyr::filter(gene_id.x %in% TSG$SYMBOL)
