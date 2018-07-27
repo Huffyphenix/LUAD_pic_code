@@ -8,8 +8,7 @@ result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 genelist_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 genelist <- readr::read_tsv(file.path(genelist_path,"all_EHZ2_CBX2_common_targets.DE_info")) %>%
-  dplyr::filter(prob>=0.99 & abs(log2FC)>=0.585) %>%
-  dplyr::filter(log2FC<0) %>%
+  dplyr::filter(Class == "Down") %>%
   .$gene_id.x
 
 # gene list 2 -------------------------------------------------------------
@@ -98,8 +97,10 @@ luad_cnv %>%
   dplyr::mutate(type=ifelse(type=="a_homo","Amplification","Deletion"))-> plot_ready
 
 plot_ready %>%
-  # dplyr::filter(type=="Deletion") %>%
-  dplyr::filter(type=="Amplification") %>%
+  readr::write_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/","Figure4/Figure5","Down_common_targets.CNV-percent.tsv"))
+plot_ready %>%
+  dplyr::filter(type=="Deletion") %>%
+  # dplyr::filter(type=="Amplification") %>%
   dplyr::filter(CNV > 0.05) -> more_than5_percent
 
 plot_ready %>%
