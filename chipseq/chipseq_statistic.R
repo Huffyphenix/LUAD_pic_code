@@ -528,7 +528,7 @@ Down_KEGG_enrichment.info %>%
         axis.text.y = element_text(size = 13),
         axis.title.y = element_text(size=15),
         panel.background = element_blank(),
-        legend.position = c(0.95,0.3),
+        # legend.position = c(0.95,0.3),
         legend.background = element_blank(),
         axis.title.x = element_blank(),
         # panel.grid.minor =element_line(color = "black",size=0.2),
