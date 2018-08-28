@@ -320,14 +320,14 @@ EZH2_CBX2_common_targets.entrez %>%
 EZH2_CBX2_common_targets.entrez.all %>%
   dplyr::as.tbl() %>%
   dplyr::left_join(all_gene_nofil.entrez,by="entrez_id") %>%
-  dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99 & case_mean>=30,"Down","non-DE")) %>%
-  dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99 & con_mean>=30,"Up",Class)) %>%
+  dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99 & con_mean>=30,"Down","non-DE")) %>%
+  dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99 & case_mean>=30,"Up",Class)) %>%
   dplyr::mutate(Class=ifelse(is.na(log2FC),"non-DE",Class)) -> EHZ2_CBX2_common_targets.DE_info
 EHZ2_CBX2_common_targets.DE_info %>%
-  readr::write_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
-EHZ2_CBX2_common_targets.DE_info %>%
-  dplyr::filter(gene_id.x %in% EZH2_CBX2_common_peak_common_targets) %>%
-  readr::write_tsv(file.path(chip_path,"common-targets-180426-new","only_EHZ2_CBX2_common_peaks-targets.DE_info"))
+#   readr::write_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
+# EHZ2_CBX2_common_targets.DE_info %>%
+#   dplyr::filter(gene_id.x %in% EZH2_CBX2_common_peak_common_targets) %>%
+#   readr::write_tsv(file.path(chip_path,"common-targets-180426-new","only_EHZ2_CBX2_common_peaks-targets.DE_info"))
 
 # for EZH2 targets -----
 EZH2_targets_proteincoding %>%
@@ -521,7 +521,7 @@ Down_KEGG_enrichment.info %>%
   geom_tile(aes(fill = log2FC),colour = "white") +
   scale_y_discrete(limits=Down_KEGG_enrichment_rank$Description) +
   scale_x_discrete(limits=generank$gene_id.x) +
-  scale_fill_gradientn(colours=c("#039BE5","#BBDEFB"),
+  scale_fill_gradientn(colours=c("#1874CD","#BBDEFB"),
                        name = "log2(FC)") +
   ylab("KEGG pathway") +
   theme(axis.text.x = element_text(angle = 45,hjust = 1,size = 13),
