@@ -144,3 +144,31 @@ EZH2_CBX2_exp.gather.allsamples %>%
   facet_wrap(~sample_type,scales = "free") -> p;p
 ggsave(filename = "EZH2_CBX2_correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 8,height = 3)
 ggsave(filename = "EZH2_CBX2_correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 8,height = 3)
+
+
+# only for tumor tsissue -------------------------------------------------
+text %>%
+  dplyr::filter(sample_type=="TCGA Tumor") -> text_tumor
+EZH2_CBX2_exp.gather.allsamples %>%
+  dplyr::filter(sample_type=="TCGA Tumor") %>%
+  ggplot(aes(x=log2(EZH2),y=log2(CBX2))) +
+  geom_point(aes(color = sample_type)) +
+  geom_smooth(span = 0.8, se = FALSE, fullrange=TRUE, color = "#039BE5") +
+  theme_bw() +
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black")
+  ) +
+  labs(
+    x = "EZH2 mRNA (log2)",
+    y = "CBX2 mRNA (log2)"
+  ) +
+  scale_color_manual(
+    values = c("#EE6363"),
+    labels = text_tumor$label
+  ) +
+  facet_wrap(~sample_type,scales = "free") -> p;p
+ggsave(filename = "EZH2_CBX2_tumor-correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 6,height = 3)
+ggsave(filename = "EZH2_CBX2_tumor-correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 6,height = 3)
+
