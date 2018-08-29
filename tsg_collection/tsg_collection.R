@@ -92,31 +92,51 @@ sanger_census_TSG %>%
 
 
 ### fileter ---------------------------------------------------------
-all_oncogene$geneID %>% table() %>% .[.>=2] %>% names() -> oncogene_at_least_2_source
-all_TSG$geneID %>% table() %>% .[.>=2] %>% names() -> TSG_at_least_2_source
-
-oncogene_at_least_2_source %>%
-  bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> oncogene_at_least_2_source
-TSG_at_least_2_source %>%
-  bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> TSG_at_least_2_source
+# all_oncogene$geneID %>% table() %>% .[.>=2] %>% names() -> oncogene_at_least_2_source
+# all_TSG$geneID %>% table() %>% .[.>=2] %>% names() -> TSG_at_least_2_source
+# 
+# oncogene_at_least_2_source %>%
+#   bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> oncogene_at_least_2_source
+# TSG_at_least_2_source %>%
+#   bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> TSG_at_least_2_source
 
 # ### confused gene filter --------------------------------------------------------------
-oncogene_at_least_2_source %>%
-  dplyr::inner_join(TSG_at_least_2_source,by="ENTREZID") -> confused_genes
+# oncogene_at_least_2_source %>%
+#   dplyr::inner_join(TSG_at_least_2_source,by="ENTREZID") -> confused_genes
+all_oncogene %>%
+  dplyr::inner_join(all_TSG,by="geneID") %>%
+  dplyr::select(geneID) %>%
+  unique() %>%
+  .$geneID %>%
+  bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> confused_genes
+
+
+# ID convertion -----------------------------------------------------------
+
+all_oncogene %>%
+  .$geneID %>%
+  unique() %>%
+  bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> all_oncogene.symbol
+
+all_TSG %>%
+  .$geneID %>%
+  unique() %>%
+  bitr(fromType = "ENTREZID",toType = "SYMBOL",OrgDb = "org.Hs.eg.db") -> all_TSG.symbol
+
 
 # ###source clear ---------------------------------------------------------
 
 library(plyr)
 all_oncogene %>%
   dplyr::rename("ENTREZID"="geneID") %>%
-  dplyr::inner_join(oncogene_at_least_2_source,by="ENTREZID") %>%
+  dplyr::inner_join(all_oncogene.symbol,by="ENTREZID") %>%
   unique() %>%
   ddply(.(ENTREZID,SYMBOL), summarize,
         source=paste(source,collapse=",")) -> oncogene.source_clear
 
 all_TSG %>%
   dplyr::rename("ENTREZID"="geneID") %>%
-  dplyr::inner_join(TSG_at_least_2_source,by="ENTREZID") %>%
+  dplyr::inner_join(all_TSG.symbol,by="ENTREZID") %>%
   unique() %>%
   ddply(.(ENTREZID,SYMBOL), summarize,
         source=paste(source,collapse=",")) -> TSG.source_clear
@@ -139,10 +159,10 @@ sanger_census_twoside %>%
   dplyr::filter(! `Treat as oncogene`=="sanger_census")
 
 confused_genes.source_clear %>%
-  readr::write_tsv(file.path(data_path,"confuse_gene.source_clear(at least two evidence).tsv"))
+  readr::write_tsv(file.path(data_path,"confuse_gene.source_clear(at least one evidence).tsv"))
 TSG.source_clear %>%
-  dplyr::filter(!ENTREZID %in% confused_genes$ENTREZID) %>%
-  readr::write_tsv(file.path(data_path,"TSG.source_clear(at least two evidence-no confuse).tsv"))
+  dplyr::filter(!ENTREZID %in% confused_genes.source_clear$ENTREZID) %>%
+  readr::write_tsv(file.path(data_path,"TSG.source_clear(at least one evidence-no confuse).tsv"))
 oncogene.source_clear %>%
-  dplyr::filter(!ENTREZID %in% confused_genes$ENTREZID) %>%
-  readr::write_tsv(file.path(data_path,"oncogene.source_clear(at least two evidence-no confuse).tsv"))
+  dplyr::filter(!ENTREZID %in% confused_genes.source_clear$ENTREZID) %>%
+  readr::write_tsv(file.path(data_path,"oncogene.source_clear(at least one evidence-no confuse).tsv"))
