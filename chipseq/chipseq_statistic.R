@@ -323,7 +323,7 @@ EZH2_CBX2_common_targets.entrez.all %>%
   dplyr::mutate(Class=ifelse(log2FC<= (-0.585) & prob>=0.99 & con_mean>=30,"Down","non-DE")) %>%
   dplyr::mutate(Class=ifelse(log2FC>= 0.585 & prob>=0.99 & case_mean>=30,"Up",Class)) %>%
   dplyr::mutate(Class=ifelse(is.na(log2FC),"non-DE",Class)) -> EHZ2_CBX2_common_targets.DE_info
-EHZ2_CBX2_common_targets.DE_info %>%
+# EHZ2_CBX2_common_targets.DE_info %>%
 #   readr::write_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
 # EHZ2_CBX2_common_targets.DE_info %>%
 #   dplyr::filter(gene_id.x %in% EZH2_CBX2_common_peak_common_targets) %>%
