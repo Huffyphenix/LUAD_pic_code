@@ -263,7 +263,7 @@ ready_draw %>%
     low = CPCOLS[3],
     high = CPCOLS[1],
     mid = CPCOLS[2],
-    breaks = c(-0.3,0,0.2)
+    breaks = c(-0.3,0,0.15)
   ) +
   scale_x_discrete(limit = y_rank$regulator) +
   scale_y_discrete(limit = x_rank$gene) +
@@ -297,6 +297,7 @@ mirna_nofil <- readr::read_tsv(file.path(data_path_3,"NOISeq_DE_mirna_noFC_cpm30
 rbind(TF_nofil,progene_nofil) %>%
   rbind(mirna_nofil) %>%
   dplyr::rename("SYMBOL"="gene_id") -> all_gene_nofil
+
 net %>%
   tidyr::gather(key="type",value="Gene") %>%
   dplyr::mutate(type=ifelse(type=="Sources","1","2")) -> attribute
@@ -311,3 +312,6 @@ attribute %>%
 
 attribute.fc %>%
   readr::write_tsv(file.path(mirna_regulate_path,"attribute_fc_tsg_multuiple-source.txt"))
+net_net %>%
+  dplyr::mutate(regu_type=1) %>%
+  readr::write_tsv(file.path(mirna_regulate_path,"network_multuiple-source.txt"))
