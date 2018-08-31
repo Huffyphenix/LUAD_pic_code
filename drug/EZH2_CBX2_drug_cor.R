@@ -1,11 +1,19 @@
 library(magrittr)
 library(clusterProfiler)
 library(org.Hs.eg.db)
-# data path ---------------------------------------------------------------
+# data path in Ezhou---------------------------------------------------------------
 
 drug_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/drug_sensitivity"
 gdsc_info <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/DRUG_data/GDSC database"
 FFL_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_targets-180830"
+out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"
+
+
+# data path in Hust -------------------------------------------------------
+drug_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/drug_sensitivity"
+gdsc_info <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/DRUG_data/GDSC database"
+FFL_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_targets-180830"
+out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure9"
 
 
 # load data ---------------------------------------------------------------
@@ -53,7 +61,7 @@ LUAD_IC50_exp.druginfo %>%
   dplyr::select(-data) %>%
   dplyr::ungroup() %>%
   tidyr::unnest() %>%
-  dplyr::filter(p.value<=0.05) %>%
+  dplyr::filter(p.value<=0.05,abs(estimate)>=0.3) %>%
   dplyr::inner_join(drug_info,by="DRUG_ID") %>%
   dplyr::select(SYMBOL,`DRUG NAME`,TARGET,`TARGET PATHWAY`,estimate,p.value) -> cor_drug
 
@@ -62,13 +70,16 @@ LUAD_IC50_exp.druginfo %>%
 
 # draw pic ----------------------------------------------------------------
 PPAR_TSG %>% 
-  dplyr::filter(Class == "PPAR") %>%
+  dplyr::filter(Class == "TSG") %>%
   .$SYMBOL -> genelist_to_draw
 
 cor_drug %>%
   dplyr::mutate(`TARGET PATHWAY`=ifelse(`TARGET PATHWAY`==TARGET,paste(TARGET,1,sep="_"),`TARGET PATHWAY`)) %>%
   dplyr::filter(SYMBOL %in% genelist_to_draw)-> EZH2_CBX2_cor_drug
   
+
+# line plot ---------------------------------------------------------------
+
 
 ### get text 
 EZH2_CBX2_cor_drug %>%
@@ -263,7 +274,6 @@ p +
   xlab("") +
   ylab("") +
   labs(title = "Drug sensitiviy") -> p2;p2
-out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"
 ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.pdf"),device = "pdf",height = 6,width = 8)
 ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.tiff"),device = "tiff",height = 6,width = 8)
 
@@ -281,11 +291,19 @@ EZH2_CBX2_cor_drug %>%
   dplyr::arrange(`TARGET PATHWAY`) %>%
   unique() %>%
   dplyr::ungroup() -> n_color
+
+y_coordinate <- vector(length = nrow(n_color)) %>% as.numeric()
+for(i in 1:nrow(n_color)){
+  if(i==1){
+    y_coordinate[i] <- n_color$n[i] %>% as.numeric()
+  }else{
+    y_coordinate[i] <- y_coordinate[i-1]+n_color$n[i]
+  }
+}
 n_color %>%
   dplyr::mutate(color = ggthemes::gdocs_pal()(nrow(n_color))) %>%
   dplyr::mutate(n_r=1:nrow(n_color)) %>%
-  dplyr::mutate(y=ifelse(n_r==1,y=n,0)) >>>>>>>>>>>>>>>>>>>>>>>>>>>
-  dplyr::mutate(x=2,y=seq(20,20+3*(nrow(n_color)-1),3)) -> pathway_color
+  dplyr::mutate(y=(y_coordinate-n/2),x=4) -> pathway_color ## change x when num of gene set changes
 drug_rank %>%
   dplyr::left_join(pathway_color,by="TARGET PATHWAY") -> drug_rank
 drug_rank %>%
@@ -342,7 +360,8 @@ EZH2_CBX2_cor_drug %>%
       barheight = 0.5,
       barwidth = 10
     )
-  ) -> p
-out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure9"
-ggsave(file.path(out_path,"PPAR_drug_sensiticity.pdf"),device = "pdf",height = 10,width = 4)
-ggsave(file.path(out_path,"PPAR_drug_sensiticity.tiff"),device = "tiff",height = 10,width = 4)
+  ) -> p;p
+ggsave(file.path(out_path,"PPAR_drug_sensiticity.pdf"),device = "pdf",height = 10,width = 5)
+ggsave(file.path(out_path,"PPAR_drug_sensiticity.tiff"),device = "tiff",height = 10,width = 5)
+ggsave(file.path(out_path,"TSG_drug_sensiticity.pdf"),device = "pdf",height = 10,width = 5)
+ggsave(file.path(out_path,"TSG_drug_sensiticity.tiff"),device = "tiff",height = 10,width = 5)
