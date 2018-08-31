@@ -1,21 +1,39 @@
 library(magrittr)
+library(clusterProfiler)
+library(org.Hs.eg.db)
 # data path ---------------------------------------------------------------
 
 drug_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/drug_sensitivity"
 gdsc_info <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/DRUG_data/GDSC database"
+FFL_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_targets-180830"
 
 
 # load data ---------------------------------------------------------------
 
-EZH2_CBX2_LUAD_IC50_exp <- readr::read_tsv(file.path(drug_path,"EZH2_CBX2_LUAD_IC50_exp.tsv"))
+LUAD_IC50_exp <- readr::read_rds(file.path(drug_path,"data_merged","LUAD_cell_line_expression_IC50.rds.gz"))
 drug_info <- readr::read_tsv(file.path(drug_path,"Screened_Compounds.txt")) %>%
   dplyr::rename("DRUG_ID"="DRUG ID")
 
+PPAR_TSG <- readr::read_tsv(file.path(FFL_path,"attribute_fc_tsg_multuiple-source.txt"))
 
+genelist <- readr::read_tsv(file.path(FFL_path,"attribute_fc_tsg_multuiple-source.txt")) %>%
+  .$SYMBOL %>%
+  unique() %>%
+  bitr(fromType = "SYMBOL", toType = "ENSEMBL",OrgDb = org.Hs.eg.db)
+
+c("EZH2","CBX2") %>%
+  bitr(fromType = "SYMBOL", toType = "ENSEMBL",OrgDb = org.Hs.eg.db) -> EZH2_CBX2
 # data combination --------------------------------------------------------
 
-EZH2_CBX2_LUAD_IC50_exp %>%
-  dplyr::inner_join(drug_info,by="DRUG_ID") -> EZH2_CBX2_LUAD_IC50_exp.druginfo
+genelist %>%
+  rbind(EZH2_CBX2) %>%
+  dplyr::rename("ensembl_gene"="ENSEMBL") -> genelist
+
+LUAD_IC50_exp %>%
+  dplyr::filter(ensembl_gene %in% c(genelist$ensembl_gene)) %>%
+  dplyr::left_join(genelist,by="ensembl_gene") %>%
+  tidyr::unnest() %>%
+  dplyr::inner_join(drug_info,by="DRUG_ID") -> LUAD_IC50_exp.druginfo
 
 
 # calculation -------------------------------------------------------------
@@ -28,29 +46,33 @@ fn_cor <- function(data){
     return(tmp.spm)
   }
 }
-EZH2_CBX2_LUAD_IC50_exp %>%
-  tidyr::nest(-ensembl_gene,-DRUG_ID) %>%
-  dplyr::group_by(ensembl_gene,DRUG_ID) %>%
+LUAD_IC50_exp.druginfo %>%
+  tidyr::nest(-SYMBOL,-DRUG_ID) %>%
+  dplyr::group_by(SYMBOL,DRUG_ID) %>%
   dplyr::mutate(spm=purrr::map(data,fn_cor)) %>%
   dplyr::select(-data) %>%
   dplyr::ungroup() %>%
   tidyr::unnest() %>%
   dplyr::filter(p.value<=0.05) %>%
-  dplyr::left_join(drug_info,by="DRUG_ID") %>%
-  dplyr::mutate(symbol=ifelse(ensembl_gene=="ENSG00000173894","CBX2","EZH2")) %>%
-  dplyr::select(symbol,`DRUG NAME`,TARGET,`TARGET PATHWAY`,estimate,p.value) -> EZH2_CBX2_cor_drug
+  dplyr::inner_join(drug_info,by="DRUG_ID") %>%
+  dplyr::select(SYMBOL,`DRUG NAME`,TARGET,`TARGET PATHWAY`,estimate,p.value) -> cor_drug
 
 
 
 
 # draw pic ----------------------------------------------------------------
-EZH2_CBX2_cor_drug %>%
-  dplyr::mutate(`TARGET PATHWAY`=ifelse(`TARGET PATHWAY`==TARGET,paste(TARGET,1,sep="_"),`TARGET PATHWAY`)) -> EZH2_CBX2_cor_drug
+PPAR_TSG %>% 
+  dplyr::filter(Class == "PPAR") %>%
+  .$SYMBOL -> genelist_to_draw
+
+cor_drug %>%
+  dplyr::mutate(`TARGET PATHWAY`=ifelse(`TARGET PATHWAY`==TARGET,paste(TARGET,1,sep="_"),`TARGET PATHWAY`)) %>%
+  dplyr::filter(SYMBOL %in% genelist_to_draw)-> EZH2_CBX2_cor_drug
   
 
 ### get text 
 EZH2_CBX2_cor_drug %>%
-  dplyr::pull(symbol) %>%
+  dplyr::pull(SYMBOL) %>%
   unique() -> gene.text
 
 EZH2_CBX2_cor_drug %>%
@@ -148,7 +170,7 @@ get_rppa_seg <- function(data,cancer_text) {
 }
 EZH2_CBX2_cor_drug %>%
   dplyr::select(-p.value) %>%
-  dplyr::mutate(drug_target=c("Inhibit","Inhibit","Inhibit","Inhibit","Inhibit","Activate","Inhibit")) %>%
+  dplyr::mutate(drug_target=c("Activate")) %>%
   dplyr::mutate(n=1:nrow(EZH2_CBX2_cor_drug)) %>%
   tidyr::nest(-n) %>%
   dplyr::group_by(n) %>%
@@ -244,3 +266,83 @@ p +
 out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"
 ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.pdf"),device = "pdf",height = 6,width = 8)
 ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.tiff"),device = "tiff",height = 6,width = 8)
+
+
+
+# point plot --------------------------------------------------------------
+EZH2_CBX2_cor_drug %>%
+  dplyr::arrange(`TARGET PATHWAY`,estimate) %>%
+  dplyr::select(`DRUG NAME`,`TARGET PATHWAY`) %>%
+  unique() -> drug_rank
+EZH2_CBX2_cor_drug %>%
+  dplyr::group_by(`TARGET PATHWAY`) %>%
+  dplyr::mutate(n=n()) %>%
+  dplyr::select(`TARGET PATHWAY`,n) %>%
+  dplyr::arrange(`TARGET PATHWAY`) %>%
+  unique() %>%
+  dplyr::ungroup() -> n_color
+n_color %>%
+  dplyr::mutate(color = ggthemes::gdocs_pal()(nrow(n_color))) %>%
+  dplyr::mutate(n_r=1:nrow(n_color)) %>%
+  dplyr::mutate(y=ifelse(n_r==1,y=n,0)) >>>>>>>>>>>>>>>>>>>>>>>>>>>
+  dplyr::mutate(x=2,y=seq(20,20+3*(nrow(n_color)-1),3)) -> pathway_color
+drug_rank %>%
+  dplyr::left_join(pathway_color,by="TARGET PATHWAY") -> drug_rank
+drug_rank %>%
+  dplyr::select(-`DRUG NAME`) %>%
+  dplyr::distinct() -> text_added
+EZH2_CBX2_cor_drug %>%
+  dplyr::group_by(SYMBOL) %>%
+  dplyr::mutate(sum=sum(estimate)) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(SYMBOL,sum) %>%
+  unique() %>%
+  dplyr::arrange(sum) -> gene_rank
+
+library(ggplot2)
+EZH2_CBX2_cor_drug %>%
+  dplyr::mutate(log10p= -log10(p.value)) %>%
+  ggplot(aes(x=SYMBOL,y=`DRUG NAME`)) +
+  geom_point(aes(size=log10p,color=estimate)) +
+  scale_x_discrete(limits = gene_rank$SYMBOL, expand = c(0.012,0.012)) +
+  scale_y_discrete(limits = drug_rank$`DRUG NAME`, expand = c(0.012,0.012), position = "right") +
+  scale_color_gradient2(
+    name = "Correlation",
+    high = "red",
+    mid = "white",
+    low = "blue"
+  ) +
+  scale_size_continuous(
+    name = "-log10(p value)"
+  ) +
+  geom_text(data = text_added,
+            aes(x=x,y=y,label=`TARGET PATHWAY`),color=text_added$color) +
+  theme(
+    panel.background = element_rect(color = "black", fill = "white", size = 0.1),
+    panel.grid=element_line(colour="grey",linetype="dashed"),
+    panel.grid.major=element_line(colour="grey",linetype="dashed",size=0.2),
+    
+    axis.title = element_blank(),
+    axis.text.x = element_text(size = 9, angle = 90, hjust = 1, vjust = 0.5),
+    axis.text.y = element_text(size = 10, color = drug_rank$color),
+    
+    axis.ticks = element_line(color = "black"),
+    
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 10),
+    # legend.key.width = unit(1,"cm"),
+    # legend.key.heigh = unit(0.3,"cm"),
+    legend.key = element_rect(fill="white",colour = "black")
+  ) + guides(
+    color = guide_colorbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      barheight = 0.5,
+      barwidth = 10
+    )
+  ) -> p
+out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure9"
+ggsave(file.path(out_path,"PPAR_drug_sensiticity.pdf"),device = "pdf",height = 10,width = 4)
+ggsave(file.path(out_path,"PPAR_drug_sensiticity.tiff"),device = "tiff",height = 10,width = 4)
