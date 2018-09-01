@@ -22,7 +22,8 @@ LUAD_IC50_exp <- readr::read_rds(file.path(drug_path,"data_merged","LUAD_cell_li
 drug_info <- readr::read_tsv(file.path(drug_path,"Screened_Compounds.txt")) %>%
   dplyr::rename("DRUG_ID"="DRUG ID")
 
-PPAR_TSG <- readr::read_tsv(file.path(FFL_path,"attribute_fc_tsg_multuiple-source.txt"))
+PPAR_TSG <- readr::read_tsv(file.path(FFL_path,"attribute_fc_tsg_multuiple-source.txt")) %>%
+  dplyr::filter(!SYMBOL %in% c("APOA1","APOA5"))
 
 genelist <- readr::read_tsv(file.path(FFL_path,"attribute_fc_tsg_multuiple-source.txt")) %>%
   .$SYMBOL %>%
@@ -31,10 +32,13 @@ genelist <- readr::read_tsv(file.path(FFL_path,"attribute_fc_tsg_multuiple-sourc
 
 c("EZH2","CBX2") %>%
   bitr(fromType = "SYMBOL", toType = "ENSEMBL",OrgDb = org.Hs.eg.db) -> EZH2_CBX2
+c("E2F1","SOX4") %>%
+  bitr(fromType = "SYMBOL", toType = "ENSEMBL",OrgDb = org.Hs.eg.db) -> E2F1_SOX4
 # data combination --------------------------------------------------------
 
 genelist %>%
   rbind(EZH2_CBX2) %>%
+  rbind(E2F1_SOX4) %>%
   dplyr::rename("ensembl_gene"="ENSEMBL") -> genelist
 
 LUAD_IC50_exp %>%
@@ -61,7 +65,7 @@ LUAD_IC50_exp.druginfo %>%
   dplyr::select(-data) %>%
   dplyr::ungroup() %>%
   tidyr::unnest() %>%
-  dplyr::filter(p.value<=0.05,abs(estimate)>=0.3) %>%
+  dplyr::filter(p.value<=0.05) %>%
   dplyr::inner_join(drug_info,by="DRUG_ID") %>%
   dplyr::select(SYMBOL,`DRUG NAME`,TARGET,`TARGET PATHWAY`,estimate,p.value) -> cor_drug
 
@@ -70,7 +74,7 @@ LUAD_IC50_exp.druginfo %>%
 
 # draw pic ----------------------------------------------------------------
 PPAR_TSG %>% 
-  dplyr::filter(Class == "TSG") %>%
+  dplyr::filter(Class == "PPAR") %>%
   .$SYMBOL -> genelist_to_draw
 
 cor_drug %>%
@@ -277,9 +281,13 @@ p +
 ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.pdf"),device = "pdf",height = 6,width = 8)
 ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.tiff"),device = "tiff",height = 6,width = 8)
 
-
+ggsave(file.path(out_path,"E2F1_SOX4_drug_sensiticity.pdf"),device = "pdf",height = 6,width = 8)
+ggsave(file.path(out_path,"E2F1_SOX4_drug_sensiticity.tiff"),device = "tiff",height = 6,width = 8)
 
 # point plot --------------------------------------------------------------
+EZH2_CBX2_cor_drug %>%
+  dplyr::filter(abs(estimate)>=0.3) -> EZH2_CBX2_cor_drug
+
 EZH2_CBX2_cor_drug %>%
   dplyr::arrange(`TARGET PATHWAY`,estimate) %>%
   dplyr::select(`DRUG NAME`,`TARGET PATHWAY`) %>%
@@ -361,7 +369,7 @@ EZH2_CBX2_cor_drug %>%
       barwidth = 10
     )
   ) -> p;p
-ggsave(file.path(out_path,"PPAR_drug_sensiticity.pdf"),device = "pdf",height = 10,width = 5)
-ggsave(file.path(out_path,"PPAR_drug_sensiticity.tiff"),device = "tiff",height = 10,width = 5)
+ggsave(file.path(out_path,"PPAR_drug_sensiticity.pdf"),device = "pdf",height = 5,width = 5)
+ggsave(file.path(out_path,"PPAR_drug_sensiticity.tiff"),device = "tiff",height = 5,width = 5)
 ggsave(file.path(out_path,"TSG_drug_sensiticity.pdf"),device = "pdf",height = 10,width = 5)
 ggsave(file.path(out_path,"TSG_drug_sensiticity.tiff"),device = "tiff",height = 10,width = 5)
