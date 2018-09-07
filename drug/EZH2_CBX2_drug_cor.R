@@ -74,7 +74,7 @@ LUAD_IC50_exp.druginfo %>%
 
 # draw pic ----------------------------------------------------------------
 PPAR_TSG %>% 
-  dplyr::filter(Class == "PPAR") %>%
+  dplyr::filter(Class == "TSG") %>%
   .$SYMBOL -> genelist_to_draw
 
 cor_drug %>%
