@@ -65,12 +65,12 @@ library(ggplot2)
 genelist_exp %>%
   dplyr::inner_join(genelist_FC,by="gene_id") %>%
   dplyr::arrange(Group) %>%
-  dplyr::mutate(Group=ifelse(Group=="Normal",as.integer(2),as.integer(1))) %>%
+  dplyr::mutate(Group=ifelse(Group=="Normal",as.integer(1),as.integer(2))) %>%
   dplyr::group_by(Group) %>%
   dplyr::mutate(ID=substr(sample,1,4)) -> df
 b <- runif(nrow(df), -0.2, 0.2)
 
-comp_list <- list(c("2","1"))
+comp_list <- list(c("1","2"))
 df %>%
   ggpubr::ggboxplot(x = "Group", y = "log2Exp",
                     color = "Group", palette = "npg", #add = "jitter",
@@ -78,21 +78,21 @@ df %>%
   geom_point(aes(x=as.numeric(Group)+b,y=log2Exp,color=Group)) +
   geom_line(aes(x=as.numeric(Group)+b,y=log2Exp,group=ID),linetype="11",color="grey") +
   scale_color_manual(
-    values = c("#EE6363","#00C5CD")
+    values = c("#00C5CD","#EE6363")
   )+
   ylab("log2(mRNA Exp)") +
   theme(legend.position = "none",
         axis.title.x = element_blank()) +
   facet_wrap( ~ title) +
   # ggpubr::stat_compare_means(label.y = 14,paired = TRUE) +
-  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(12),label = "p.signif") +
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(10),label = "p.signif") +
   scale_x_discrete(breaks = c(1,2),
                      labels = c("Tumor","Normal"),
                      expand = c(0.2,0.2)) -> p;p
 
 
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 5,height = 3)
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.tiff",device = "tiff",width = 5,height = 3)
+ggsave("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 5,height = 3)
+ggsave("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2B.DE_histone_boxplot.tiff",device = "tiff",width = 5,height = 3)
 
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.TP53_boxplot.pdf",device = "pdf",width = 4,height = 5)
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary/Figure S1.cell_cycle_genes_boxplot.pdf",device = "pdf",width = 8,height = 5)
