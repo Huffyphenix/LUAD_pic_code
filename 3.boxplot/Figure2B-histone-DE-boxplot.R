@@ -1,7 +1,7 @@
 
 # gene list ---------------------------------------------------------------
 .libPaths("E:/library")
-genelist <- c("CBX2","EZH2","UHRF1")
+genelist <- c("CBX2","EZH2")
 genelist <- c("TP53")
 genelist <- c("E2F1","E2F2","E2F3","E2F5","SOX4","NME2","TP63","TP53","CBX7")
 genelist <- c("CCNA2","CCNB1",
@@ -77,7 +77,10 @@ df %>%
                     facet.by = "title") +
   geom_point(aes(x=as.numeric(Group)+b,y=log2Exp,color=Group)) +
   geom_line(aes(x=as.numeric(Group)+b,y=log2Exp,group=ID),linetype="11",color="grey") +
-  ylab("log2(Exp)") +
+  scale_color_manual(
+    values = c("#EE6363","#00C5CD")
+  )+
+  ylab("log2(mRNA Exp)") +
   theme(legend.position = "none",
         axis.title.x = element_blank()) +
   facet_wrap( ~ title) +
