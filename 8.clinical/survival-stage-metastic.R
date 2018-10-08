@@ -1120,13 +1120,13 @@ mRNA_exp_normal.gather.filter %>%
                     color = "metastasis", palette = "npg", add = "jitter",
                     facet.by = "symbol") +
   ylab("log2 (mRNA exp)") +
-  scale_color_manual(values = c("#039BE5","#F08080","#f44336")) +
+  scale_color_manual(values = c("#00C5CD","#F08080","#f44336")) +
   scale_x_discrete(breaks=c("Normal","m0","m1"),
                    labels=c("Normal","DMF","DM")) +
   theme(legend.position = "none",
         axis.title.x = element_blank()) +
   # ggpubr::stat_compare_means(label.y = 15) +
-  ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label = "p.signif",label.y = c(13,14,15))->p;p
+  ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label = "p.signif",label.y = c(10,11))->p;p
 ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.pdf"),p,width = 5,height = 3)
 ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.tiff"),p,width = 5,height = 3)
 
