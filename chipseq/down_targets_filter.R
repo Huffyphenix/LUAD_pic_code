@@ -1,5 +1,10 @@
 # TSG and oncogene statistic ----------------------------------------------
+# E zhou ----
 TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+
+# HUST ----
+TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+
 TSG <- readr::read_tsv(file.path(TSG_onco_data_path,"TSG.source_clear(at least one evidence-no confuse).tsv")) %>%
   dplyr::mutate(hallmark="TSG")
 oncogene <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene.source_clear(at least one evidence-no confuse).tsv")) %>%
@@ -15,7 +20,11 @@ TSG %>%
 
 
 # EZH2 CBX2 downregulated targets -----------------------------------------
+# E zhou ----
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+
+# HUST ----
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 all_EHZ2_CBX2_common_targets.DE_info <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
 
@@ -27,13 +36,20 @@ all_EHZ2_CBX2_common_targets.DE_info %>%
 TSG %>%
   dplyr::filter(SYMBOL %in% all_EHZ2_CBX2_common_targets.Down$gene_id.x) -> EZH2_CBX2_targets_TSG
 
+# E zhou ----
 result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
+# HUST ----
+result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
 EZH2_CBX2_targets_TSG %>%
   readr::write_tsv(file.path(result_path,"Figure4/Figure5","EZH2-CBX2_down_targets_TSG.tsv"))
 
 # CNV analysis ------------------------------------------------------------
 ### load cnv data ----
 data_path<- "H:/data/GSCALite/TCGA/cnv"
+data_path<- "G:/data/GSCALite/TCGA/cnv"
+
 luad_cnv <- readr::read_rds(file.path(data_path,"pancan34_cnv_percent.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest()
@@ -59,18 +75,20 @@ cnv_plot_ready %>%
   scale_fill_manual(values=c("#FF0000", "#0000FF"))+
   scale_x_discrete(limits = symbol_rank$symbol) +
   ylab("Percent (%)") +
+  xlab("TSGs targeted by CBX2 and EZH2") +
+  coord_flip() +
   theme(
     panel.background = element_blank(),
     panel.border = element_rect(fill='transparent',colour = "black"),
-    legend.position = c(0.3,0.9),
+    legend.position = c(0.7,0.2),
     legend.background = element_blank(),
-    axis.title.x = element_blank(),
+    # axis.title.x = element_blank(),
     axis.title = element_text(size=10),
-    axis.text = element_text(size = 8),
-    axis.text.x = element_text(angle = 30,hjust = 1)
+    axis.text = element_text(colour = "black")
+    # axis.text.x = element_text(angle = 30,hjust = 1)
   ) ->p;p
-ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.pdf"),width = 4,height = 3)
-ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.tiff"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.pdf"),width = 3,height = 4)
+ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.tiff"),width = 3,height = 4)
 
 # DNA methylation ---------------------------------------------------------
 ### load methy data ----
