@@ -12,7 +12,13 @@ data_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942
 result_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
 
 immune_histone<-read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",header = T) %>%
-  dplyr::mutate(sample_type=ifelse(sample_type=="T","1Tumor","2Normal"))
+  dplyr::mutate(sample_type=ifelse(sample_type=="T","Tumor","Normal")) %>%
+  dplyr::mutate(EZH2_cytoplsm=ifelse(is.na(EZH2_cytoplsm),0,EZH2_cytoplsm)) %>%
+  dplyr::mutate(EZH2_karyon=ifelse(is.na(EZH2_karyon),0,EZH2_karyon)) %>%
+  dplyr::mutate(CBX2_cytoplsm=ifelse(is.na(CBX2_cytoplsm),0,CBX2_cytoplsm)) %>%
+  dplyr::mutate(CBX2_karyon=ifelse(is.na(CBX2_karyon),0,CBX2_karyon)) %>%
+  dplyr::mutate(EZH2=EZH2_cytoplsm+EZH2_karyon) %>%
+  dplyr::mutate(CBX2=CBX2_cytoplsm+CBX2_karyon)
 hist(immune_histone$EZH2_karyon)
 
 # Preleminary test to check the test assumptions
@@ -25,9 +31,9 @@ shapiro.test(immune_histone$CBX2_karyon) # p-value < 0.05, don't follow a normal
 #correlation analysis
 #pearson 
 immune_histone %>%
-  dplyr::filter(sample_type=="1Tumor") -> immune_histone.T
+  dplyr::filter(sample_type=="Tumor") -> immune_histone.T
 immune_histone %>%
-  dplyr::filter(sample_type=="2Normal") -> immune_histone.N
+  dplyr::filter(sample_type=="Normal") -> immune_histone.N
 
 human_read <- function(.x){
   if (.x > 0.1) {
@@ -40,7 +46,7 @@ human_read <- function(.x){
 }
 
 broom::tidy(
-    cor.test(immune_histone.T$CBX2_cytoplsm,immune_histone.T$EZH2_cytoplsm,method = "kendall")) %>%
+    cor.test(immune_histone.T$CBX2,immune_histone.T$EZH2,method = "kendall")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
@@ -57,7 +63,7 @@ broom::tidy(
         latex2exp::TeX(glue::glue("r = {.y}, p = {.x}, n = {.z}"))
       }
     }
-  )) ->CBX2_EZH2_cytoplsm.T
+  )) ->CBX2_EZH2.T
 broom::tidy(
   cor.test(immune_histone.N$CBX2_cytoplsm,immune_histone.N$EZH2_cytoplsm,method = "kendall")) %>%
   dplyr::as_tibble() %>%
@@ -300,9 +306,10 @@ ggsave(filename = "immune_histone-stage.pdf", plot = p, device = "pdf", path = "
 
 ##########################Tumor and Tumor adjcent
 immune_histone %>%
+  dplyr::select(-c(EZH2_cytoplsm,EZH2_karyon,CBX2_cytoplsm,CBX2_karyon)) %>%
   tidyr::gather(-c("sample","sample_type","stage"),key="group",value="PositiveRateXStainingIntensity") %>%
   dplyr::mutate(sample_type=as.character(sample_type)) %>%
-  dplyr::mutate(sample_type=ifelse(sample_type=="2Normal","2","1")) %>%
+  dplyr::mutate(sample_type=ifelse(sample_type=="Normal","1","2")) %>%
   dplyr::mutate(group=sub(pattern = "_",replacement = " ",group)) %>%
   dplyr::arrange(sample_type) %>%
   dplyr::group_by(group)->df
@@ -313,15 +320,18 @@ df %>%
                     color = "sample_type", pallete = "npg",add = "jitter",
                     facet.by = "group") +
   theme(legend.position = "none") +
-  scale_x_discrete(breaks=c("2","1"),
+  scale_x_discrete(breaks=c("1","2"),
                    labels=c("Normal","Tumor")) +
+  scale_color_manual(
+    values = c("#00C5CD","#EE6363")
+  )+
   theme(
     axis.title.x = element_blank()
   ) +
   ylab("PositiveRate X StainingIntensity") +
   scale_y_continuous(limits = c(0,2.5)) +
   # ggpubr::stat_compare_means(label.y = 2.3,method = "wilcox.test",label = "p.format") +
-  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(2.2),label = "p.signif") ->p;p
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(2.5),label = "p.signif") ->p;p
 ggsave(filename = "immune_histone.tiff", plot = p, device = "tiff", path = "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
        width = 4, height = 3)
 ggsave(filename = "immune_histone.pdf", plot = p, device = "pdf", path = "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
