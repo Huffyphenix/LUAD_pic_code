@@ -1,8 +1,14 @@
 library(magrittr)
 library(ggplot2)
+
 # data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+# E Zhou ------
 data_path<- "H:/data/GSCALite/TCGA/cnv"
 result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
+# HUST ------
+data_path<- "G:/data/GSCALite/TCGA/cnv"
+result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # gene list 1 -------------------------------------------------------------
 
@@ -23,6 +29,8 @@ genelist <- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv"))
 
 # gene list 3 -------------------------------------------------------------
 enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+enrich_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+
 ppar_relate <- c("PPAR signaling pathway")
 genelist <- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv")) %>%
   dplyr::filter(Description %in% ppar_relate) %>%
@@ -104,24 +112,36 @@ plot_ready %>%
   dplyr::filter(CNV > 0.05) -> more_than5_percent
 
 plot_ready %>%
-  dplyr::filter(symbol %in% more_than5_percent$symbol) %>%
+  dplyr::mutate(CNV=ifelse(type=="Deletion",-CNV,CNV)) %>%
+  dplyr::group_by(symbol) %>%
+  dplyr::mutate(CNV_sum=sum(CNV)) %>%
+  dplyr::select(symbol,CNV_sum) %>%
+  unique() %>%
+  dplyr::arrange(CNV_sum) %>%
+  dplyr::ungroup() -> symbol_rank
+plot_ready %>%
+  # dplyr::filter(symbol %in% more_than5_percent$symbol) %>%
   ggplot(aes(x=symbol,y=Percent,fill=type)) +
   geom_col(position = "stack",width = 0.5) +
   guides(fill=guide_legend(title = "")) +
   scale_fill_manual(values=c("#FF0000", "#0000FF"))+
-  ylab("Percent (%)") +
+  ylab("CNV Percent (%)") +
+  xlab("Downregulated PPAR signaling genes") +
+  scale_x_discrete(limit = symbol_rank$symbol) +
+  coord_flip() +
   theme(
     panel.background = element_blank(),
     panel.border = element_rect(fill='transparent',colour = "black"),
-    legend.position = c(0.3,0.9),
+    legend.position = c(0.6,0.3),
     legend.background = element_blank(),
-    axis.title.x = element_blank(),
+    # axis.title.x = element_blank(),
     axis.title = element_text(size=14),
-    axis.text = element_text(size = 12)
+    axis.text = element_text(size = 12,color = "black")
+    # axis.text.x = element_text(angle = 30,hjust = 1)
   ) ->p;p
 ggsave(file.path(result_path,"Figure4/Figure5","Down_common_targets.CNV-percent(del_5).pdf"),width = 4,height = 3)
 ggsave(file.path(result_path,"Figure4/Figure5","Down_common_targets.CNV-percent(del_5).tiff"),width = 4,height = 3)
 ggsave(file.path(result_path,"Figure1","cellcycle.CNV-percent(Ampl_5).pdf"),width = 4,height = 3)
 ggsave(file.path(result_path,"Figure1","cellcycle.CNV-percent(Ampl_5).tiff"),width = 4,height = 3)
-ggsave(file.path(result_path,"Figure1","ppar.CNV-percent(Ampl_5).pdf"),width = 4,height = 3)
-ggsave(file.path(result_path,"Figure1","ppar.CNV-percent(Ampl_5).tiff"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure1","ppar.CNV-percent(deletion).pdf"),width = 3,height = 4)
+ggsave(file.path(result_path,"Figure1","ppar.CNV-percent(deletion).tiff"),width = 3,height = 4)
