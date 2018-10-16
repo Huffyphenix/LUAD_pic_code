@@ -333,8 +333,8 @@ df %>%
   # ggpubr::stat_compare_means(label.y = 2.3,method = "wilcox.test",label = "p.format") +
   ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(2.5),label = "p.signif") ->p;p
 ggsave(filename = "immune_histone.tiff", plot = p, device = "tiff", path = "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
-       width = 4, height = 3)
+       width = 5, height = 3)
 ggsave(filename = "immune_histone.pdf", plot = p, device = "pdf", path = "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",
-       width = 4, height = 3)
+       width = 5, height = 3)
 
 save.image(file = file.path(result_path,"immune_histone.rdata"))
