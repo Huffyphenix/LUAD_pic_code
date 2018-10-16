@@ -87,7 +87,7 @@ df %>%
   # ggpubr::stat_compare_means(label.y = 14,paired = TRUE) +
   ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(10),label = "p.signif") +
   scale_x_discrete(breaks = c(1,2),
-                     labels = c("Tumor","Normal"),
+                     labels = c("Normal","Tumor"),
                      expand = c(0.2,0.2)) -> p;p
 
 
