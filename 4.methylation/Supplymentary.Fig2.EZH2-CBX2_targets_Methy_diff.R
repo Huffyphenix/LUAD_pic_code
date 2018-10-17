@@ -71,46 +71,54 @@ methy %>%
 methy_cor %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest() %>%
-  dplyr::inner_join(tcga_geneid,by="symbol") %>%
+  dplyr::full_join(tcga_geneid,by="symbol") %>%
   # dplyr::filter(entrez_id %in% genelist$ENTREZID) %>%
   dplyr::filter(symbol %in% genelist) -> LUAD_gene_methy_cor
 
-LUAD_gene_methy %>%
-  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  readr::write_tsv(file.path(out_path_sup,"correlation-table/cellcycle_pathway_methy_diff_cor.tsv"))
+# LUAD_gene_methy %>%
+#   dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
+#   readr::write_tsv(file.path(out_path_sup,"correlation-table/ppar_pathway_methy_diff_cor.tsv"))
 
 ### For downregulate genes ------
-LUAD_gene_methy %>%
-  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  dplyr::filter(spm<=-0.3 & diff>0) %>%
-  readr::write_tsv(file.path(out_path_fig,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
+
+# LUAD_gene_methy %>%
+#   dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
+#   dplyr::filter(spm<=-0.3 & diff>0) %>%
+#   readr::write_tsv(file.path(out_path_fig,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
 
 LUAD_gene_methy %>%
-  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
+  dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
   dplyr::filter(spm<=-0.3 & diff>0) -> LUAD_gene_methy.sig_gene
 
-# draw pic ----------------------------------------------------------------
-LUAD_gene_methy_cor %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
-LUAD_gene_methy_cor %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::rename("value"="spm") %>%
-  dplyr::mutate(group="Cor.") -> LUAD_gene_methy_cor.pic
 LUAD_gene_methy %>%
-  dplyr::rename("value"="diff","logfdr" = "fdr") %>%
-  dplyr::mutate(group="Diff. (T - N)") %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::select(-direction) -> LUAD_gene_methy.pic
+  dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
+  dplyr::select(symbol,diff,spm) %>%
+  tidyr::gather(-symbol,key="group",value="value") %>%
+  dplyr::mutate(value=ifelse(is.na(value),0,signif(value,2))) %>%
+  dplyr::mutate(label=ifelse(value==0,"NS",value)) %>%
+  dplyr::mutate(group = ifelse(group=="diff","Diff. (T - N)","Cor.")) %>%
+  dplyr::filter(! symbol %in% c("APOA1","APOA5"))-> targets_methy
+
+# draw pic ----------------------------------------------------------------
+targets_methy %>%
+  dplyr::filter(group == "Cor.") %>%
+  dplyr::arrange(value) %>% .$symbol -> cor_rank.genesymbol
+
+# LUAD_gene_methy_cor %>%
+#   dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+#   dplyr::rename("value"="spm") %>%
+#   dplyr::mutate(group="Cor.") -> LUAD_gene_methy_cor.pic
+# LUAD_gene_methy %>%
+#   dplyr::rename("value"="diff","logfdr" = "fdr") %>%
+#   dplyr::mutate(group="Diff. (T - N)") %>%
+#   dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+#   dplyr::select(-direction) -> LUAD_gene_methy.pic
 
 library(ggplot2)
 library(grid)
 CPCOLS <- c("red", "white", "#1C86EE")
 
-LUAD_gene_methy_cor.pic %>%
-  dplyr::select(-entrez_id) %>%
-  rbind(LUAD_gene_methy.pic) %>%
-  dplyr::mutate(value=signif(value,3)) %>%
+targets_methy %>%
   ggplot(aes(x=group,y=symbol)) +
   geom_tile(aes(fill = value),color="white") +
   scale_y_discrete(limit = cor_rank.genesymbol) +
@@ -123,8 +131,8 @@ LUAD_gene_methy_cor.pic %>%
     mid = CPCOLS[2],
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
-  geom_text(aes(label=value)) +
-  ylab("Symbol") +
+  geom_text(aes(label=label)) +
+  ylab("PPAR signaling genes targeted by CBX2 or/and EZH2") +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
@@ -140,8 +148,8 @@ LUAD_gene_methy_cor.pic %>%
     legend.key = element_rect(fill = "white", colour = "black") ,
     plot.title = element_text(size=20)
   ) -> p;p
-ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
-ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 4)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)
 
 ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
 ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)
