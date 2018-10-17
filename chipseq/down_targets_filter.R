@@ -3,7 +3,7 @@
 TSG_onco_data_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/TS and oncogene source"
 
 # HUST ----
-TSG_onco_data_path <- "S:/??????/?业募?????/ENCODE-TCGA-LUAD/TS and oncogene source"
+TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
 
 TSG <- readr::read_tsv(file.path(TSG_onco_data_path,"TSG.source_clear(at least one evidence-no confuse).tsv")) %>%
   dplyr::mutate(hallmark="TSG")
@@ -24,7 +24,7 @@ TSG %>%
 chip_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 # HUST ----
-chip_path <- "S:/??????/?业募?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 all_EHZ2_CBX2_common_targets.DE_info <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
 
@@ -40,7 +40,7 @@ TSG %>%
 result_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/Figure/"
 
 # HUST ----
-result_path <- "S:/??????/?业募?????/ENCODE-TCGA-LUAD/Figure/"
+result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 EZH2_CBX2_targets_TSG %>%
   readr::write_tsv(file.path(result_path,"Figure4/Figure5","EZH2-CBX2_down_targets_TSG.tsv"))
@@ -96,7 +96,12 @@ ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.tif
 
 # DNA methylation ---------------------------------------------------------
 ### load methy data ----
-methy_data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2????/?谆???????/"
+# E zhou path
+methy_data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
+
+# HUST path 
+methy_data_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
+
 methy <- readr::read_rds(file.path(methy_data_path,"pan33_allgene_methy_diff.simplification.rds.gz"))
 methy_cor <- readr::read_rds(file.path(methy_data_path,"pancan34_all_gene_exp-cor-meth.rds.gz"))
 
@@ -112,11 +117,17 @@ methy_cor %>%
   dplyr::filter(symbol %in% EZH2_CBX2_targets_TSG$SYMBOL) -> targets_methy_cor
 
 targets_methy_diff %>%
-  dplyr::full_join(targets_methy_cor,by="symbol") -> 
+  dplyr::full_join(targets_methy_cor,by="symbol") %>%
+  dplyr::select(symbol,diff,spm) %>%
+  tidyr::gather(-symbol,key="group",value="value") %>%
+  dplyr::mutate(value=ifelse(is.na(value),0,signif(value,2))) %>%
+  dplyr::mutate(label=ifelse(value==0,"NS",value)) %>%
+  dplyr::mutate(group = ifelse(group=="diff","Diff. (T - N)","Cor."))-> targets_methy  # set NA value as 0
 
 ### plot ----
 targets_methy %>%
-  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
+  dplyr::filter(group == "spm") %>%
+  dplyr::arrange(value) %>% .$symbol -> cor_rank.genesymbol
 
 targets_methy_cor %>%
   dplyr::rename("value"="spm") %>%
@@ -131,9 +142,7 @@ library(ggplot2)
 library(grid)
 CPCOLS <- c("red", "white", "#1C86EE")
 
-targets_methy_cor.pic %>%
-  rbind(targets_methy_diff.pic) %>%
-  dplyr::mutate(value=signif(value,3)) %>%
+targets_methy %>%
   ggplot(aes(x=group,y=symbol)) +
   geom_tile(aes(fill = value),color="white") +
   scale_y_discrete(limit = cor_rank.genesymbol) +
@@ -146,7 +155,7 @@ targets_methy_cor.pic %>%
     mid = CPCOLS[2],
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
-  geom_text(aes(label=value)) +
+  geom_text(aes(label=label)) +
   ylab("Symbol") +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
