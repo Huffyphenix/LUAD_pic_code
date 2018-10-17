@@ -126,17 +126,17 @@ targets_methy_diff %>%
 
 ### plot ----
 targets_methy %>%
-  dplyr::filter(group == "spm") %>%
+  dplyr::filter(group == "Cor.") %>%
   dplyr::arrange(value) %>% .$symbol -> cor_rank.genesymbol
 
-targets_methy_cor %>%
-  dplyr::rename("value"="spm") %>%
-  dplyr::mutate(group="Cor.") -> targets_methy_cor.pic
-
-targets_methy_diff %>%
-  dplyr::rename("value"="diff","logfdr" = "fdr") %>%
-  dplyr::mutate(group="Diff. (T - N)") %>%
-  dplyr::select(-direction) -> targets_methy_diff.pic
+# targets_methy_cor %>%
+#   dplyr::rename("value"="spm") %>%
+#   dplyr::mutate(group="Cor.") -> targets_methy_cor.pic
+# 
+# targets_methy_diff %>%
+#   dplyr::rename("value"="diff","logfdr" = "fdr") %>%
+#   dplyr::mutate(group="Diff. (T - N)") %>%
+#   dplyr::select(-direction) -> targets_methy_diff.pic
 
 library(ggplot2)
 library(grid)
@@ -156,7 +156,7 @@ targets_methy %>%
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
   geom_text(aes(label=label)) +
-  ylab("Symbol") +
+  ylab("TSGs targeted by CBX2 and EZH2") +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
@@ -165,6 +165,7 @@ targets_methy %>%
       linetype = "dashed",
       size = 0.2),
     axis.text.x = element_text(size = 10),
+    axis.text = element_text(colour = "black"),
     axis.title.x = element_blank(),
     axis.text.y = element_text(size = 10),
     legend.text = element_text(size = 10),
