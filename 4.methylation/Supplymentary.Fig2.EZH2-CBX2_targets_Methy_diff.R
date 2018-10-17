@@ -5,21 +5,33 @@ library(magrittr,ggplot2)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 # data path ---------------------------------------------------------------
-
+# E zhou path
 methy_data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
 genelist_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets"
 data_path<- "H:/data"
 
+# HUST path
+methy_data_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
+genelist_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets"
+data_path<- "G:/data"
+
+
 # output data -------------------------------------------------------------
+# E ZHou path
 out_path_sup <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
 out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
+# HUST path
+out_path_sup <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
+out_path_fig <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info")) %>%
   dplyr::filter(Class == "Down") %>%
   .$gene_id.x
-genelist <- readr::read_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
+genelist <- readr::read_tsv(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
   dplyr::filter(Description %in% "PPAR signaling pathway")%>%
   .$SYMBOL
 cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
@@ -45,7 +57,8 @@ methy_cor <- readr::read_rds(file.path(methy_data_path,"pancan34_all_gene_exp-co
 
 tcga_geneid <- readr::read_tsv("F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt") %>%
   dplyr::rename("symbol"="gene_id")
-
+tcga_geneid <- readr::read_tsv("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt") %>%
+  dplyr::rename("symbol"="gene_id")
 # gene list data ----------------------------------------------------------
 
 methy %>%
