@@ -1,0 +1,40 @@
+INFO [2018-06-14 15:19:41] [[1]]
+INFO [2018-06-14 15:19:41] list(CBX2_All = CBX2_targets_proteincoding, EZH2_All = EZH2_targets_proteincoding, 
+INFO [2018-06-14 15:19:41]     CBX2_Co = CBX2_targets_proteincoding_inoverlappeak, EZH2_Co = EZH2_targets_proteincoding_inoverlappeak)
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $filename
+INFO [2018-06-14 15:19:41] NULL
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $col
+INFO [2018-06-14 15:19:41] RColorBrewer::brewer.pal(6, "Paired")[c(6, 2, 5, 1)]
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $cat.col
+INFO [2018-06-14 15:19:41] RColorBrewer::brewer.pal(6, "Paired")[c(6, 2, 5, 1)]
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $scaled
+INFO [2018-06-14 15:19:41] [1] TRUE
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $ext.text
+INFO [2018-06-14 15:19:41] [1] TRUE
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $ext.line.lwd
+INFO [2018-06-14 15:19:41] [1] 2
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $ext.dist
+INFO [2018-06-14 15:19:41] -0.15
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $ext.length
+INFO [2018-06-14 15:19:41] [1] 0.9
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $ext.pos
+INFO [2018-06-14 15:19:41] -4
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $inverted
+INFO [2018-06-14 15:19:41] [1] TRUE
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $cex
+INFO [2018-06-14 15:19:41] [1] 2.5
+INFO [2018-06-14 15:19:41] 
+INFO [2018-06-14 15:19:41] $cat.cex
+INFO [2018-06-14 15:19:41] [1] 2.5
+INFO [2018-06-14 15:19:41] 
