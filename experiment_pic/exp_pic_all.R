@@ -70,14 +70,16 @@ geom_bar(stat="identity", color="black",
     axis.text.y = element_text(size = 15,colour = "black"),
     axis.ticks.x = element_blank(),
     axis.title.y = element_text(size = 15, colour = "black"),
-    legend.position = c(0.4,0.8),
+    legend.position = c(0.2,0.89),
     legend.background = element_blank(),
     legend.title = element_blank(),
     legend.text = element_text(size = 12),
+    legend.key.height = unit(0.15,"inches"),
+    legend.key.width = unit(0.15,"inches"),
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 15, color = "black") #分面字体
   ) +
-  ylab("%input")
+  ylab("% of input")
 
 ggsave(file.path(result_path,"CLDN11_RBMS3_CHIP.pdf"),width = 4,height = 3,device = "pdf")
 ggsave(file.path(result_path,"CLDN11_RBMS3_CHIP.tiff"),width = 4,height = 3,device = "tiff")
@@ -108,15 +110,17 @@ EDU_summary %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) -> EDU_summary
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(x="Edu")-> EDU_summary
 
 # ggplot
 ggplot(EDU_summary, aes(x=group, y=Relative_mRNA_level, fill=group)) +
   geom_bar(stat="identity", color="black",
-           position=position_dodge(), width = 0.5) +
+           position=position_dodge()) +
   geom_errorbar(aes(ymin=Relative_mRNA_level-sd, ymax=Relative_mRNA_level+sd), width=.2,
                 position=position_dodge(.9)) +
-  geom_text(aes(y = Relative_mRNA_level+sd+0.5, label=p_labe)) +
+  facet_wrap(~x,strip.position = "bottom") +
+  geom_text(aes(y = Relative_mRNA_level+sd+1, label=p_labe),size=5) +
   # facet_wrap( ~ targets) +
   # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
   theme_classic() +
@@ -130,18 +134,105 @@ ggplot(EDU_summary, aes(x=group, y=Relative_mRNA_level, fill=group)) +
     axis.title.y = element_text(size = 15, colour = "black"),
     legend.position = "right",
     legend.title = element_blank(),
-    legend.text = element_text(colour = "black",size = 12)
+    legend.text = element_text(colour = "black",size = 12),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size = 15)
   ) +
-  ylab("EdU positive cells(%)")
+  ylab(paste("EdU positive", "cells(%)",sep = "\n"))
 
 ggsave(file.path(result_path,"EDU_siCBX-EZH2.pdf"),width = 4,height = 2,device = "pdf")
 ggsave(file.path(result_path,"EDU_siCBX-EZH2.tiff"),width = 4,height = 2,device = "tiff")
 
+##################################################
+### mirna EDU
+mirna_EDU <- readr::read_tsv(file.path(data_path,"11.mirna_edu.txt")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(x="Edu")
+
+
+# ggplot
+ggplot(mirna_EDU, aes(x=mimics, y=mean, fill=mimics)) +
+  geom_bar(stat="identity", color="black",
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~ x, strip.position = "bottom") +
+  geom_text(aes(y = mean+sd+5, label=p_labe)) +
+  ylim(0,60)+
+  # facet_wrap( ~ targets) +
+  # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
+  theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank() ,
+    axis.ticks.x = element_blank() ,
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 12, colour = "black"),
+    legend.position = c(0.25,0.9),
+    legend.title = element_blank(),
+    legend.text = element_text(colour = "black",size = 8),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size=12),
+    legend.key.height = unit(0.1,"inches"),
+    legend.key.width = unit(0.1,"inches"),
+    legend.background = element_blank()
+  ) +
+  ylab(paste("EdU positive", "cells(%)",sep="\n"))
+
+
+ggsave(file.path(result_path,"EDU_mirna.pdf"),width = 2.5,height = 2.5,device = "pdf")
+ggsave(file.path(result_path,"EDU_mirna.tiff"),width = 2.5,height = 2.5,device = "tiff")
+
+##################################################
+### mirna invasion
+mirna_invasion <- readr::read_tsv(file.path(data_path,"13.mirna_invasion.txt"))%>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(x="Invasion")
+
+# ggplot
+ggplot(mirna_invasion, aes(x=mimics, y=mean, fill=mimics)) +
+  geom_bar(stat="identity", color="black",
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~ x, strip.position = "bottom") +
+  geom_text(aes(y = mean+sd+10, label=p_labe)) +
+  ylim(0,150)+
+  # facet_wrap( ~ targets) +
+  # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
+  theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank() ,
+    axis.ticks.x = element_blank() ,
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 12, colour = "black"),
+    legend.position = c(0.25,0.9),
+    legend.title = element_blank(),
+    legend.text = element_text(colour = "black",size = 8),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size=12),
+    legend.key.height = unit(0.1,"inches"),
+    legend.key.width = unit(0.1,"inches"),
+    legend.background = element_blank()
+  ) +
+  ylab(paste("Cells invasion", "(% of Control)",sep="\n"))
+
+ggsave(file.path(result_path,"invasion_mirna.pdf"),width = 2.5,height = 2.5,device = "pdf")
+ggsave(file.path(result_path,"invasion_mirna.tiff"),width = 2.5,height = 2.5,device = "tiff")
 
 ##################################################
 ### CBX2 and EZH2 siRNA invasion
 CBX2_invasion <- readr::read_tsv(file.path(data_path,"6. CBX2-EZH2-invasion.txt")) %>%
-  tidyr::gather(key = "group",value="invasion")
+  tidyr::gather(key = "group",value="invasion") 
 
 data_summary(CBX2_invasion,varname = "invasion",groupnames = "group") -> CBX2_invasion_summary
 
@@ -159,38 +250,41 @@ CBX2_invasion_summary %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) -> CBX2_invasion_summary
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(x="Invasion")-> CBX2_invasion_summary
 
 # ggplot
 ggplot(CBX2_invasion_summary, aes(x=group, y=invasion, fill=group)) +
   geom_bar(stat="identity", color="black",
-           position=position_dodge(), width = 0.5) +
+           position=position_dodge()) +
   geom_errorbar(aes(ymin=invasion-sd, ymax=invasion+sd), width=.2,
                 position=position_dodge(.9)) +
-  geom_text(aes(y = invasion+sd+0.01, label=p_labe)) +
+  facet_wrap(~ x, strip.position = "bottom") +
+  geom_text(aes(y = invasion+sd+5, label=p_labe), size = 5) +
+  # ylim(0,1.5)+
   # facet_wrap( ~ targets) +
   # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
   theme_classic() +
-  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
-                    labels = c("Control", "siCBX2-1", "siCBX2-2","siEZH2-1","siEZH2-2")) +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
   theme(
     axis.title.x = element_blank(),
     axis.text.x = element_blank() ,
     axis.ticks.x = element_blank() ,
-    axis.text = element_text(color = "black",size = 12),
-    axis.title.y = element_text(size = 15, colour = "black"),
+    axis.text = element_text(color = "black",size = 8),
+    axis.title.y = element_text(size = 12, colour = "black"),
     legend.position = "right",
-    legend.background = element_blank(),
-    # legend.direction = "horizontal",
     legend.title = element_blank(),
-    legend.text = element_text(colour = "black",size = 10),
-    legend.key.width=unit(0.15,"inches"),  # legend size
-    legend.key.height=unit(0.15,"inches")
-  ) +
-  ylab("Flod of invasion")
+    legend.text = element_text(colour = "black",size = 12),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size=12),
+    # legend.key.height = unit(0.15,"inches"),
+    # legend.key.width = unit(0.15,"inches"),
+    legend.background = element_blank()
+  )  +
+  ylab(paste("Cells invasion", "(% of Control)",sep="\n"))
 
-ggsave(file.path(result_path,"invasion_siCBX-EZH2.pdf"),width = 3.5,height = 2,device = "pdf")
-ggsave(file.path(result_path,"invasion_siCBX-EZH2.tiff"),width = 3.5,height = 2,device = "tiff")
+ggsave(file.path(result_path,"invasion_siCBX-EZH2.pdf"),width = 3,height = 2,device = "pdf")
+ggsave(file.path(result_path,"invasion_siCBX-EZH2.tiff"),width = 3,height = 2,device = "tiff")
 
 ##################################################
 ### CBX2 and EZH2 siRNA Ecell variability
@@ -212,20 +306,27 @@ CBX2_viability_bar %>%
 
 # ggplot
 ## bar plot
-ggplot(CBX2_viability_summary, aes(x=time, y=viability, fill = siRNA)) + 
+ggplot(CBX2_viability_summary, aes(x=siRNA, y=viability, fill = siRNA)) + 
   geom_bar(stat="identity", color="black",
            position=position_dodge())  +
   geom_errorbar(aes(ymin=viability-sd, ymax=viability+sd), width=.2,
                 position=position_dodge(.9)) +
-  geom_text(aes(label=p_labe)) +theme_classic() +
-  scale_fill_manual(values=c("black", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
-                    labels = c("Control", "siCBX2-1", "siCBX2-2","siEZH2-1","siEZH2-2")) +
+  facet_wrap(~time,strip.position = "bottom",nrow=1) +
+  geom_text(aes(y=viability+sd+0.1,label=p_labe),size=5) +theme_classic() +
+  scale_fill_manual(values=c("black", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
   theme(
     axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
     axis.text = element_text(color = "black",size = 12),
     axis.title.y = element_text(size = 15, colour = "black"),
     legend.position = "right",
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    # legend.key.width=unit(0.15,"inches"),  # legend size
+    # legend.key.height=unit(0.15,"inches"),
+    strip.text = element_text(size = 15),
+    strip.background = element_rect(colour = "white")
   ) +
   ylab("OD 450 nm")
 ggsave(file.path(result_path,"viability_siCBX-EZH2_barplot-2.pdf"),width = 7,height = 3,device = "pdf")
@@ -246,11 +347,146 @@ ggplot(CBX2_viability_summary, aes(x=time, y=viability, color=siRNA)) +
     axis.title.y = element_text(color = "black", size = 8),
     legend.position = "right",
     legend.title = element_blank(),
+    legend.key.width=unit(0.15,"inches"),  # legend size
+    legend.key.height=unit(0.15,"inches"),
     axis.ticks = element_blank()
   )+
   ylab("OD 450 nm")
 
-ggsave(file.path(result_path,"viability_siCBX-EZH2_brokenline.pdf"),width = 3,height = 2,device = "pdf")
+ggsave(file.path(result_path,"viability_siCBX-EZH2_brokenline.pdf"),width = 4,height = 2,device = "pdf")
+
+##################################################
+### TF siRNA Ecell variability
+TF_viability_bar <- readr::read_tsv(file.path(data_path,"10. TF_viability_data.txt")) %>%
+  tidyr::gather(-siRNA,key = "time",value="viability") 
+TF_viability_SD <- readr::read_tsv(file.path(data_path,"10. TF_viability_sd.txt")) %>%
+  tidyr::gather(-siRNA,key = "time",value="sd") 
+TF_viability_P <- readr::read_tsv(file.path(data_path,"10. TF_viability_p.txt")) %>%
+  tidyr::gather(-siRNA,key = "time",value="p")
+
+TF_viability_bar %>%
+  dplyr::left_join(TF_viability_SD,by=c("siRNA","time")) %>%
+  dplyr::left_join(TF_viability_P,by=c("siRNA","time")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) -> TF_viability_summary
+
+# ggplot
+## bar plot
+TF_viability_summary%>%
+  dplyr::filter(! siRNA %in% c("siE2F3-1","siE2F3-2")) %>%
+  ggplot(aes(x=siRNA, y=viability, fill = siRNA)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=viability-sd, ymax=viability+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~time,strip.position = "bottom",nrow=1) +
+  geom_text(aes(y=viability+sd+0.02,label=p_labe),size=5) +theme_classic() +
+  scale_fill_manual(values=c("black", c("#858585"),"#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 15, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.key.width=unit(0.15,"inches"),  # legend size
+    legend.key.height=unit(0.15,"inches"),
+    strip.text = element_text(size = 15),
+    strip.background = element_rect(colour = "white")
+  ) +
+  ylab("OD 470 nm")
+ggsave(file.path(result_path,"viability_siTF_barplot.pdf"),width = 6,height = 3,device = "pdf")
+ggsave(file.path(result_path,"viability_siTF_barplot.tiff"),width = 6,height = 3,device = "tiff")
+
+## broken line
+TF_viability_summary%>%
+  dplyr::filter(! siRNA %in% c("siE2F3-1","siE2F3-2")) %>%
+  ggplot(aes(x=time, y=viability, color=siRNA)) +
+  geom_line(aes(group=siRNA)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=viability-sd, ymax=viability+sd), width=.1) +
+  # facet_wrap( ~ targets) +
+  # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
+  theme_classic() +
+  scale_color_manual(values=c("black", c("#858585"),"#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text = element_text(color = "black", size = 8),
+    axis.title.y = element_text(color = "black", size = 8),
+    legend.position = "right",
+    legend.title = element_blank(),
+    axis.ticks = element_blank()
+  )+
+  ylab("OD 470 nm")
+
+ggsave(file.path(result_path,"viability_siTF_brokenline.pdf"),width = 4,height = 2,device = "pdf")
+
+##################################################
+### TF siRNA Ecell variability
+mirna_viability_bar <- readr::read_tsv(file.path(data_path,"12.mirna_viability.txt")) %>%
+  tidyr::gather(-c("mimics","group"),key = "time",value="value") %>%
+  tidyr::spread(key="group",value = "value") %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe))
+
+
+# ggplot
+## bar plot
+mirna_viability_bar %>%
+  ggplot(aes(x=mimics, y=mean, fill = mimics)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~time,strip.position = "bottom",nrow=1) +
+  geom_text(aes(y=mean+sd+0.05,label=p_labe),size=4) +theme_classic() +
+  scale_fill_manual(values=c("black","#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 15, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    # legend.key.width=unit(0.15,"inches"),  # legend size
+    # legend.key.height=unit(0.15,"inches"),
+    strip.text = element_text(size = 15),
+    strip.background = element_rect(colour = "white")
+  ) +
+  ylab("OD 470 nm")
+ggsave(file.path(result_path,"viability_mirna_barplot.pdf"),width = 7,height = 3,device = "pdf")
+ggsave(file.path(result_path,"viability_mirna_barplot.tiff"),width = 7,height = 3,device = "tiff")
+
+## broken line
+mirna_viability_bar %>%
+  ggplot(aes(x=time, y=mean, color=mimics)) +
+  geom_line(aes(group=mimics)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1) +
+  # facet_wrap( ~ targets) +
+  # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
+  theme_classic() +
+  scale_color_manual(values=c("black", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text = element_text(color = "black", size = 8),
+    axis.title.y = element_text(color = "black", size = 8),
+    legend.position = "right",
+    legend.title = element_blank(),
+    axis.ticks = element_blank()
+  )+
+  ylab("OD 470 nm")
+
+ggsave(file.path(result_path,"viability_mirna_brokenline.pdf"),width = 4,height = 2,device = "pdf")
 
 ##################################################
 ### CBX2 and EZH2 siRNA Ecell matas
@@ -294,16 +530,18 @@ CBX2_apoptosis_bar <- readr::read_tsv(file.path(data_path,"4. CBX2_EZH2_apoptosi
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05 ,"ns",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe))
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
+  dplyr::mutate(x="Apoptosis")
 
 # ggplot
 ## bar plot
 ggplot(CBX2_apoptosis_bar, aes(x=siRNA, y=Apoptosis, fill = siRNA)) + 
-  geom_bar(stat="identity", color="black", width = 0.5,
+  geom_bar(stat="identity", color="black",
            position=position_dodge())  +
   geom_errorbar(aes(ymin=Apoptosis-sd, ymax=Apoptosis+sd), width=.2,
                 position=position_dodge(.9)) +
-  geom_text(aes(y=Apoptosis+sd+0.5,label=p_labe)) +theme_classic() +
+  facet_wrap(~x,strip.position = "bottom") +
+  geom_text(aes(y=Apoptosis+sd+1,label=p_labe),size=5) +theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
                     labels = c("Control", "siCBX2-1", "siCBX2-2","siEZH2-1","siEZH2-2")) +
   theme(
@@ -311,9 +549,12 @@ ggplot(CBX2_apoptosis_bar, aes(x=siRNA, y=Apoptosis, fill = siRNA)) +
     axis.text = element_text(color = "black",size = 12),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    axis.title.y = element_text(size = 15, colour = "black"),
+    axis.title.y = element_text(size = 12, colour = "black"),
     legend.position = "right",
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size = 12,colour = "black")
   ) +
   ylab("Apoptotic cells (%)")
 ggsave(file.path(result_path,"apoptosis_siCBX-EZH2_barplot.pdf"),width = 3,height = 2,device = "pdf")
@@ -404,20 +645,23 @@ ggplot(siRNA_target_TSG, aes(x=siRNA, y=mean, fill=siRNA)) +
   facet_wrap( ~ targets,strip.position = "bottom",nrow = 1) +
   # ggpubr::stat_compare_means(ref.group = "1_IgG",method = "t.test",label.y = c(0.25),label = "p.signif") +
   theme_classic() +
-  geom_text(aes(group = targets, y = mean+sd+0.1, label = p_labe),size=5) +
-  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#87CEFA", "#8B6914"),
+  geom_text(aes(group = targets, y = mean+sd+0.2, label = p_labe),size=5) +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#87CEFA", "#4F94CD"),
                     label = c("Control","siCBX2","siEZH2","siCBX2+siEZH2")
   ) +
+  ylim(0,7)+
   theme(
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.text.y = element_text(size = 15,colour = "black"),
     axis.ticks.x = element_blank(),
     axis.title.y = element_text(size = 15, colour = "black"),
-    legend.position = c(0.7,0.85),
+    legend.position = c(0.25,0.9),
     legend.background = element_blank(),
     legend.title = element_blank(),
     legend.text = element_text(size = 12),
+    legend.key.height = unit(0.15,"inches"),
+    legend.key.width = unit(0.15,"inches"),
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 15, color = "black") #分面字体
   ) +
@@ -445,7 +689,7 @@ ggplot(miRNA_mimics_bar, aes(x=key, y=Relative_mRNA_level, fill = key)) +
   geom_errorbar(aes(ymin=Relative_mRNA_level-sd, ymax=Relative_mRNA_level+sd), width=.2,
                 position=position_dodge(.9)) +
   facet_wrap(~siRNA, strip.position = "bottom") +
-  geom_text(aes(y=Relative_mRNA_level+sd+0.02,label=p_labe)) +theme_classic() +
+  geom_text(aes(y=Relative_mRNA_level+sd+0.02,label=p_labe),size = 5) +theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
   theme(
     axis.title.x = element_blank(),
@@ -456,6 +700,8 @@ ggplot(miRNA_mimics_bar, aes(x=key, y=Relative_mRNA_level, fill = key)) +
     legend.position = c(0.8,0.85),
     legend.background = element_blank(),
     legend.title = element_blank(),
+    legend.key.height = unit(0.15,"inches"),
+    legend.key.width = unit(0.15,"inches"),
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 15)
   ) +
@@ -463,3 +709,42 @@ ggplot(miRNA_mimics_bar, aes(x=key, y=Relative_mRNA_level, fill = key)) +
 ggsave(file.path(result_path,"mirna_mimic_barplot.pdf"),width = 4,height = 3,device = "pdf")
 ggsave(file.path(result_path,"mirna_mimic_barplot.tiff"),width = 4,height = 3,device = "tiff")
 
+##################################################
+### CBX2 and EZH2 miRNA mimics
+TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-EZH2.txt")) %>%
+  tidyr::gather(-c(group),key="siRNA",value="value") %>%
+  tidyr::spread(key="group",value="value") %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<0.051 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.051 ,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
+  dplyr::mutate(key = "EZH2")
+
+# ggplot
+## bar plot
+ggplot(TF_EZH2_bar, aes(x=siRNA, y=mean, fill = siRNA)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~key, strip.position = "bottom") +
+  geom_text(aes(y=mean+sd+0.02,label=p_labe),size = 5) +theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 15, colour = "black"),
+    legend.position = c(0.6,0.8),
+    legend.background = element_blank(),
+    legend.title = element_blank(),
+    legend.key.height = unit(0.15,"inches"),
+    legend.key.width = unit(0.15,"inches"),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size = 15)
+  ) +
+  ylab("Relative mRNA level")
+ggsave(file.path(result_path,"TF_EZH2_barplot.pdf"),width = 4,height = 3,device = "pdf")
+ggsave(file.path(result_path,"TF_EZH2_barplot.tiff"),width = 2,height = 3,device = "tiff")
