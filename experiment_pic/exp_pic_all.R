@@ -270,7 +270,7 @@ ggplot(CBX2_invasion_summary, aes(x=group, y=invasion, fill=group)) +
     axis.title.x = element_blank(),
     axis.text.x = element_blank() ,
     axis.ticks.x = element_blank() ,
-    axis.text = element_text(color = "black",size = 8),
+    axis.text = element_text(color = "black",size = 12),
     axis.title.y = element_text(size = 12, colour = "black"),
     legend.position = "right",
     legend.title = element_blank(),
@@ -426,7 +426,44 @@ TF_viability_summary%>%
 ggsave(file.path(result_path,"viability_siTF_brokenline.pdf"),width = 4,height = 2,device = "pdf")
 
 ##################################################
-### TF siRNA Ecell variability
+### mirna variability
+mirna_mimics <- readr::read_tsv(file.path(data_path,"14.mirna_mimic.txt")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe))
+
+# ggplot
+mirna_mimics %>%
+  ggplot(aes(x=mimics, y=mean, fill = mimics)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~group,strip.position = "bottom",nrow=1,scales = "free") +
+  geom_text(aes(y=mean+sd+mean/50,label=p_labe),size=4) +theme_classic() +
+  scale_fill_manual(values=c("black","#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 15, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    # legend.key.width=unit(0.15,"inches"),  # legend size
+    # legend.key.height=unit(0.15,"inches"),
+    strip.text = element_text(size = 12),
+    strip.background = element_rect(colour = "white")
+  ) +
+  ylab("Relative expresion")
+ggsave(file.path(result_path,"mirna_mimic.pdf"),width = 6,height = 3,device = "pdf")
+ggsave(file.path(result_path,"mirna_mimic.tiff"),width = 6,height = 3,device = "tiff")
+
+##################################################
+### mirna variability
 mirna_viability_bar <- readr::read_tsv(file.path(data_path,"12.mirna_viability.txt")) %>%
   tidyr::gather(-c("mimics","group"),key = "time",value="value") %>%
   tidyr::spread(key="group",value = "value") %>%
@@ -502,11 +539,12 @@ CBX2_mice_matas <- readr::read_tsv(file.path(data_path,"7. mice_matas.txt")) %>%
 # ggplot
 ## bar plot
 ggplot(CBX2_mice_matas, aes(x=siRNA, y=value, fill = siRNA)) + 
-  geom_bar(stat="identity", color="black", width = 0.5,
+  geom_bar(stat="identity", color="black", 
            position=position_dodge())  +
   geom_errorbar(aes(ymin=value-sd, ymax=value+sd), width=.2,
                 position=position_dodge(.9)) +
-  geom_text(aes(y=value+sd+0.5,label=p_labe)) +theme_classic() +
+  geom_text(aes(y=value+sd+0.5,label=p_labe), size = 5) +
+  theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4"),
                     labels = c("Control", "CBX2 sgRNA")) +
   theme(
@@ -515,13 +553,15 @@ ggplot(CBX2_mice_matas, aes(x=siRNA, y=value, fill = siRNA)) +
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.title.y = element_text(size = 12, colour = "black"),
-    legend.position = c(0.7,0.6),
+    legend.position = "right",
     legend.title = element_blank(),
-    legend.text = element_text(size = 12)
+    legend.text = element_text(size = 8),
+    legend.key.width = unit(0.15,"inches"),
+    legend.key.height = unit(0.15,"inches")
   ) +
-  ylab("Relative photon flux (X104)")
-ggsave(file.path(result_path,"CBX-matas.pdf"),width = 3,height = 3,device = "pdf")
-ggsave(file.path(result_path,"CBX-matas.tiff"),width = 3,height = 2.8,device = "tiff")
+  ylab(paste("Relative photon", "flux (X104)", sep="\n"))
+ggsave(file.path(result_path,"CBX-matas.pdf"),width = 3,height = 2,device = "pdf")
+ggsave(file.path(result_path,"CBX-matas.tiff"),width = 3,height = 2,device = "tiff")
 
 ##################################################
 ### CBX2 and EZH2 siRNA Ecell apoptosis
