@@ -1116,6 +1116,7 @@ mRNA_exp_normal.gather.filter %>%
   rbind(mRNA_clinical.metas.m0) %>%
   rbind(mRNA_clinical.metas.m1) %>%
   dplyr::filter(symbol %in% c("EZH2","CBX2")) %>%
+  dplyr::mutate(symbol = paste(symbol,"(Metastasis)")) %>%
   dplyr::mutate(metastasis=ifelse(metastasis=="Normal(TA)","Normal",metastasis)) %>%
   dplyr::mutate(log2exp=log2(exp)) %>%
   ggpubr::ggboxplot(x = "metastasis", y = "log2exp",
