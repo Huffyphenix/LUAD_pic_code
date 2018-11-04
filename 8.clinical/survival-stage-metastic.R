@@ -1119,16 +1119,20 @@ mRNA_exp_normal.gather.filter %>%
   dplyr::mutate(metastasis=ifelse(metastasis=="Normal(TA)","Normal",metastasis)) %>%
   dplyr::mutate(log2exp=log2(exp)) %>%
   ggpubr::ggboxplot(x = "metastasis", y = "log2exp",
-                    color = "metastasis", palette = "npg", add = "jitter",
-                    facet.by = "symbol") +
+                    color = "metastasis", palette = "npg", add = "jitter") +
+  facet_wrap(~ symbol, strip.position = "bottom") +
   ylab("log2 (mRNA exp)") +
+  ylim(4,13)+
   scale_color_manual(values = c("#00C5CD","#F08080","#f44336")) +
   scale_x_discrete(breaks=c("Normal","m0","m1"),
                    labels=c("Normal","DMF","DM")) +
   theme(legend.position = "none",
-        axis.title.x = element_blank()) +
+        axis.title.x = element_blank(),
+        legend.text = element_text(size = 15),
+        strip.background = element_rect(fill = "white", colour = "white"),
+        strip.text = element_text(size = 12)) +
   # ggpubr::stat_compare_means(label.y = 15) +
-  ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label = "p.signif",label.y = c(10,11))->p;p
+  ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label = "p.signif",label.y = c(12,12.5))->p;p
 ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.pdf"),p,width = 5,height = 3)
 ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.tiff"),p,width = 5,height = 3)
 
