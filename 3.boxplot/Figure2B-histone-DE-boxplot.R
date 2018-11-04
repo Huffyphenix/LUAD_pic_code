@@ -73,19 +73,22 @@ b <- runif(nrow(df), -0.2, 0.2)
 comp_list <- list(c("1","2"))
 df %>%
   ggpubr::ggboxplot(x = "Group", y = "log2Exp",
-                    color = "Group", palette = "npg", #add = "jitter",
-                    facet.by = "title") +
+                    color = "Group", palette = "npg" #add = "jitter",
+                    ) +
+  facet_wrap(~ title, strip.position = "bottom") +
   geom_point(aes(x=as.numeric(Group)+b,y=log2Exp,color=Group)) +
   geom_line(aes(x=as.numeric(Group)+b,y=log2Exp,group=ID),linetype="11",color="grey") +
   scale_color_manual(
     values = c("#00C5CD","#EE6363")
   )+
+  ylim(4,12) +
   ylab("log2(mRNA Exp)") +
   theme(legend.position = "none",
-        axis.title.x = element_blank()) +
-  facet_wrap( ~ title) +
+        axis.title.x = element_blank(),
+        strip.background = element_rect(fill = "white",colour = "white"),
+        strip.text = element_text(size = 12)) +
   # ggpubr::stat_compare_means(label.y = 14,paired = TRUE) +
-  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(10),label = "p.signif") +
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(11),label = "p.signif") +
   scale_x_discrete(breaks = c(1,2),
                      labels = c("Normal","Tumor"),
                      expand = c(0.2,0.2)) -> p;p
