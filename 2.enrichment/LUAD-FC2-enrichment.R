@@ -361,8 +361,8 @@ kk_nofc_plotready %>%
         legend.background = element_blank(),
         legend.title = element_text(angle = 90),
         panel.grid = element_line(colour = "grey", linetype = "dashed"),
-        axis.text = element_text(size = 12),
-        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12,colour = "black"),
+        axis.title = element_text(size = 15),
         panel.grid.major = element_line(
           colour = "grey",
           linetype = "dashed",
@@ -388,7 +388,7 @@ kk_nofc_info.1 %>%
     axis.line.y = element_blank(),
     axis.title.y = element_blank(),
     axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14),
+    axis.title = element_text(size = 15),
     axis.text.y = element_blank(),
     axis.ticks.y = element_blank()
   )  -> p2;p2
@@ -434,8 +434,8 @@ kk_nofc_plotready.down %>%
           linetype = "dashed",
           size = 0.2
         ),
-        axis.text = element_text(size = 12),
-        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12,colour = "black"),
+        axis.title = element_text(size = 15),
         panel.border =element_rect(fill='transparent', color='black')) -> p1;p1
 kk_nofc_info.1 %>%
   dplyr::filter(p.adjust<=0.05) %>%
@@ -454,7 +454,7 @@ kk_nofc_info.1 %>%
     axis.line.y = element_blank(),
     axis.title.y = element_blank(),
     axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14),
+    axis.title = element_text(size = 15),
     axis.text.y = element_blank(),
     axis.ticks.y = element_blank()
   )  -> p2;p2
