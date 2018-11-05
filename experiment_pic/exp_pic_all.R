@@ -526,6 +526,112 @@ mirna_viability_bar %>%
 ggsave(file.path(result_path,"viability_mirna_brokenline.pdf"),width = 4,height = 2,device = "pdf")
 
 ##################################################
+### mice size
+CBX2_mice_size <- readr::read_tsv(file.path(data_path,"14.mice_size.txt")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05 ,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
+  dplyr::mutate(rank = c(rep(1,4),rep(2,4))) %>%
+  dplyr::mutate(group = paste(rank,group,sep = ""))
+
+# ggplot
+## bar plot
+ggplot(CBX2_mice_size, aes(x=group, y=average, fill = group)) + 
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=average-sd, ymax=average+sd), width=.2,
+                position=position_dodge(.9)) +
+  geom_text(aes(y=average+sd+10,label=p_labe), size = 5) +
+  theme_classic() +
+  facet_wrap(~ time, nrow = 1, strip.position = "bottom") +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4"),
+                    labels = c("Control", "CBX2 KO")) +
+  theme(
+    # axis.title.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = 12, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 8),
+    legend.key.width = unit(0.15,"inches"),
+    legend.key.height = unit(0.15,"inches"),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size = 12)
+  ) +
+  ylab(latex2exp::TeX(glue::glue(paste("Tumor volume","(mm^{3})")))) +
+  xlab("Time (days)")
+ggsave(file.path(result_path,"mice_size.pdf"),width = 4,height = 2,device = "pdf")
+ggsave(file.path(result_path,"mice_size.tiff"),width = 4,height = 2,device = "tiff")
+
+ggplot(CBX2_mice_size, aes(x=time, y=average, color = group)) + 
+  geom_line(aes(group=group)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=average-sd, ymax=average+sd), width=.1) +
+  # facet_wrap( ~ targets) +
+  # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
+  theme_classic() +
+  scale_color_manual(values=c("black", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
+                     labels = c("Control", "CBX2 KO", "siCBX2-2","siEZH2-1","siEZH2-2")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text = element_text(color = "black", size = 6),
+    axis.title.y = element_text(color = "black", size = 8),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.key.width=unit(0.15,"inches"),  # legend size
+    legend.key.height=unit(0.15,"inches"),
+    axis.ticks = element_blank()
+  ) +
+  ylab(latex2exp::TeX(glue::glue(paste("Tumor volume","(mm^{3})")))) +
+  xlab("Time (days)")
+
+
+##################################################
+### mice weight
+mice_weight <- readr::read_tsv(file.path(data_path,"15.mice_weight.txt")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05 ,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
+  dplyr::mutate(rank = 1:2) %>%
+  dplyr::mutate(group = paste(rank,group,sep = ""))
+
+# ggplot
+## bar plot
+ggplot(mice_weight, aes(x=group, y=mean, fill = group)) + 
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  geom_text(aes(y=mean+sd+10,label=p_labe), size = 5) +
+  theme_classic() +
+  # facet_wrap(~ group, nrow = 1, strip.position = "bottom") +
+  scale_fill_manual(values=c("black", "#7FFFD4"),
+                    labels = c("Control", "CBX2 KO")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = 12, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 8),
+    legend.key.width = unit(0.15,"inches"),
+    legend.key.height = unit(0.15,"inches"),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size = 12)
+  ) +
+  ylab(paste("Tumor weight","(mg)",sep = "\n")) 
+ggsave(file.path(result_path,"mice_weight.pdf"),width = 3,height = 2,device = "pdf")
+ggsave(file.path(result_path,"mice_weight.tiff"),width = 3,height = 2,device = "tiff")
+
+##################################################
 ### CBX2 and EZH2 siRNA Ecell matas
 CBX2_mice_matas <- readr::read_tsv(file.path(data_path,"7. mice_matas.txt")) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
@@ -545,7 +651,7 @@ ggplot(CBX2_mice_matas, aes(x=siRNA, y=value, fill = siRNA)) +
                 position=position_dodge(.9)) +
   geom_text(aes(y=value+sd+0.5,label=p_labe), size = 5) +
   theme_classic() +
-  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4"),
+  scale_fill_manual(values=c("black", "#7FFFD4"),
                     labels = c("Control", "CBX2 sgRNA")) +
   theme(
     axis.title.x = element_blank(),
@@ -750,8 +856,8 @@ ggsave(file.path(result_path,"mirna_mimic_barplot.pdf"),width = 4,height = 3,dev
 ggsave(file.path(result_path,"mirna_mimic_barplot.tiff"),width = 4,height = 3,device = "tiff")
 
 ##################################################
-### CBX2 and EZH2 miRNA mimics
-TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-EZH2.txt")) %>%
+### siTF transwell
+TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-transwell.txt")) %>%
   tidyr::gather(-c(group),key="siRNA",value="value") %>%
   tidyr::spread(key="group",value="value") %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
@@ -759,7 +865,9 @@ TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-EZH2.txt")) %>%
   dplyr::mutate(p_labe=ifelse(p<0.051 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.051 ,"ns",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
-  dplyr::mutate(key = "EZH2")
+  dplyr::mutate(key = "Invasion") %>%
+  dplyr::mutate(mean = mean * 100) %>%
+  dplyr::mutate(sd = sd * 100)
 
 # ggplot
 ## bar plot
@@ -769,7 +877,51 @@ ggplot(TF_EZH2_bar, aes(x=siRNA, y=mean, fill = siRNA)) +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
                 position=position_dodge(.9)) +
   facet_wrap(~key, strip.position = "bottom") +
-  geom_text(aes(y=mean+sd+0.02,label=p_labe),size = 5) +theme_classic() +
+  geom_text(aes(y=mean+sd+2,label=p_labe),size = 5) +theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank() ,
+    axis.ticks.x = element_blank() ,
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 12, colour = "black"),
+    legend.position = c(0.5,0.9),
+    legend.title = element_blank(),
+    legend.text = element_text(colour = "black",size = 8),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size=12),
+    legend.key.height = unit(0.1,"inches"),
+    legend.key.width = unit(0.1,"inches"),
+    legend.background = element_blank()
+  ) +
+  ylab(paste("Cells invasion", "(% of Control)",sep="\n"))
+ggsave(file.path(result_path,"TF_transwell.pdf"),width = 2.5,height = 2,device = "pdf")
+ggsave(file.path(result_path,"TF_transwell.tiff"),width = 2.5,height = 2,device = "tiff")
+
+
+##################################################
+### siTF CBX2 and EZH2 
+TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-transwell.txt")) %>%
+  tidyr::gather(-c(group),key="siRNA",value="value") %>%
+  tidyr::spread(key="group",value="value") %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<0.051 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.051 ,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
+  dplyr::mutate(key = "Invasion") %>%
+  dplyr::mutate(mean = mean * 100) %>%
+  dplyr::mutate(sd = sd * 100)
+
+# ggplot
+## bar plot
+ggplot(TF_EZH2_bar, aes(x=siRNA, y=mean, fill = siRNA)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~key, strip.position = "bottom") +
+  geom_text(aes(y=mean+sd+2,label=p_labe),size = 5) +theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
   theme(
     axis.title.x = element_blank(),
@@ -785,6 +937,6 @@ ggplot(TF_EZH2_bar, aes(x=siRNA, y=mean, fill = siRNA)) +
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 15)
   ) +
-  ylab("Relative mRNA level")
-ggsave(file.path(result_path,"TF_EZH2_barplot.pdf"),width = 4,height = 3,device = "pdf")
-ggsave(file.path(result_path,"TF_EZH2_barplot.tiff"),width = 2,height = 3,device = "tiff")
+  ylab(paste("Cells invasion", "(% of Control)",sep="\n"))
+ggsave(file.path(result_path,"TF_transwell.pdf"),width = 2,height = 3,device = "pdf")
+ggsave(file.path(result_path,"TF_transwell.tiff"),width = 2,height = 3,device = "tiff")
