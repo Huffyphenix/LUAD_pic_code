@@ -263,6 +263,8 @@ for(i in 1:nrow(miRNA_survival_p_PFI)){
   coxp=miRNA_survival_p_PFI$Coxp.p.value[i]
   # fig_name <- paste("OS",gene,KMP,"png", sep = ".")
   fig_name <- paste("PFI",gene,KMP,"pdf", sep = ".")
+  fig_name_tif <- paste("PFI",gene,KMP,"tiff", sep = ".")
+  
   .d_diff <- survival::survdiff(survival::Surv(PFI.time.1, PFI.1) ~ group, data = draw_for_sur)
   kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(draw_for_sur$group))) - 1)
   .fit <- survival::survfit(survival::Surv(PFI.time.1, PFI.1) ~ group, data = draw_for_sur, na.action = na.exclude)
@@ -285,18 +287,31 @@ for(i in 1:nrow(miRNA_survival_p_PFI)){
   survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
                         surv.median.line = "hv",
                         title = paste(paste(gene, sep = "-"), "p =", signif(kmp, 2)),
-                        xlab = "Survival in days",
+                        xlab = "Survival in months",
                         ylab = 'Probability of survival',
                         legend.title = "Expression group:",
-                        legend= c(0.7,0.8),
-                        ggtheme = theme_survminer()
+                        legend= c(0.6,0.95),
+                        # ggtheme = theme_survminer(),
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", 
+                                                                                       size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 12, colour = "black"),
+                          axis.text = element_text(size = 12, colour = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black")
+                        )
   ) +
     scale_color_manual(
       values = c( "#EE6363","#1C86EE"),
       labels = legend$label
-    )
+    ) 
   # dev.off()
-  ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 5, height = 4)
+  ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 3)
+  ggsave(filename = fig_name_tif, device = "tiff", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 3)
 }
 #### mRNA ----
 
@@ -343,11 +358,24 @@ for(i in 1:nrow(mRNA_survival_p_OS)){
                         # risk.table = TRUE,
                         # tables.height = 0.2,
                         palette = c("#E7B800", "#2E9FDF"),
-                        ggtheme = theme_bw()
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", 
+                                                                                       size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 12, colour = "black"),
+                          axis.text = element_text(size = 12, colour = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black")
+                        )
   ) 
   # dev.off()
   # ggsave(filename = fig_name, device = "png", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 6, height = 6)
   ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/OS"), width = 4, height = 4)
+  ggsave(filename = fig_name_tif, device = "tiff", path = file.path(survival_path,"Figure5C.survival/OS"), width = 4, height = 4)
+  
 }
 
 ### PFI -----
@@ -380,7 +408,7 @@ for(i in 1:nrow(mRNA_survival_p_PFI)){
   coxp=mRNA_survival_p_PFI$Coxp.p.value[i]
   # fig_name <- paste(gene,KMP,"png", sep = ".")
   fig_name <- paste("PFI",gene,KMP,"pdf", sep = ".")
-  
+  fig_name_tiff <- paste("PFI",gene,KMP,"tiff", sep = ".")
   if(KMP==1){next}else{
     # fit <- survival::survfit(survival::Surv(OS, status) ~ group, data = draw_for_sur, na.action = na.exclude)
     .d_diff <- survival::survdiff(survival::Surv(PFI.time.1, PFI.1) ~ group, data = draw_for_sur)
@@ -409,15 +437,25 @@ for(i in 1:nrow(mRNA_survival_p_PFI)){
                           ylab = 'Probability of survival',
                           legend.title = "Expression group:",
                           legend= c(0.7,0.8),
-                          ggtheme = theme_survminer()
+                          ggtheme = theme(
+                            panel.border = element_blank(), panel.grid.major = element_blank(), 
+                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                            panel.background = element_rect(fill = "white"),
+                            legend.key = element_blank(),
+                            legend.background = element_blank(),
+                            legend.text = element_text(size = 12, colour = "black"),
+                            axis.text = element_text(size = 12, colour = "black"),
+                            legend.title = element_blank(),
+                            axis.title = element_text(size = 12,color = "black")
+                          )
     ) +
       scale_color_manual(
         values = c( "#EE6363","#1C86EE"),
         labels = legend$label
       )
     # dev.off()
-    ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 5, height = 4)
-    # ggsave(filename = fig_name, device = "png", path = file.path(survival_path,"Figure5C.survival/OS"), width = 6, height = 6)
+    ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 3)
+    ggsave(filename = fig_name_tiff, device = "tiff", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 3)
   }
 }
 
@@ -507,7 +545,8 @@ data %>%
   high_n=.fit$n[2]
   legend <- data.frame(group=c("Low","High"),n=c(low_n,high_n))
   
-  legend %>%
+  legend %>%    
+    dplyr::group_by(group) %>%
     dplyr::mutate(
       label = purrr::map2(
         .x = group,
@@ -530,10 +569,20 @@ data %>%
                         xlab = "Survival in months",
                         ylab = 'Probability of survival',
                         legend.title = "Expression group:",
-                        legend= c(0.7,0.8),
+                        legend= c(0.6,0.9),
                         # risk.table = TRUE,
                         # tables.height = 0.2,
-                        ggtheme = theme_survminer(),
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 12, colour = "black"),
+                          axis.text = element_text(size = 12, colour = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black")
+                        ),
                         font.main = c(16),
                         font.x = c(14),
                         font.y = c(14),
@@ -544,8 +593,8 @@ data %>%
       labels = legend$label
     )
   # dev.off()
-  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 5, height = 4)
-  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 5, height = 4)
+  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 4, height = 3)
+  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 4, height = 3)
 
   ##### EZH2 with upstream TFs-----
   data <- mRNA_clinical 
@@ -643,7 +692,7 @@ data <- mRNA_clinical
     dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
   EZH2_target_ppar <- c("FABP4","ACADL","SLC27A6","RXRG","LPL","SORBS1")
   CBX2_target_ppar <- c("CD36","PPARG")
-for(.gene3 in EZH2_target_ppar){
+for(.gene3 in CBX2_target_ppar){
   data %>%
     dplyr::filter(symbol %in% .gene3) %>%
     tidyr::unnest() %>%
@@ -672,6 +721,7 @@ for(.gene3 in EZH2_target_ppar){
   legend <- data.frame(group=c("Low","High"),gene2=c("Low","High"),gene3=c("High","Low"),n=c(low_n,high_n))
   
   legend %>%
+    dplyr::group_by(group) %>%
     dplyr::mutate(
       label = purrr::map2(
         .x = gene2,
@@ -695,10 +745,20 @@ for(.gene3 in EZH2_target_ppar){
                         xlab = "Survival in months",
                         ylab = 'Probability of survival',
                         legend.title = "Expression group:",
-                        legend= c(0.7,0.8),
+                        legend= c(0.6,0.9),
                         # risk.table = TRUE,
                         # tables.height = 0.2,
-                        ggtheme = theme_survminer(),
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 12, colour = "black"),
+                          axis.text = element_text(size = 12, colour = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black")
+                        ),
                         font.main = c(16),
                         font.x = c(14),
                         font.y = c(14),
@@ -709,8 +769,8 @@ for(.gene3 in EZH2_target_ppar){
       labels = legend$label
     )
   # dev.off()
-  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
-  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
+  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
+  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
   # ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
   # ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
 }
@@ -763,9 +823,10 @@ for(.gene3 in EZH2_target_ppar){
     .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude)
     low_n=.fit$n[1]
     high_n=.fit$n[2]
-    legend <- data.frame(group=c("Low","High"),gene2=c("L","H"),gene3=c("H","L"),n=c(low_n,high_n))
+    legend <- data.frame(group=c("Low","High"),gene2=c("Low","High"),gene3=c("High","Low"),n=c(low_n,high_n))
 
     legend %>%
+      dplyr::group_by(group) %>%
       dplyr::mutate(
         label = purrr::map2(
           .x = gene2,
@@ -794,10 +855,20 @@ for(.gene3 in EZH2_target_ppar){
                             xlab = "Survival in months",
                             ylab = 'Probability of survival',
                             legend.title = "Expression group:",
-                            legend= c(0.75,0.9),
+                            legend= c(0.6,0.9),
                             # risk.table = TRUE,
                             # tables.height = 0.2,
-                            ggtheme = theme_survminer(),
+                            ggtheme = theme(
+                              panel.border = element_blank(), panel.grid.major = element_blank(), 
+                              panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                              panel.background = element_rect(fill = "white"),
+                              legend.key = element_blank(),
+                              legend.background = element_blank(),
+                              legend.text = element_text(size = 12, colour = "black"),
+                              axis.text = element_text(size = 12, colour = "black"),
+                              legend.title = element_blank(),
+                              axis.title = element_text(size = 12,color = "black")
+                            ),
                             font.main = c(16),
                             font.x = c(14),
                             font.y = c(14),
@@ -915,16 +986,17 @@ mRNA_survival_p_PFI %>%
   .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
   low_n=.fit$n[1]
   high_n=.fit$n[2]
-  legend <- data.frame(group=c("Low","High"),gene2=c("L","H"),gene3=c("H","L"),n=c(low_n,high_n))
+  legend <- data.frame(group=c("Low","High"),gene2=c("Low","High"),gene3=c("High","Low"),n=c(low_n,high_n))
   
   legend %>%
+    dplyr::group_by(group) %>%
     dplyr::mutate(
       label = purrr::map2(
         .x = gene2,
         .y = gene3,
         .z = n,
         .f = function(.x,.y,.z){
-          latex2exp::TeX(glue::glue("<<.gene5>>^{<<.x>>}/<<.gene1>>^{<<.x>>}/","<<.gene2>>^{<<.y>>}/<<.gene3>>^{<<.y>>}/<<.gene4>>^{<<.y>>}, n = <<.z>>", 
+          latex2exp::TeX(glue::glue("<<.gene5>>^{<<.x>>}/<<.gene1>>^{<<.x>>}/miRNAs^{<<.y>>}",",n = <<.z>>", 
                                     .open = "<<", .close = ">>"))
         }
       )
@@ -937,12 +1009,22 @@ mRNA_survival_p_PFI %>%
   library(ggplot2)
   survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
                         surv.median.line = "hv",
-                        title = paste("Logrank p =", signif(kmp, 2),", PFI"),
-                        xlab = "Survival in days",
+                        title = paste("CBX2-EZH2-miRNAs, p =", signif(kmp, 2)),
+                        xlab = "Survival in months",
                         ylab = 'Probability of survival',
                         legend.title = "Expression group:",
-                        legend= c(0.5,0.1),
-                        ggtheme = theme_survminer(),
+                        legend= c(0.5,0.2),
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 12, colour = "black"),
+                          axis.text = element_text(size = 12, colour = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black")
+                        ),
                         font.main = c(16),
                         font.x = c(14),
                         font.y = c(14),
@@ -953,8 +1035,8 @@ mRNA_survival_p_PFI %>%
             labels = legend$label
           )
   # dev.off()
-  ggsave(filename = fig_name1, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)  
-  ggsave(filename = fig_name2, device = "tiff", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 6, height = 5)  
+  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width =5, height = 4)  
+  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"), width = 5, height = 4)  
   
 # stage -------------------------------------------------------------------
 fn_kruskal <- function(.data){
