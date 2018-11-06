@@ -546,7 +546,7 @@ ggplot(CBX2_mice_size, aes(x=group, y=average, fill = group)) +
   geom_text(aes(y=average+sd+10,label=p_labe), size = 5) +
   theme_classic() +
   facet_wrap(~ time, nrow = 1, strip.position = "bottom") +
-  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4"),
+  scale_fill_manual(values=c("black", "#7FFFD4"),
                     labels = c("Control", "CBX2 KO")) +
   theme(
     # axis.title.x = element_blank(),
@@ -570,7 +570,7 @@ ggsave(file.path(result_path,"mice_size.tiff"),width = 4,height = 2,device = "ti
 ggplot(CBX2_mice_size, aes(x=time, y=average, color = group)) + 
   geom_line(aes(group=group)) +
   geom_point() +
-  geom_errorbar(aes(ymin=average-sd, ymax=average+sd), width=.1) +
+  # geom_errorbar(aes(ymin=average-sd, ymax=average+sd), width=.1) +
   # facet_wrap( ~ targets) +
   # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
   theme_classic() +
@@ -588,7 +588,8 @@ ggplot(CBX2_mice_size, aes(x=time, y=average, color = group)) +
   ) +
   ylab(latex2exp::TeX(glue::glue(paste("Tumor volume","(mm^{3})")))) +
   xlab("Time (days)")
-
+ggsave(file.path(result_path,"mice_size_broken_line.pdf"),width = 3,height = 2,device = "pdf")
+ggsave(file.path(result_path,"mice_size_broken_line.tiff"),width = 3,height = 2,device = "tiff")
 
 ##################################################
 ### mice weight
@@ -901,35 +902,31 @@ ggsave(file.path(result_path,"TF_transwell.tiff"),width = 2.5,height = 2,device 
 
 ##################################################
 ### siTF CBX2 and EZH2 
-TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-transwell.txt")) %>%
-  tidyr::gather(-c(group),key="siRNA",value="value") %>%
-  tidyr::spread(key="group",value="value") %>%
+siTF_targets_exp <- readr::read_tsv(file.path(data_path,"siTF-targets.txt")) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<0.051 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.051 ,"ns",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
-  dplyr::mutate(key = "Invasion") %>%
-  dplyr::mutate(mean = mean * 100) %>%
-  dplyr::mutate(sd = sd * 100)
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) 
 
 # ggplot
 ## bar plot
-ggplot(TF_EZH2_bar, aes(x=siRNA, y=mean, fill = siRNA)) + 
+ggplot(siTF_targets_exp, aes(x=siRNA, y=mean, fill = siRNA)) + 
   geom_bar(stat="identity", color="black",
            position=position_dodge())  +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
                 position=position_dodge(.9)) +
-  facet_wrap(~key, strip.position = "bottom") +
-  geom_text(aes(y=mean+sd+2,label=p_labe),size = 5) +theme_classic() +
-  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  facet_wrap(~targets, strip.position = "bottom") +
+  geom_text(aes(y=mean+sd+0.1,label=p_labe),size = 5) +theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD","#C7C7C7", "#474747")) +
+  ylim(0,2.8) +
   theme(
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text = element_text(color = "black",size = 12),
     axis.title.y = element_text(size = 15, colour = "black"),
-    legend.position = c(0.6,0.8),
+    legend.position = c(0.8,0.8),
     legend.background = element_blank(),
     legend.title = element_blank(),
     legend.key.height = unit(0.15,"inches"),
@@ -937,6 +934,6 @@ ggplot(TF_EZH2_bar, aes(x=siRNA, y=mean, fill = siRNA)) +
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 15)
   ) +
-  ylab(paste("Cells invasion", "(% of Control)",sep="\n"))
-ggsave(file.path(result_path,"TF_transwell.pdf"),width = 2,height = 3,device = "pdf")
-ggsave(file.path(result_path,"TF_transwell.tiff"),width = 2,height = 3,device = "tiff")
+  ylab("Relative mRNA level")
+ggsave(file.path(result_path,"siTF_targets.pdf"),width = 5,height = 3,device = "pdf")
+ggsave(file.path(result_path,"siTF_targets.tiff"),width = 6,height = 3,device = "tiff")
