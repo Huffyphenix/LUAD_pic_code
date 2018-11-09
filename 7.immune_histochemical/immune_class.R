@@ -238,16 +238,18 @@ immune_score.all %>%
 
 ### plot to see the distribution of CBX2 and EZH2 expression
 immune_class_score.all %>%
-  dplyr::mutate(group_combine = ifelse(CBX2.y=="2_middle" & EZH2.y=="2_middle", "1", "2")) %>%
+  dplyr::mutate(group_combine = ifelse(CBX2.y=="2_middle" & EZH2.y=="2_middle" & sample_type == "Tumor", "1", "2")) %>%
+  dplyr::mutate(group_combine = ifelse(CBX2.y=="3_Low" & EZH2.y=="3_Low" & sample_type == "Normal", "1",group_combine)) %>%
   dplyr::group_by(sample_type,CBX2.y,EZH2.y) %>%
   dplyr::mutate(n=paste("n = ",n(), sep = "")) %>%
   dplyr::ungroup() %>%
   ggplot(aes(x=CBX2.x, y=EZH2.x)) +
-  geom_jitter(aes(color = group_combine),width = 1, height = 1, size = 0.5) +
+  geom_jitter(aes(color = group_combine, shape = sample_type),width = 1, height = 1, size = 0.5) +
   # facet_wrap(~sample_type) +
   facet_grid( EZH2.y ~ sample_type+CBX2.y, labeller = hospital_labeller ) +
-  geom_text(aes(label = n)) +
+  # geom_text(aes(label = n)) +
   scale_color_manual(values = c("#FF3030", "#050505")) +
+  scale_shape_manual(values = c(1,2)) +
   theme(
     plot.background = element_rect(fill = "white", colour = "black"),
     panel.background = element_rect(fill = "white", colour = "black"),
@@ -260,9 +262,10 @@ immune_class_score.all %>%
     axis.text = element_text(size = 12, colour = "black"),
     legend.position = "none"
   ) +
+  # xlim(0,6) +
   ylab("EZH2 protein level") +
   xlab("CBX2 protein level")
-ggsave(file.path(result_path,"immune_histone_T-N_distribution.pdf"),device = "pdf",height = 4,width = 5)
+ggsave(file.path(result_path,"immune_histone_T-N_distribution-1.pdf"),device = "pdf",height = 3,width = 5)
 ggsave(file.path(result_path,"immune_histone_T-N_distribution.tiff"),device = "tiff",height = 4,width = 5)
 
 
@@ -335,7 +338,7 @@ immune_class_score.all %>%
   ylab("EZH2 protein level") +
   xlab("CBX2 protein level")
 
-ggsave(file.path(result_path,"immune_histone_T-N_correlation.pdf"),device = "pdf",height = 4,width = 5)
+ggsave(file.path(result_path,"immune_histone_T-N_correlation-1.pdf"),device = "pdf",height = 3,width = 3)
 ggsave(file.path(result_path,"immune_histone_T-N_correlation.tiff"),device = "tiff",height = 4,width = 5)
 
 # DE analysis between tumor and normal samples
