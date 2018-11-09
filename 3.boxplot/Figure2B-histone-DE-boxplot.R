@@ -18,6 +18,7 @@ de_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942
 
 # data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 data_path_3 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+
 library(magrittr)
 TF_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::rename("Gene_id"="gene_id")
@@ -79,7 +80,7 @@ df %>%
   geom_point(aes(x=as.numeric(Group)+b,y=log2Exp,color=Group)) +
   geom_line(aes(x=as.numeric(Group)+b,y=log2Exp,group=ID),linetype="11",color="grey") +
   scale_color_manual(
-    values = c("#00C5CD","#EE6363")
+    values = c("#1E90FF","#EE6363")
   )+
   ylim(4,12) +
   ylab("log2(mRNA Exp)") +
