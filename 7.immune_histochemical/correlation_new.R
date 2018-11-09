@@ -11,18 +11,23 @@ result_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f9
 data_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
 result_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
 
-immune_histone  <- read.table(file.path(data_path,"immune_hisChamis_mean.txt"),sep = "\t",header = T) %>%
+immune_histone  <- read.table(file.path(data_path,"immune_histone.txt"),sep = "\t",header = T) %>%
+  dplyr::mutate(stage = as.character(stage)) %>%
+  dplyr::mutate(stage = ifelse(is.na(stage),"N",stage)) %>%
+  tidyr::drop_na() %>%
   dplyr::mutate(sample_type=ifelse(sample_type=="T","Tumor","Normal")) %>%
-  dplyr::mutate(EZH2_cytoplsm=ifelse(is.na(EZH2_cytoplsm),0,EZH2_cytoplsm)) %>%
-  dplyr::mutate(EZH2_karyon=ifelse(is.na(EZH2_karyon),0,EZH2_karyon)) %>%
-  dplyr::mutate(CBX2_cytoplsm=ifelse(is.na(CBX2_cytoplsm),0,CBX2_cytoplsm)) %>%
-  dplyr::mutate(CBX2_karyon=ifelse(is.na(CBX2_karyon),0,CBX2_karyon)) %>%
+  # dplyr::mutate(EZH2_cytoplsm=ifelse(is.na(EZH2_cytoplsm),0,EZH2_cytoplsm)) %>%
+  # dplyr::mutate(EZH2_karyon=ifelse(is.na(EZH2_karyon),0,EZH2_karyon)) %>%
+  # dplyr::mutate(CBX2_cytoplsm=ifelse(is.na(CBX2_cytoplsm),0,CBX2_cytoplsm)) %>%
+  # dplyr::mutate(CBX2_karyon=ifelse(is.na(CBX2_karyon),0,CBX2_karyon)) %>%
   dplyr::mutate(CBX2_mean = (CBX2_cytoplsm+CBX2_karyon)/2) %>%
-  dplyr::mutate(CBX2_mean = (CBX2_karyon+CBX2_cytoplsm)/2) 
+  dplyr::mutate(EZH2_mean = (EZH2_karyon+EZH2_cytoplsm)/2) %>%
+  dplyr::mutate(CBX2_max = ifelse(CBX2_cytoplsm > CBX2_karyon, CBX2_cytoplsm, CBX2_karyon)) %>%
+  dplyr::mutate(EZH2_max = ifelse(EZH2_cytoplsm > EZH2_karyon, EZH2_cytoplsm, EZH2_karyon))
   
 # Preleminary test to check the test assumptions
-shapiro.test(immune_histone$EZH2_max) # p-value < 0.05, don't follow a normal distribution.
-shapiro.test(immune_histone$CBX2_max) # p-value < 0.05, don't follow a normal distribution.
+shapiro.test(immune_histone$EZH2_mean) # p-value < 0.05, don't follow a normal distribution.
+shapiro.test(immune_histone$CBX2_mean) # p-value < 0.05, don't follow a normal distribution.
 
 
 # do correlation for tumor and normal samples, respectively
@@ -46,7 +51,7 @@ human_read <- function(.x){
 ## do
 
 broom::tidy(
-  cor.test(immune_histone.T$CBX2_mean,immune_histone.T$EZH2_mean,method = "kendall")) %>%
+  cor.test(immune_histone.T$CBX2_mean,immune_histone.T$EZH2_mean,method = "pearson")) %>%
   dplyr::as_tibble() %>%
   dplyr::mutate(fdr=p.adjust(p.value,method = "fdr")) %>%
   dplyr::mutate(p.value = purrr::map_chr(p.value,human_read)) %>%
