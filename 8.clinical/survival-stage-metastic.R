@@ -1206,7 +1206,7 @@ mRNA_exp_normal.gather.filter %>%
   facet_wrap(~ symbol, strip.position = "bottom") +
   ylab("log2 (mRNA exp)") +
   ylim(4,13)+
-  scale_color_manual(values = c("#00C5CD","#F08080","#f44336")) +
+  scale_color_manual(values = c("#1E90FF","#F08080","#f44336")) +
   scale_x_discrete(breaks=c("Normal","m0","m1"),
                    labels=c("Normal","DMF","DM")) +
   theme(legend.position = "none",
