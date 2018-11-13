@@ -398,7 +398,7 @@ TF_viability_summary%>%
     strip.text = element_text(size = 15),
     strip.background = element_rect(colour = "white")
   ) +
-  ylab("OD 470 nm")
+  ylab("OD 450 nm") # CCDK8
 ggsave(file.path(result_path,"viability_siTF_barplot.pdf"),width = 6,height = 3,device = "pdf")
 ggsave(file.path(result_path,"viability_siTF_barplot.tiff"),width = 6,height = 3,device = "tiff")
 
@@ -613,7 +613,7 @@ ggplot(mice_weight, aes(x=group, y=mean, fill = group)) +
   theme_classic() +
   # facet_wrap(~ group, nrow = 1, strip.position = "bottom") +
   scale_fill_manual(values=c("black", "#7FFFD4"),
-                    labels = c("Control", "CBX2 KO")) +
+                    labels = c("Control", "CBX2 sgRNA")) +
   theme(
     axis.title.x = element_blank(),
     axis.text = element_text(color = "black",size = 12),
