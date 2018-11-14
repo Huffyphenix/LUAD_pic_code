@@ -44,7 +44,6 @@ data_Chip_summary <- data_summary(data_Chip, varname="per_input",
 #  bar plot
 # get p signif
 data_Chip_p <- readr::read_tsv(file.path(data_path,"1.EZH2-CBX2-Chip-CLDN11-RBMS3-pvalue.txt"))
-
 data_Chip_summary %>%
   dplyr::left_join(data_Chip_p,by=c("antibody","targets")) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
@@ -61,7 +60,7 @@ geom_bar(stat="identity", color="black",
   facet_wrap( ~ targets,strip.position = "bottom") +
   # ggpubr::stat_compare_means(ref.group = "1_IgG",method = "t.test",label.y = c(0.25),label = "p.signif") +
   theme_classic() +
-  geom_text(aes(group = targets, y = per_input+sd+0.01, label = p_labe),size=5) +
+  geom_text(aes(group = targets, y = per_input+sd+(per_input/20), label = p_labe),size=5) +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
                     labels = c("IgG", "CBX2", "H2AK119ub","EZH2","H3K27me3")) +
   theme(
@@ -79,11 +78,52 @@ geom_bar(stat="identity", color="black",
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 15, color = "black") #分面字体
   ) +
-  ylab("% of input")
+  ylab("% of input") 
 
-ggsave(file.path(result_path,"CLDN11_RBMS3_CHIP.pdf"),width = 4,height = 3,device = "pdf")
-ggsave(file.path(result_path,"CLDN11_RBMS3_CHIP.tiff"),width = 4,height = 3,device = "tiff")
+ggsave(file.path(result_path,"CLDN11_RBMS3_CHIP.pdf"),width = 3.5,height = 3,device = "pdf")
+ggsave(file.path(result_path,"CLDN11_RBMS3_CHIP.tiff"),width = 3.5,height = 3,device = "tiff")
 
+
+
+##################################################
+### Chip for CBX2 and EZH2 target PPARG
+pparg_Chip_p <- readr::read_tsv(file.path(data_path,"1.EZH2-CBX2-Chip-PPARG.txt")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe))
+# ggplot
+ggplot(pparg_Chip_p, aes(x=antibody, y=per_input, fill=antibody)) +
+  geom_bar(stat="identity", color="black",
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=per_input-sd, ymax=per_input+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap( ~ targets,strip.position = "bottom") +
+  # ggpubr::stat_compare_means(ref.group = "1_IgG",method = "t.test",label.y = c(0.25),label = "p.signif") +
+  theme_classic() +
+  geom_text(aes(group = targets, y = per_input+sd+0.001, label = p_labe),size=5) +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
+                    labels = c("IgG", "CBX2", "H2AK119ub","EZH2","H3K27me3")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 15,colour = "black"),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = 15, colour = "black"),
+    legend.position = c(0.5,0.89),
+    legend.background = element_blank(),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    legend.key.height = unit(0.15,"inches"),
+    legend.key.width = unit(0.15,"inches"),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size = 15, color = "black") #分面字体
+  ) +
+  ylab("% of input") +
+  ylim(0,0.03)
+
+ggsave(file.path(result_path,"PPARG_CHIP.pdf"),width = 2,height = 3,device = "pdf")
+ggsave(file.path(result_path,"PPARG_CHIP.tiff"),width = 2,height = 3,device = "tiff")
 ##################################################
 ### CBX2 and EZH2 siRNA EDU
 EDU <- readr::read_tsv(file.path(data_path,"2.CBX2_EZH2_EDU.txt"),col_names = F) %>%
@@ -778,8 +818,8 @@ siRNA_target_TSG <- readr::read_tsv(file.path(data_path,"8. sCBX-EZH-TSG.txt")) 
   tidyr::spread(key="group",value="value") %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.053 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.053,"ns",p_labe)) %>%
   dplyr::mutate(sort=rep(c(1,2,4,3),2)) %>%
   dplyr::mutate(siRNA = paste(sort,siRNA,sep = ""))
 
@@ -803,7 +843,7 @@ ggplot(siRNA_target_TSG, aes(x=siRNA, y=mean, fill=siRNA)) +
     axis.text.y = element_text(size = 15,colour = "black"),
     axis.ticks.x = element_blank(),
     axis.title.y = element_text(size = 15, colour = "black"),
-    legend.position = c(0.25,0.9),
+    legend.position = c(0.4,0.9),
     legend.background = element_blank(),
     legend.title = element_blank(),
     legend.text = element_text(size = 12),
@@ -814,8 +854,8 @@ ggplot(siRNA_target_TSG, aes(x=siRNA, y=mean, fill=siRNA)) +
   ) +
   ylab("Relative mRNA level")
 
-ggsave(file.path(result_path,"siRNA_CBX2_TSG.pdf"),width = 4,height = 3,device = "pdf")
-ggsave(file.path(result_path,"siRNA_CBX2_TSG.tiff"),width = 4,height = 3,device = "tiff")
+ggsave(file.path(result_path,"siRNA_CBX2_TSG.pdf"),width = 2.5,height = 3,device = "pdf")
+ggsave(file.path(result_path,"siRNA_CBX2_TSG.tiff"),width = 2.5,height = 3,device = "tiff")
 
 ##################################################
 ### CBX2 and EZH2 miRNA mimics
