@@ -180,7 +180,9 @@ ggsave(file.path(result_path,"Figure4/Figure5","TSG_targets_methy_Cor-diff-gsca.
 ### load miRNa regulation data -----
 ### >>>> construc FFL in server 1:/home/huff/LUAD_cancer/FFL_quantification_data/EZH2_CBX2_TSG_targets/
 
-mirna_regulate_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_TSG_targets"
+mirna_regulate_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_TSG_targets"
+mirna_regulate_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_TSG_targets"
+
 net <- readr::read_tsv(file.path(mirna_regulate_path,"miRNA2gene"),col_names = F) %>%
   dplyr::rename("Sources"="X1","Targets"="X2")
 
@@ -188,7 +190,7 @@ net <- readr::read_tsv(file.path(mirna_regulate_path,"miRNA2gene"),col_names = F
 
 # data path config
 miRNA_exp_path <- "H:/data/TCGA/TCGA_data"
-
+miRNA_exp_path <- "G:/data/TCGA/TCGA_data"
 # load expression 
 miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
@@ -309,8 +311,8 @@ ready_draw %>%
       colour = "grey",
       linetype = "dashed",
       size = 0.2),
-    axis.text.x = element_text(size = 10, angle = 30, hjust = 1),
-    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 10, color = "black"),
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 12),
     legend.key = element_rect(fill = "white", colour = "black") ,
