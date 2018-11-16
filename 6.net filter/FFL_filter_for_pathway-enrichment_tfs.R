@@ -223,8 +223,7 @@ ready_draw %>%
   scale_y_discrete(limit = x_rank$gene) +
   geom_text(aes(label=label)) +
   xlab("Upregulated miRNA") +
-  ylab("TSGs targeted by CBX2 and EZH2") +
-  coord_flip() +
+  ylab("PPAR signaling genes targeted by CBX2 and/or EZH2") +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
@@ -232,12 +231,13 @@ ready_draw %>%
       colour = "grey",
       linetype = "dashed",
       size = 0.2),
-    axis.text.x = element_text(size = 10,colour = "black",angle = 90,hjust = 1),
+    axis.text.x = element_text(size = 10,colour = "black",angle = 45,hjust = 1),
     axis.text.y = element_text(size = 10,colour = "black"),
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 12),
     legend.key = element_rect(fill = "white", colour = "black") ,
     plot.title = element_text(size=20)
   ) -> p;p
-ggsave(file.path(result_path,"Figure4/Figure5","PPAR_miRNA_Cor.pdf"),device = "pdf",width = 4,height = 4)
-ggsave(file.path(result_path,"Figure4/Figure5","PPAR_miRNA_Cor.tiff"),device = "tiff",width = 4,height = 4)
+result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure"
+ggsave(file.path(result_path,"Figure4/Figure5","PPAR_miRNA_Cor.pdf"),device = "pdf",width = 7,height = 3)
+ggsave(file.path(result_path,"Figure4/Figure5","PPAR_miRNA_Cor.tiff"),device = "tiff",width = 7,height = 3)
