@@ -340,37 +340,52 @@ for(i in 1:nrow(mRNA_survival_p_OS)){
   high_n=draw_for_sur %>% dplyr::filter(group==paste("Up",.up,"%",sep="")) %>% nrow()
   KMP=mRNA_survival_p_OS$KMP[i]
   coxp=mRNA_survival_p_OS$Coxp.p.value[i]
-  fig_name <- paste("OS",gene,KMP,"pdf", sep = ".")
+  
   # fig_name <- paste("PFI",gene,KMP,"png", sep = ".")
   
-  fit <- survival::survfit(survival::Surv(OS, status) ~ group, data = draw_for_sur, na.action = na.exclude)
+  .fit <- survival::survfit(survival::Surv(OS, status) ~ group, data = draw_for_sur, na.action = na.exclude)
+  low_n=.fit$n[2]
+  high_n=.fit$n[1]
+  legend <- data.frame(group=c("Low","High"),n=c(low_n,high_n))
+  
+  legend %>%
+    dplyr::mutate(
+      label = purrr::map2(
+        .x = group,
+        .y = n,
+        .f = function(.x,.y){
+          latex2exp::TeX(glue::glue("<<gene>>^{<<.x>>}, n = <<.y>>", .open = "<<", .close = ">>"))
+        }
+      )
+    ) %>%
+    dplyr::arrange(group)-> legend
+  fig_name <- paste("OS",gene,KMP,"pdf", sep = ".")
+  fig_name_tif <- paste("OS",gene,KMP,"tiff", sep = ".")
   # fit <- survival::survfit(survival::Surv(PFI.time.1, PFI.1) ~ group, data = draw_for_sur, na.action = na.exclude)
   # pdf(file.path(survival_path,"survival",fig_name),width = 6, height = 6)
-  survminer::ggsurvplot(fit,pval=F, #pval.method = T,
-                        surv.median.line = "hv",
-                        title = paste(paste(gene, sep = "-"), "Logrank P =", signif(KMP, 2),"Cox p =",signif(coxp, 2)),
-                        xlab = "Survival in days",
-                        ylab = 'Probability of survival',
-                        legend.title = "Expression group:",
-                        legend.labs = c(paste("Low", .low,"%",", n = ",low_n,sep=""),
-                                        paste("Up", .up,"%",", n = ",high_n,sep="")),
-                        legend= c(0.8,0.8),
-                        # risk.table = TRUE,
-                        # tables.height = 0.2,
-                        palette = c("#E7B800", "#2E9FDF"),
-                        ggtheme = theme(
-                          panel.border = element_blank(), panel.grid.major = element_blank(), 
-                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", 
-                                                                                       size = 0.5), 
-                          panel.background = element_rect(fill = "white"),
-                          legend.key = element_blank(),
-                          legend.background = element_blank(),
-                          legend.text = element_text(size = 12, colour = "black"),
-                          axis.text = element_text(size = 12, colour = "black"),
-                          legend.title = element_blank(),
-                          axis.title = element_text(size = 12,color = "black")
+  survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
+                          surv.median.line = "hv",
+                          title = paste(paste(gene, sep = "-"), "p =", signif(KMP, 2)),
+                          xlab = "Time (days)",
+                          ylab = 'Probability of survival',
+                          legend.title = "Expression group:",
+                          legend= c(0.7,0.8),
+                          ggtheme = theme(
+                            panel.border = element_blank(), panel.grid.major = element_blank(), 
+                            panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                            panel.background = element_rect(fill = "white"),
+                            legend.key = element_blank(),
+                            legend.background = element_blank(),
+                            legend.text = element_text(size = 12, colour = "black"),
+                            axis.text = element_text(size = 12, colour = "black"),
+                            legend.title = element_blank(),
+                            axis.title = element_text(size = 12,color = "black")
                         )
-  ) 
+  ) +
+                          scale_color_manual(
+                            values = c( "#EE6363","#1C86EE"),
+                            labels = legend$label
+                          )
   # dev.off()
   # ggsave(filename = fig_name, device = "png", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 6, height = 6)
   ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/OS"), width = 4, height = 4)
@@ -381,7 +396,7 @@ for(i in 1:nrow(mRNA_survival_p_OS)){
 ### PFI -----
 mRNA_clinical %>%
   dplyr::group_by(symbol) %>%
-  dplyr::mutate(survival=purrr::map2(symbol,data,.up=50,.low=50,fn_survival_PFI)) %>%
+  dplyr::mutate(survival=purrr::map2(symbol,data,.up=25,.low=75,fn_survival_PFI)) %>%
   dplyr::select(-data) %>%
   tidyr::unnest() %>%
   dplyr::mutate(Worse=ifelse(Coxp.estimate>0,"H", "L")) %>%
@@ -393,8 +408,8 @@ mRNA_survival_p_PFI %>%
 
 ### PFI pic -----
 for(i in 1:nrow(mRNA_survival_p_PFI)){
-  .up=50
-  .low=50
+  .up=25
+  .low=75
   gene=mRNA_survival_p_PFI$symbol[i]
   print(gene)
   mRNA_clinical %>%
@@ -454,8 +469,8 @@ for(i in 1:nrow(mRNA_survival_p_PFI)){
         labels = legend$label
       )
     # dev.off()
-    ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 3)
-    ggsave(filename = fig_name_tiff, device = "tiff", path = file.path(survival_path,"Figure5C.survival/PFI"), width = 4, height = 3)
+    ggsave(filename = fig_name, device = "pdf", path = file.path(survival_path,"PFI"), width = 4, height = 3)
+    ggsave(filename = fig_name_tiff, device = "tiff", path = file.path(survival_path,"PFI"), width = 4, height = 3)
   }
 }
 
