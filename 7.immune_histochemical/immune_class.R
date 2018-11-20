@@ -27,6 +27,23 @@ immune_histone %>% # negative and NA all represent by 0.
   dplyr::mutate(class = ifelse(all_cell_score<3, "Low", "Middle")) %>%
   dplyr::mutate(class = ifelse(all_cell_score>=6, "High", class)) %>%
   dplyr::mutate(sample_type = ifelse(sample_type == "T", "Tumor", "Normal")) -> immune_class
+
+# Score for positive rate
+# From reference: https://www.spandidos-publications.com/10.3892/mmr.2016.5714
+# 
+immune_histone %>% # negative and NA all represent by 0.
+  dplyr::mutate(positiveRate_c_score = ifelse(positiveRate_c<0.05,0,1)) %>%
+  dplyr::mutate(positiveRate_c_score = ifelse(positiveRate_c>=0.25 & positiveRate_c <0.5,2,positiveRate_c_score)) %>%
+  dplyr::mutate(positiveRate_c_score = ifelse(positiveRate_c>=0.5,3,positiveRate_c_score)) %>%
+  dplyr::mutate(positiveRate_k_score = ifelse(positiveRate_k<0.05,0,1)) %>%
+  dplyr::mutate(positiveRate_k_score = ifelse(positiveRate_k>=0.25 & positiveRate_k <0.5,2,positiveRate_k)) %>%
+  dplyr::mutate(positiveRate_k_score = ifelse(positiveRate_k>=0.5, 3,positiveRate_k)) %>%
+  dplyr::mutate(k = positiveRate_k_score * staningIntensity_k) %>%
+  dplyr::mutate(c = positiveRate_c_score * staningIntensity_c) %>%
+  dplyr::mutate(all_cell_score = ifelse(k>c,k,c)) %>%
+  dplyr::mutate(class = ifelse(all_cell_score<3, "Low", "Middle")) %>%
+  dplyr::mutate(class = ifelse(all_cell_score>=6, "High", class)) %>%
+  dplyr::mutate(sample_type = ifelse(sample_type == "T", "Tumor", "Normal")) -> immune_class
 ######################################################################
 ## annotate the code seprerate calculate the tumor and normal samples
 ## do class, correaltion and generate plot for all samples togather
@@ -247,7 +264,7 @@ immune_class_score.all %>%
   geom_jitter(aes(color = group_combine, shape = sample_type),width = 1, height = 1, size = 0.5) +
   # facet_wrap(~sample_type) +
   facet_grid( EZH2.y ~ sample_type+CBX2.y, labeller = hospital_labeller ) +
-  # geom_text(aes(label = n)) +
+  geom_text(aes(label = n)) +
   scale_color_manual(values = c("#FF3030", "#050505")) +
   scale_shape_manual(values = c(1,2)) +
   theme(
@@ -356,7 +373,7 @@ immune_class %>%
     values = c("#1E90FF","#EE6363")
   )+
   ylim(0,7)+
-  ylab("PositiveRate X StainingIntensity") +
+  ylab("Protein level") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         strip.background = element_rect(fill = "white",colour = "white"),
