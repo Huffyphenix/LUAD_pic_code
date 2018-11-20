@@ -76,20 +76,20 @@ df %>%
   ggpubr::ggboxplot(x = "Group", y = "log2Exp",
                     color = "Group", palette = "npg" #add = "jitter",
                     ) +
-  facet_wrap(~ title, strip.position = "bottom") +
+  facet_wrap(~ title, strip.position = "bottom", nrow = 1,scales = "free") +
   geom_point(aes(x=as.numeric(Group)+b,y=log2Exp,color=Group)) +
   geom_line(aes(x=as.numeric(Group)+b,y=log2Exp,group=ID),linetype="11",color="grey") +
   scale_color_manual(
     values = c("#1E90FF","#EE6363")
   )+
-  ylim(4,12) +
+  # ylim(4,12) +
   ylab("log2(mRNA Exp)") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         strip.background = element_rect(fill = "white",colour = "white"),
         strip.text = element_text(size = 12)) +
   # ggpubr::stat_compare_means(label.y = 14,paired = TRUE) +
-  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(11),label = "p.signif") +
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label = "p.signif") +
   scale_x_discrete(breaks = c(1,2),
                      labels = c("Normal","Tumor"),
                      expand = c(0.2,0.2)) -> p;p
@@ -109,6 +109,9 @@ ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC1_boxplo
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure S2.PRC1_boxplot.tiff",device = "tiff",width = 6,height = 5)
 
 ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3/Figure S3.CBX_boxplot.pdf",device = "pdf",width = 5,height = 4)
+
+ggsave("S:/study/ENCODE-TCGA-LUAD/CBX4678/Figure2B.DE_histone_boxplot.pdf",device = "pdf",width = 10,height = 4)
+ggsave("S:/study/ENCODE-TCGA-LUAD/CBX4678/Figure2B.DE_histone_boxplot.tiff",device = "tiff",width = 10,height = 4)
 
 # by ggplot2 --------------------------------------------------------------
 
