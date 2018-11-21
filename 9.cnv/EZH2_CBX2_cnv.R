@@ -16,7 +16,7 @@ luad_cnv <- readr::read_rds(file.path(data_path,"pancan34_cnv_percent.rds.gz")) 
 
 
 genelist <- c("EZH2","CBX2")
-
+genelist <- c("CBX6","CBX7")
 
 # filter ------------------------------------------------------------------
 
