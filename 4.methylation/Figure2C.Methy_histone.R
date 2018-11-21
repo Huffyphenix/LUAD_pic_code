@@ -2,6 +2,7 @@ library(magrittr)
 # data path ---------------------------------------------------------------
 
 data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/图"
+data_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/图"
 
 # laod data ---------------------------------------------------------------
 
@@ -32,4 +33,5 @@ all_methy %>%
     panel.background  = element_rect(fill = "white", color = "grey"),
     axis.title.x = element_text()
   )
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2/Figure2C.Methy_histone.pdf",device = "pdf",width = 4,height = 3)
+ggsave("S:/study/ENCODE-TCGA-LUAD/CBX4678/CBX6_CBX7_promoter_methylation.pdf",device = "pdf",width = 4,height = 3)
+ggsave("S:/study/ENCODE-TCGA-LUAD/CBX4678/CBX6_CBX7_promoter_methylation.tiff",device = "tiff",width = 4,height = 3)

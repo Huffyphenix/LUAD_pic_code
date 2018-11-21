@@ -130,7 +130,9 @@ clinical %>%
   dplyr::mutate(metastasis=ifelse(pathologic_m=="m0","m0","m1")) %>%
   dplyr::mutate(metastasis=ifelse(pathologic_m=="mx",NA,metastasis)) %>%
   dplyr::select(patient_id,status,OS,stage,metastasis) %>%
-  dplyr::rename("sample"="patient_id")-> clinical_data
+  dplyr::rename("sample"="patient_id") %>%
+  dplyr::mutate(OS=as.numeric(OS)/30) %>%
+  dplyr::filter(OS<=60)-> clinical_data
 
 clinical_data %>% 
   dplyr::full_join(PFI_survival_time,by="sample") -> clinical_data
@@ -319,7 +321,7 @@ for(i in 1:nrow(miRNA_survival_p_PFI)){
 ### for OS ----
 mRNA_clinical %>%
   dplyr::group_by(symbol) %>%
-  dplyr::mutate(survival=purrr::map2(symbol,data,.up=75,.low=25,fn_survival)) %>%
+  dplyr::mutate(survival=purrr::map2(symbol,data,.up=50,.low=50,fn_survival)) %>%
   dplyr::select(-data) %>%
   tidyr::unnest() %>%
   dplyr::mutate(Worse=ifelse(Coxp.estimate>0,"H", "L")) %>%
