@@ -18,6 +18,7 @@ de_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942
 
 # data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 data_path_3 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
+
 library(magrittr)
 TF_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::rename("Gene_id"="gene_id")
@@ -65,6 +66,7 @@ library(ggplot2)
 genelist_exp %>%
   dplyr::inner_join(genelist_FC,by="gene_id") %>%
   dplyr::arrange(Group) %>%
+  dplyr::mutate(Group=ifelse(Group=="Normal",as.integer(1),as.integer(2))) %>%
   dplyr::group_by(Group) %>%
   dplyr::mutate(ID=substr(sample,1,4)) -> df
 b <- runif(nrow(df), -0.2, 0.2)
@@ -80,6 +82,7 @@ df %>%
   scale_color_manual(
     values = c("#1E90FF","#EE6363")
   )+
+  # ylim(4,12) +
   ylab("log2(mRNA Exp)") +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
