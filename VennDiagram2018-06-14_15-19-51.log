@@ -1,0 +1,24 @@
+INFO [2018-06-14 15:19:51] [[1]]
+INFO [2018-06-14 15:19:51] list(CBX2_targets = CBX2_targets_proteincoding, EZH2_targets = EZH2_targets_proteincoding)
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $filename
+INFO [2018-06-14 15:19:51] NULL
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $col
+INFO [2018-06-14 15:19:51] RColorBrewer::brewer.pal(6, "Paired")[c(2, 6)]
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $cat.col
+INFO [2018-06-14 15:19:51] RColorBrewer::brewer.pal(6, "Paired")[c(2, 6)]
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $cat.pos
+INFO [2018-06-14 15:19:51] c(5, -6)
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $scaled
+INFO [2018-06-14 15:19:51] [1] FALSE
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $cex
+INFO [2018-06-14 15:19:51] [1] 2
+INFO [2018-06-14 15:19:51] 
+INFO [2018-06-14 15:19:51] $cat.cex
+INFO [2018-06-14 15:19:51] [1] 2
+INFO [2018-06-14 15:19:51] 

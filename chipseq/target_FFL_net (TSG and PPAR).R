@@ -1,5 +1,10 @@
 # TSG and oncogene statistic ----------------------------------------------
+# E zhou -----
 TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+
+# Hust ------
+TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+
 TSG <- readr::read_tsv(file.path(TSG_onco_data_path,"TSG.source_clear(at least one evidence-no confuse).tsv")) %>%
   dplyr::mutate(hallmark="TSG")
 oncogene <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene.source_clear(at least one evidence-no confuse).tsv")) %>%
@@ -17,8 +22,12 @@ TSG %>%
 # Regulation of TFs in EZH2/CBX2 targets to to TSGs and PPAR --------------------------------------------------------
 ### load miRNa regulation data -----
 ### >>>> construc FFL in server 1:/home/huff/LUAD_cancer/FFL_quantification_data/EZH2_CBX2_targets
-
+# Ezhou ------
 FFL_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_targets-180830"
+
+# HUST -------
+FFL_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_targets-180830"
+
 net <- readr::read_tsv(file.path(FFL_path,"TF2gene"),col_names = F) %>%
   dplyr::rename("Sources"="X1","Targets"="X2")
 

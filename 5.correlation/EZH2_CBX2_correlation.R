@@ -1,8 +1,13 @@
 library(magrittr)
 # data path ---------------------------------------------------------------
-
+# E zhou
 miRNA_exp_path <- "H:/data/TCGA/TCGA_data"
 data_path <- "H:/data/GSCALite/GTEx"
+
+# HUST
+miRNA_exp_path <- "G:/data/TCGA/TCGA_data"
+data_path <- "G:/data/GSCALite/GTEx"
+
 # laod data ---------------------------------------------------------------
 
 miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
@@ -151,24 +156,40 @@ text %>%
   dplyr::filter(sample_type=="TCGA Tumor") -> text_tumor
 EZH2_CBX2_exp.gather.allsamples %>%
   dplyr::filter(sample_type=="TCGA Tumor") %>%
+  dplyr::rename("Sample type" = "sample_type") %>%
   ggplot(aes(x=log2(EZH2),y=log2(CBX2))) +
-  geom_point(aes(color = sample_type)) +
+  geom_point(aes(color = `Sample type`)) +
   geom_smooth(span = 0.8, se = FALSE, fullrange=TRUE, color = "#039BE5") +
   theme_bw() +
-  theme(panel.border = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.line = element_line(color = "black")
-  ) +
-  labs(
-    x = "EZH2 mRNA (log2)",
-    y = "CBX2 mRNA (log2)"
-  ) +
   scale_color_manual(
     values = c("#EE6363"),
     labels = text_tumor$label
   ) +
-  facet_wrap(~sample_type,scales = "free") -> p;p
-ggsave(filename = "EZH2_CBX2_tumor-correlation.tiff",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "tiff",width = 6,height = 3)
-ggsave(filename = "EZH2_CBX2_tumor-correlation.pdf",path = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2",device = "pdf",width = 6,height = 3)
+  theme(panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(color = "black"),
+        axis.text = element_text(colour = "black"),
+        axis.title = element_text(size = 12),
+        legend.position = c(0.3,0.9),
+        legend.title = element_blank(),
+        legend.background = element_blank(),
+        legend.key.height = unit(0,"inches"),
+        legend.key.width = unit(0,"inches"),
+        strip.background = element_rect(fill = "white", colour = "black"),
+        strip.text = element_text(size = 12)
+  ) +
+  labs(
+    x = "EZH2 mRNA (log2)",
+    y = "CBX2 mRNA (log2)"
+  )+
+  facet_wrap(~ `Sample type`,scales = "free") -> p;p
+
+# E ZHOU
+result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"
+# HUST
+result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"
+
+ggsave(filename = "EZH2_CBX2_tumor-correlation.tiff",path = result_path,device = "tiff",width = 4,height = 3)
+ggsave(filename = "EZH2_CBX2_tumor-correlation.pdf",path = result_path, device = "pdf",width = 4,height = 3)
 

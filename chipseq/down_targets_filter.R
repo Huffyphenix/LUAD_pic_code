@@ -1,5 +1,10 @@
 # TSG and oncogene statistic ----------------------------------------------
-TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+# E zhou ----
+TSG_onco_data_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/TS and oncogene source"
+
+# HUST ----
+TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
+
 TSG <- readr::read_tsv(file.path(TSG_onco_data_path,"TSG.source_clear(at least one evidence-no confuse).tsv")) %>%
   dplyr::mutate(hallmark="TSG")
 oncogene <- readr::read_tsv(file.path(TSG_onco_data_path,"oncogene.source_clear(at least one evidence-no confuse).tsv")) %>%
@@ -15,7 +20,11 @@ TSG %>%
 
 
 # EZH2 CBX2 downregulated targets -----------------------------------------
-chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+# E zhou ----
+chip_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+
+# HUST ----
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 all_EHZ2_CBX2_common_targets.DE_info <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info"))
 
@@ -27,13 +36,20 @@ all_EHZ2_CBX2_common_targets.DE_info %>%
 TSG %>%
   dplyr::filter(SYMBOL %in% all_EHZ2_CBX2_common_targets.Down$gene_id.x) -> EZH2_CBX2_targets_TSG
 
-result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+# E zhou ----
+result_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/Figure/"
+
+# HUST ----
+result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
 EZH2_CBX2_targets_TSG %>%
   readr::write_tsv(file.path(result_path,"Figure4/Figure5","EZH2-CBX2_down_targets_TSG.tsv"))
 
 # CNV analysis ------------------------------------------------------------
 ### load cnv data ----
 data_path<- "H:/data/GSCALite/TCGA/cnv"
+data_path<- "G:/data/GSCALite/TCGA/cnv"
+
 luad_cnv <- readr::read_rds(file.path(data_path,"pancan34_cnv_percent.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest()
@@ -48,9 +64,13 @@ luad_cnv %>%
 
 ### plot ----
 cnv_plot_ready %>%
-  dplyr::filter(type == "Deletion") %>%
-  dplyr::arrange(CNV) %>%
-  dplyr::select(symbol) ->symbol_rank
+  dplyr::mutate(CNV=ifelse(type=="Deletion",-CNV,CNV)) %>%
+  dplyr::group_by(symbol) %>%
+  dplyr::mutate(CNV_sum=sum(CNV)) %>%
+  dplyr::select(symbol,CNV_sum) %>%
+  unique() %>%
+  dplyr::arrange(CNV_sum) %>%
+  dplyr::ungroup() ->symbol_rank
 
 cnv_plot_ready %>%
   ggplot(aes(x=symbol,y=Percent,fill=type)) +
@@ -58,23 +78,30 @@ cnv_plot_ready %>%
   guides(fill=guide_legend(title = "")) +
   scale_fill_manual(values=c("#FF0000", "#0000FF"))+
   scale_x_discrete(limits = symbol_rank$symbol) +
-  ylab("Percent (%)") +
+  ylab("CNV Percent (%)") +
+  xlab("TSGs targeted by CBX2 and EZH2") +
+  coord_flip() +
   theme(
     panel.background = element_blank(),
     panel.border = element_rect(fill='transparent',colour = "black"),
-    legend.position = c(0.3,0.9),
+    legend.position = c(0.7,0.3),
     legend.background = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title = element_text(size=10),
-    axis.text = element_text(size = 8),
-    axis.text.x = element_text(angle = 30,hjust = 1)
+    # axis.title.x = element_blank(),
+    axis.title = element_text(size=14),
+    axis.text = element_text(colour = "black",size = 12)
+    # axis.text.x = element_text(angle = 30,hjust = 1)
   ) ->p;p
-ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.pdf"),width = 4,height = 3)
-ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.tiff"),width = 4,height = 3)
+ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.pdf"),width = 3,height = 4)
+ggsave(file.path(result_path,"Figure4/Figure5","Down_TSG_targets.CNV-percent.tiff"),width = 3,height = 4)
 
 # DNA methylation ---------------------------------------------------------
 ### load methy data ----
+# E zhou path
 methy_data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
+
+# HUST path 
+methy_data_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
+
 methy <- readr::read_rds(file.path(methy_data_path,"pan33_allgene_methy_diff.simplification.rds.gz"))
 methy_cor <- readr::read_rds(file.path(methy_data_path,"pancan34_all_gene_exp-cor-meth.rds.gz"))
 
@@ -90,28 +117,32 @@ methy_cor %>%
   dplyr::filter(symbol %in% EZH2_CBX2_targets_TSG$SYMBOL) -> targets_methy_cor
 
 targets_methy_diff %>%
-  dplyr::full_join(targets_methy_cor,by="symbol") -> 
+  dplyr::full_join(targets_methy_cor,by="symbol") %>%
+  dplyr::select(symbol,diff,spm) %>%
+  tidyr::gather(-symbol,key="group",value="value") %>%
+  dplyr::mutate(value=ifelse(is.na(value),0,signif(value,2))) %>%
+  dplyr::mutate(label=ifelse(value==0,"NS",value)) %>%
+  dplyr::mutate(group = ifelse(group=="diff","Diff. (T - N)","Cor."))-> targets_methy  # set NA value as 0
 
 ### plot ----
 targets_methy %>%
-  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
+  dplyr::filter(group == "Cor.") %>%
+  dplyr::arrange(value) %>% .$symbol -> cor_rank.genesymbol
 
-targets_methy_cor %>%
-  dplyr::rename("value"="spm") %>%
-  dplyr::mutate(group="Cor.") -> targets_methy_cor.pic
-
-targets_methy_diff %>%
-  dplyr::rename("value"="diff","logfdr" = "fdr") %>%
-  dplyr::mutate(group="Diff. (T - N)") %>%
-  dplyr::select(-direction) -> targets_methy_diff.pic
+# targets_methy_cor %>%
+#   dplyr::rename("value"="spm") %>%
+#   dplyr::mutate(group="Cor.") -> targets_methy_cor.pic
+# 
+# targets_methy_diff %>%
+#   dplyr::rename("value"="diff","logfdr" = "fdr") %>%
+#   dplyr::mutate(group="Diff. (T - N)") %>%
+#   dplyr::select(-direction) -> targets_methy_diff.pic
 
 library(ggplot2)
 library(grid)
 CPCOLS <- c("red", "white", "#1C86EE")
 
-targets_methy_cor.pic %>%
-  rbind(targets_methy_diff.pic) %>%
-  dplyr::mutate(value=signif(value,3)) %>%
+targets_methy %>%
   ggplot(aes(x=group,y=symbol)) +
   geom_tile(aes(fill = value),color="white") +
   scale_y_discrete(limit = cor_rank.genesymbol) +
@@ -124,8 +155,8 @@ targets_methy_cor.pic %>%
     mid = CPCOLS[2],
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
-  geom_text(aes(label=value)) +
-  ylab("Symbol") +
+  geom_text(aes(label=label)) +
+  ylab("TSGs targeted by CBX2 and EZH2") +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
@@ -134,6 +165,7 @@ targets_methy_cor.pic %>%
       linetype = "dashed",
       size = 0.2),
     axis.text.x = element_text(size = 10),
+    axis.text = element_text(colour = "black"),
     axis.title.x = element_blank(),
     axis.text.y = element_text(size = 10),
     legend.text = element_text(size = 10),
@@ -149,6 +181,8 @@ ggsave(file.path(result_path,"Figure4/Figure5","TSG_targets_methy_Cor-diff-gsca.
 ### >>>> construc FFL in server 1:/home/huff/LUAD_cancer/FFL_quantification_data/EZH2_CBX2_TSG_targets/
 
 mirna_regulate_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_TSG_targets"
+mirna_regulate_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_TSG_targets"
+
 net <- readr::read_tsv(file.path(mirna_regulate_path,"miRNA2gene"),col_names = F) %>%
   dplyr::rename("Sources"="X1","Targets"="X2")
 
@@ -156,7 +190,7 @@ net <- readr::read_tsv(file.path(mirna_regulate_path,"miRNA2gene"),col_names = F
 
 # data path config
 miRNA_exp_path <- "H:/data/TCGA/TCGA_data"
-
+miRNA_exp_path <- "G:/data/TCGA/TCGA_data"
 # load expression 
 miRNA_exp <- readr::read_rds(file.path(miRNA_exp_path,"pancan33_mirna_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
@@ -277,8 +311,8 @@ ready_draw %>%
       colour = "grey",
       linetype = "dashed",
       size = 0.2),
-    axis.text.x = element_text(size = 10, angle = 30, hjust = 1),
-    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1, color = "black"),
+    axis.text.y = element_text(size = 10, color = "black"),
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 12),
     legend.key = element_rect(fill = "white", colour = "black") ,

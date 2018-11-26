@@ -5,21 +5,33 @@ library(magrittr,ggplot2)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 # data path ---------------------------------------------------------------
-
+# E zhou path
 methy_data_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
 genelist_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets"
 data_path<- "H:/data"
 
+# HUST path
+methy_data_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/EZH2分析/甲基化分析/"
+genelist_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
+chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets"
+data_path<- "G:/data"
+
+
 # output data -------------------------------------------------------------
+# E ZHou path
 out_path_sup <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
 out_path_fig <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
+
+# HUST path
+out_path_sup <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
+out_path_fig <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # data manage -------------------------------------------------------------
 genelist <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info")) %>%
   dplyr::filter(Class == "Down") %>%
   .$gene_id.x
-genelist <- readr::read_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
+genelist <- readr::read_tsv(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
   dplyr::filter(Description %in% "PPAR signaling pathway")%>%
   .$SYMBOL
 cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
@@ -45,7 +57,8 @@ methy_cor <- readr::read_rds(file.path(methy_data_path,"pancan34_all_gene_exp-co
 
 tcga_geneid <- readr::read_tsv("F:/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt") %>%
   dplyr::rename("symbol"="gene_id")
-
+tcga_geneid <- readr::read_tsv("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TCGA_gene_info/TCGA_all_gene_id.txt") %>%
+  dplyr::rename("symbol"="gene_id")
 # gene list data ----------------------------------------------------------
 
 methy %>%
@@ -58,46 +71,54 @@ methy %>%
 methy_cor %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest() %>%
-  dplyr::inner_join(tcga_geneid,by="symbol") %>%
+  dplyr::full_join(tcga_geneid,by="symbol") %>%
   # dplyr::filter(entrez_id %in% genelist$ENTREZID) %>%
   dplyr::filter(symbol %in% genelist) -> LUAD_gene_methy_cor
 
-LUAD_gene_methy %>%
-  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  readr::write_tsv(file.path(out_path_sup,"correlation-table/cellcycle_pathway_methy_diff_cor.tsv"))
+# LUAD_gene_methy %>%
+#   dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
+#   readr::write_tsv(file.path(out_path_sup,"correlation-table/ppar_pathway_methy_diff_cor.tsv"))
 
 ### For downregulate genes ------
-LUAD_gene_methy %>%
-  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
-  dplyr::filter(spm<=-0.3 & diff>0) %>%
-  readr::write_tsv(file.path(out_path_fig,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
+
+# LUAD_gene_methy %>%
+#   dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
+#   dplyr::filter(spm<=-0.3 & diff>0) %>%
+#   readr::write_tsv(file.path(out_path_fig,"Figure4/Figure5","genes_regulate_by_methy.tsv"))
 
 LUAD_gene_methy %>%
-  dplyr::inner_join(LUAD_gene_methy_cor,by="symbol") %>%
+  dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
   dplyr::filter(spm<=-0.3 & diff>0) -> LUAD_gene_methy.sig_gene
 
-# draw pic ----------------------------------------------------------------
-LUAD_gene_methy_cor %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::arrange(spm) %>% .$symbol -> cor_rank.genesymbol
-LUAD_gene_methy_cor %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::rename("value"="spm") %>%
-  dplyr::mutate(group="Cor.") -> LUAD_gene_methy_cor.pic
 LUAD_gene_methy %>%
-  dplyr::rename("value"="diff","logfdr" = "fdr") %>%
-  dplyr::mutate(group="Diff. (T - N)") %>%
-  dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
-  dplyr::select(-direction) -> LUAD_gene_methy.pic
+  dplyr::full_join(LUAD_gene_methy_cor,by="symbol") %>%
+  dplyr::select(symbol,diff,spm) %>%
+  tidyr::gather(-symbol,key="group",value="value") %>%
+  dplyr::mutate(value=ifelse(is.na(value),0,signif(value,2))) %>%
+  dplyr::mutate(label=ifelse(value==0,"NS",value)) %>%
+  dplyr::mutate(group = ifelse(group=="diff","Diff. (T - N)","Cor.")) %>%
+  dplyr::filter(! symbol %in% c("APOA1","APOA5"))-> targets_methy
+
+# draw pic ----------------------------------------------------------------
+targets_methy %>%
+  dplyr::filter(group == "Cor.") %>%
+  dplyr::arrange(value) %>% .$symbol -> cor_rank.genesymbol
+
+# LUAD_gene_methy_cor %>%
+#   dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+#   dplyr::rename("value"="spm") %>%
+#   dplyr::mutate(group="Cor.") -> LUAD_gene_methy_cor.pic
+# LUAD_gene_methy %>%
+#   dplyr::rename("value"="diff","logfdr" = "fdr") %>%
+#   dplyr::mutate(group="Diff. (T - N)") %>%
+#   dplyr::filter(symbol %in% LUAD_gene_methy.sig_gene$symbol) %>%
+#   dplyr::select(-direction) -> LUAD_gene_methy.pic
 
 library(ggplot2)
 library(grid)
 CPCOLS <- c("red", "white", "#1C86EE")
 
-LUAD_gene_methy_cor.pic %>%
-  dplyr::select(-entrez_id) %>%
-  rbind(LUAD_gene_methy.pic) %>%
-  dplyr::mutate(value=signif(value,3)) %>%
+targets_methy %>%
   ggplot(aes(x=group,y=symbol)) +
   geom_tile(aes(fill = value),color="white") +
   scale_y_discrete(limit = cor_rank.genesymbol) +
@@ -110,8 +131,8 @@ LUAD_gene_methy_cor.pic %>%
     mid = CPCOLS[2],
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
-  geom_text(aes(label=value)) +
-  ylab("Symbol") +
+  geom_text(aes(label=label)) +
+  ylab("PPAR signaling genes targeted by CBX2 or/and EZH2") +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
@@ -127,8 +148,8 @@ LUAD_gene_methy_cor.pic %>%
     legend.key = element_rect(fill = "white", colour = "black") ,
     plot.title = element_text(size=20)
   ) -> p;p
-ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
-ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 4)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)
 
 ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
 ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)

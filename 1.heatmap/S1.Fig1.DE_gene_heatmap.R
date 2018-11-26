@@ -10,10 +10,18 @@ data_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图"
 de_path <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 # loading data ------------------------------------------------------------
 
+library(magrittr)
 progene.exp <- read.table(file.path(data_path,"20160519.FC2","NOISeq_DE_ProGene_FC2_cpm_30.exp.xls"),sep = '\t',header = T)
-
-DE_info <- read.table(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) %>%
+TF_exp <- read.table(file.path(data_path,"20160519.FC2","NOISeq_DE_TF_cpm_30_FC2_all.exp.xls"),sep = '\t',header = T)
+progene.exp %>%
+  rbind(TF_exp) -> progene.exp
+pro_DE_info <- read.table(file.path(de_path,"NOISeq_DE_ProGene_FC2_cpm_30"),sep = '\t',header = T) %>%
   dplyr::arrange(gene_id)
+tf_DE_info <- read.table(file.path(de_path,"NOISeq_DE_TF_FC2_cpm_30"),sep = '\t',header = T) %>%
+  dplyr::arrange(gene_id)
+pro_DE_info %>%
+  rbind(tf_DE_info) %>%
+  dplyr::arrange(gene_id) -> DE_info
 
 # data manage -------------------------------------------------------------
 library(magrittr)
@@ -94,14 +102,15 @@ progene.exp.scaled <- apply(progene.exp,1,scale) %>% t()
 colnames(progene.exp.scaled) <- colnames(progene.exp)
 
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
-
+library(circlize)
 he = Heatmap(progene.exp.scaled,
+             col = colorRamp2(c(-2, 0, 4), c(c("#00BFFF"), "white", "red")),
         show_row_names = FALSE, 
         show_column_names = FALSE,
         cluster_columns = FALSE,
         show_row_dend = FALSE, # whether show row clusters.
         top_annotation = sample_anno,
-        heatmap_legend_param = list(title = c("Experssion")))
-pdf(file.path(out_path,"FC2_progene_exp_heatmap.pdf"),width = 6,height = 6)
+        heatmap_legend_param = list(title = c("Expression")))
+pdf(file.path(out_path,"FC2_progene_exp_heatmap.pdf"),width = 5,height = 7)
 he+gene_anno
 dev.off()
