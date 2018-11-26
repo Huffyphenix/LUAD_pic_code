@@ -5,6 +5,10 @@ library(ggplot2)
 data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/实验图片/原图/data_process"
 result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/实验图片/原图/Pic_by_R"
 
+# E Zhou 
+data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/实验图片/原图/data_process"
+result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/实验图片/原图/Pic_by_R"
+
 #+++++++++++++++++++++++++
 # Function to calculate the mean and the standard deviation
 # for each group
@@ -395,6 +399,98 @@ ggplot(CBX2_viability_summary, aes(x=time, y=viability, color=siRNA)) +
 
 ggsave(file.path(result_path,"viability_siCBX-EZH2_brokenline.pdf"),width = 4,height = 2,device = "pdf")
 
+
+##################################################
+### PPARG siRNA Ecell variability
+PPARG_viability_bar <- readr::read_tsv(file.path(data_path,"siPPARG_MTT.txt")) 
+PPARG_viability_bar %>%
+  tidyr::gather(-siRNA,key = "time",value="viability") -> PPARG_viability_bar.gather
+
+data_Chip_summary <- data_summary(PPARG_viability_bar.gather, varname="viability", 
+                                  groupnames=c("siRNA", "time")) %>%
+  dplyr::mutate(time = as.factor(time))
+
+
+PPARG_p <- data.frame(siRNA=data_Chip_summary$siRNA,time=data_Chip_summary$time,p=NA) %>%
+  tidyr::spread(key="time",value="p") 
+for(name in colnames(PPARG_viability_bar)[2:4]){
+  t.test(as.vector(t(PPARG_viability_bar[1:4,name])),as.vector(t(PPARG_viability_bar[5:8,name]))) %>% 
+    broom::tidy() %>% .[1,5] -> PPARG_p[2,name]
+  t.test(as.vector(t(PPARG_viability_bar[1:4,name])),as.vector(t(PPARG_viability_bar[9:11,name]))) %>% 
+    broom::tidy() %>% .[1,5] -> PPARG_p[3,name]
+}
+PPARG_p %>%
+  tidyr::gather(-siRNA,key="time",value = "p") -> PPARG_p
+
+PPARG_viability_bar.gather %>%
+  dplyr::group_by(siRNA,time) %>%
+  dplyr::mutate(mean = mean(viability)) %>%
+  dplyr::select(siRNA,time,mean) %>%
+  unique() %>%
+  dplyr::ungroup()  -> PPARG_viability_mean
+
+
+PPARG_viability_mean %>%
+  dplyr::inner_join(PPARG_p,by=c("siRNA","time")) %>%
+  dplyr::left_join(data_Chip_summary,by=c("siRNA","time")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) -> PPARG_viability_summary
+
+# ggplot
+## bar plot
+library(ggplot2)
+ggplot(PPARG_viability_summary, aes(x=siRNA, y=mean, fill = siRNA)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~time,strip.position = "bottom",nrow=1) +
+  geom_text(aes(y=viability+sd+0.01,label=p_labe),size=5) +theme_classic() +
+  scale_fill_manual(values=c("black", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 15, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    # legend.key.width=unit(0.15,"inches"),  # legend size
+    # legend.key.height=unit(0.15,"inches"),
+    strip.text = element_text(size = 15),
+    strip.background = element_rect(colour = "white")
+  ) +
+  ylab("OD 490 nm")
+ggsave(file.path(result_path,"viability_siPPAR_barplot.pdf"),width = 7,height = 3,device = "pdf")
+
+## broken line
+ggplot(PPARG_viability_summary, aes(x=time, y=mean, color=siRNA)) +
+  geom_line(aes(group=siRNA)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1) +
+  # facet_wrap( ~ targets) +
+  # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
+  theme_classic() +
+  scale_color_manual(values=c("black", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
+                     labels = c("Control", "siCBX2-1", "siCBX2-2","siEZH2-1","siEZH2-2")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text = element_text(color = "black", size = 6),
+    axis.title.y = element_text(color = "black", size = 8),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.key.width=unit(0.15,"inches"),  # legend size
+    legend.key.height=unit(0.15,"inches"),
+    axis.ticks = element_blank()
+  )+
+  ylab("OD 490 nm")
+
+ggsave(file.path(result_path,"viability_siPPAR_brokenline.pdf"),width = 4,height = 2,device = "pdf")
+
 ##################################################
 ### TF siRNA Ecell variability
 TF_viability_bar <- readr::read_tsv(file.path(data_path,"10. TF_viability_data.txt")) %>%
@@ -539,7 +635,7 @@ mirna_viability_bar %>%
     strip.text = element_text(size = 15),
     strip.background = element_rect(colour = "white")
   ) +
-  ylab("OD 470 nm")
+  ylab("OD 490 nm")
 ggsave(file.path(result_path,"viability_mirna_barplot.pdf"),width = 7,height = 3,device = "pdf")
 ggsave(file.path(result_path,"viability_mirna_barplot.tiff"),width = 7,height = 3,device = "tiff")
 
@@ -895,7 +991,43 @@ ggplot(miRNA_mimics_bar, aes(x=key, y=Relative_mRNA_level, fill = key)) +
   ylab("Relative mRNA level")
 ggsave(file.path(result_path,"mirna_mimic_barplot.pdf"),width = 4,height = 3,device = "pdf")
 ggsave(file.path(result_path,"mirna_mimic_barplot.tiff"),width = 4,height = 3,device = "tiff")
-
+##################################################
+### siPPAR transwell
+PPAR_bar <- readr::read_tsv(file.path(data_path,"siPPAR-transwell.txt")) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<0.051 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.051 ,"ns",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
+  dplyr::mutate(key = "Invasion") 
+# ggplot
+## bar plot
+ggplot(PPAR_bar, aes(x=siRNA, y=mean, fill = siRNA)) + 
+  geom_bar(stat="identity", color="black",
+           position=position_dodge())  +
+  geom_errorbar(aes(ymin=mean-SD, ymax=mean+SD), width=.2,
+                position=position_dodge(.9)) +
+  facet_wrap(~key, strip.position = "bottom") +
+  geom_text(aes(y=mean+SD+2,label=p_labe),size = 5) +theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank() ,
+    axis.ticks.x = element_blank() ,
+    axis.text = element_text(color = "black",size = 12),
+    axis.title.y = element_text(size = 12, colour = "black"),
+    legend.position = "right",
+    legend.title = element_blank(),
+    legend.text = element_text(colour = "black",size = 10),
+    strip.background = element_rect(colour = "white"),
+    strip.text = element_text(size=12),
+    # legend.key.height = unit(0.1,"inches"),
+    # legend.key.width = unit(0.1,"inches"),
+    legend.background = element_blank()
+  ) +
+  ylab(paste("Cells invasion", "(% of Control)",sep="\n"))
+ggsave(file.path(result_path,"PPAR_transwell.pdf"),width = 3,height = 2,device = "pdf")
+ggsave(file.path(result_path,"PPAR_transwell.tiff"),width = 3,height = 2,device = "tiff")
 ##################################################
 ### siTF transwell
 TF_EZH2_bar <- readr::read_tsv(file.path(data_path,"9. siTF-transwell.txt")) %>%
