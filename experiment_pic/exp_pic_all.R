@@ -97,7 +97,9 @@ pparg_Chip_p <- readr::read_tsv(file.path(data_path,"1.EZH2-CBX2-Chip-PPARG.txt"
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe))
 # ggplot
-ggplot(pparg_Chip_p, aes(x=antibody, y=per_input, fill=antibody)) +
+pparg_Chip_p %>%
+  dplyr::filter(! antibody %in% c("4_EZH2","5_H3K27me3")) %>%
+  ggplot(aes(x=antibody, y=per_input, fill=antibody)) +
   geom_bar(stat="identity", color="black",
            position=position_dodge()) +
   geom_errorbar(aes(ymin=per_input-sd, ymax=per_input+sd), width=.2,
