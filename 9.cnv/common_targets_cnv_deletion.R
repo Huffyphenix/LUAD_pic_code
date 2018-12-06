@@ -35,7 +35,7 @@ ppar_relate <- c("PPAR signaling pathway")
 genelist <- readr::read_tsv(file.path(enrich_path,"gseaKEGG_result-gather.tsv")) %>%
   dplyr::filter(Description %in% ppar_relate) %>%
   .$SYMBOL
-
+genelist <- c(genelist,"RXRA")
 
 # load cnv data -----------------------------------------------------------
 

@@ -1233,8 +1233,8 @@ mRNA_exp_normal.gather.filter %>%
         strip.text = element_text(size = 12)) +
   # ggpubr::stat_compare_means(label.y = 15) +
   ggpubr::stat_compare_means(comparisons = comp_list_metas,method = "wilcox.test",label = "p.signif",label.y = c(12,12.5))->p;p
-ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.pdf"),p,width = 5,height = 3)
-ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.tiff"),p,width = 5,height = 3)
+ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.pdf"),p,width = 7,height = 3)
+# ggsave(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2","EZH2-CBX2_metastic-box.tiff"),p,width = 5,height = 3)
 
 #### for E2F1 and SOX4 ----
 mRNA_exp_normal.gather.filter %>%
