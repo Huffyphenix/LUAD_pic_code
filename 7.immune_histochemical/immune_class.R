@@ -6,7 +6,7 @@ data_path<-"Z:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942
 
 # E Zhou -----
 data_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
-result_path<-"H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/result"
+result_path<-"F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"
 
 # HUST ----
 data_path<-"G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/芯片-免疫组化/data"
@@ -331,14 +331,14 @@ immune_class_score.all %>%
   dplyr::mutate(group_combine = ifelse(CBX2.y=="2_middle" & EZH2.y=="2_middle" & sample_type == "Tumor", "1", "2")) %>%
   dplyr::mutate(group_combine = ifelse(CBX2.y=="3_Low" & EZH2.y=="3_Low" & sample_type == "Normal", "1",group_combine)) %>%
   ggplot(aes(x=CBX2.x, y=EZH2.x)) +
-  geom_jitter(height = 0.1, width = 0.1,aes(color = group_combine, shape = sample_type)) +
+  geom_jitter(height = 0.1, width = 0.1,aes(color = sample_type, shape = sample_type)) +
   scale_shape_manual(values = c(1,2),
                      labels = cor_p_label$label) +
   facet_wrap(~ sample_type) +
-  scale_color_manual(values = c("#FF3030", "#050505")) +
+  scale_color_manual(values = c("#00C5CD","#EE6363")) +
   geom_smooth(method = "lm") +
-  geom_vline(xintercept = c(2.8,5.9)) +
-  geom_hline(yintercept = c(5.9,2.8))+
+  # geom_vline(xintercept = c(2.8,5.9)) +
+  # geom_hline(yintercept = c(5.9,2.8))+
   theme_bw() +
   theme(
     panel.background = element_rect(fill = "white"),
