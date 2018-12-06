@@ -108,9 +108,9 @@ go %>%
   as.data.frame() %>%
   tidyr::separate(geneID,paste("gene",1:100,sep="_"),"/") %>%
   dplyr::select(-ONTOLOGY,-ID,-GeneRatio,-BgRatio,-pvalue,-Count) %>%
-  tidyr::gather(-Description,-p.adjust,-qvalue,key="title",value="ENTREZID") %>%
+  tidyr::gather(-Description,-p.adjust,-qvalue,key="title",value="SYMBOL") %>%
   # tidyr::drop_na() %>%
-  dplyr::inner_join(all_gene_prob0.9_info,by="ENTREZID") -> go_up_info
+  dplyr::inner_join(all_gene_prob0.9_info,by="SYMBOL") -> go_up_info
 go %>% 
   as.data.frame() -> go_up_info.tible
 go_up_info %>%
@@ -279,7 +279,7 @@ sort(y,decreasing = TRUE) ->y # 8806 genes
 # all_gene_prob0.9up_info[,6] ->y
 # names(y) = all_gene_prob0.9up_info$ENTREZID
 # sort(y,decreasing = TRUE) ->y
-kk_nofc <- gseKEGG(y, nPerm=1000,pvalueCutoff=1)
+kk_nofc <- gseKEGG(y, nPerm=1000,pvalueCutoff=0.05)  # pvaluecutoff is important for result reproducible. must 0.05
 ridgeplot(kk_nofc,showCategory = 40)
 kk_nofc %>% 
   as.data.frame() %>%
