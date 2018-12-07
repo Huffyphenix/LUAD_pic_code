@@ -297,7 +297,7 @@ kk_nofc %>%
 kk_nofc_info %>%
   dplyr::select(Description,title,SYMBOL) %>%
   tidyr::spread(key = title,value=SYMBOL) %>%
-  tidyr::unite("enriched_genes",paste("gene",1:100,sep="_"),sep="/") %>%
+  tidyr::unite("enriched_genes",paste("gene",1:86,sep="_"),sep="/") %>%
   dplyr::mutate(enriched_genes=gsub("/NA","",enriched_genes)) %>%
   dplyr::inner_join(kk_nofc.tible,by="Description") %>%
   dplyr::mutate(Counts = strsplit(enriched_genes,"/") %>%  lapply(length) %>% unlist()) %>%
