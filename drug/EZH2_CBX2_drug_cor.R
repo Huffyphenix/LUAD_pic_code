@@ -80,7 +80,6 @@ PPAR_TSG %>%
 cor_drug %>%
   dplyr::mutate(`TARGET PATHWAY`=ifelse(`TARGET PATHWAY`==TARGET,paste(TARGET,1,sep="_"),`TARGET PATHWAY`)) %>%
   dplyr::filter(SYMBOL %in% genelist_to_draw)-> EZH2_CBX2_cor_drug
-  
 
 # line plot ---------------------------------------------------------------
 
