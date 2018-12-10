@@ -6,7 +6,7 @@ library(org.Hs.eg.db)
 drug_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/drug_sensitivity"
 gdsc_info <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/DRUG_data/GDSC database"
 FFL_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new/FFL/EZH2_CBX2_targets-180830"
-out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure3"
+out_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure9"
 
 
 # data path in Hust -------------------------------------------------------
@@ -69,7 +69,8 @@ LUAD_IC50_exp.druginfo %>%
   dplyr::inner_join(drug_info,by="DRUG_ID") %>%
   dplyr::select(SYMBOL,`DRUG NAME`,TARGET,`TARGET PATHWAY`,estimate,p.value) -> cor_drug
 
-
+cor_drug %>%
+  readr::write_tsv(file.path(out_path,"drug_correlation_result.txt"))
 
 
 # draw pic ----------------------------------------------------------------
@@ -82,6 +83,9 @@ cor_drug %>%
   dplyr::filter(SYMBOL %in% genelist_to_draw)-> EZH2_CBX2_cor_drug
   
 
+###### key correlation 
+#### filtered correlation pairs to show
+readr::read_tsv(file.path(out_path,"key_correlations.txt"))-> EZH2_CBX2_cor_drug
 # line plot ---------------------------------------------------------------
 
 
@@ -284,6 +288,8 @@ ggsave(file.path(out_path,"EZH2_CBX2_drug_sensiticity.tiff"),device = "tiff",hei
 ggsave(file.path(out_path,"E2F1_SOX4_drug_sensiticity.pdf"),device = "pdf",height = 6,width = 8)
 ggsave(file.path(out_path,"E2F1_SOX4_drug_sensiticity.tiff"),device = "tiff",height = 6,width = 8)
 
+ggsave(file.path(out_path,"keys_drug_sensiticity.pdf"),device = "pdf",height = 6,width = 8)
+ggsave(file.path(out_path,"keys_drug_sensiticity.tiff"),device = "tiff",height = 6,width = 8)
 # point plot --------------------------------------------------------------
 EZH2_CBX2_cor_drug %>%
   dplyr::filter(abs(estimate)>=0.3) -> EZH2_CBX2_cor_drug
