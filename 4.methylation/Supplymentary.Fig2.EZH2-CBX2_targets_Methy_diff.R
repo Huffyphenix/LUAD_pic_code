@@ -31,7 +31,7 @@ out_path_fig <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 genelist <- readr::read_tsv(file.path(chip_path,"common-targets-180426-new","all_EHZ2_CBX2_common_targets.DE_info")) %>%
   dplyr::filter(Class == "Down") %>%
   .$gene_id.x
-genelist <- readr::read_tsv(file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
+genelist <- readr::read_tsv(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea","gseaKEGG_result-gather.tsv")) %>%
   dplyr::filter(Description %in% "PPAR signaling pathway")%>%
   .$SYMBOL
 cell_cycle_relate <- c("Cell cycle","Oocyte meiosis","DNA replication",
@@ -132,7 +132,7 @@ targets_methy %>%
     breaks = c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6)
   ) +
   geom_text(aes(label=label)) +
-  ylab("PPAR signaling genes targeted by CBX2 or/and EZH2") +
+  ylab(paste("PPAR signaling genes targeted by","\n","CBX2 or/and EZH2",sep = "")) +
   theme(#legend.position = "bottom",
     panel.background = element_rect(colour = "black", fill = "white"),
     panel.grid = element_line(colour = "grey", linetype = "dashed"),
@@ -140,19 +140,21 @@ targets_methy %>%
       colour = "grey",
       linetype = "dashed",
       size = 0.2),
-    axis.text.x = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = -30, hjust = 0),
     axis.title.x = element_blank(),
     axis.text.y = element_text(size = 10),
+    axis.text = element_text(colour = "black"),
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 12),
-    legend.key = element_rect(fill = "white", colour = "black") ,
+    legend.key = element_rect(fill = "white", colour = "black"),
+    # legend.position = "bottom",
     plot.title = element_text(size=20)
   ) -> p;p
-ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
-ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
+ggsave(file.path(out_path_fig,"Figure1","PPAR_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 4)
 
-ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
-ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.pdf"),device = "pdf",width = 3,height = 6)
+ggsave(file.path(out_path_fig,"Figure4/Figure5","Figure5B.methy_Cor-diff-gsca.tiff"),device = "tiff",width = 3,height = 6)
 
 ### For upregulate genes -------
 LUAD_gene_methy %>%
