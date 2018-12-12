@@ -1,6 +1,6 @@
 # TSG and oncogene statistic ----------------------------------------------
 # E zhou ----
-TSG_onco_data_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/TS and oncogene source"
+TSG_onco_data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
 
 # HUST ----
 TSG_onco_data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/TS and oncogene source"
@@ -21,7 +21,7 @@ TSG %>%
 
 # EZH2 CBX2 downregulated targets -----------------------------------------
 # E zhou ----
-chip_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 # HUST ----
 chip_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
@@ -37,7 +37,7 @@ TSG %>%
   dplyr::filter(SYMBOL %in% all_EHZ2_CBX2_common_targets.Down$gene_id.x) -> EZH2_CBX2_targets_TSG
 
 # E zhou ----
-result_path <- "F:/?业募?????/ENCODE-TCGA-LUAD/Figure/"
+result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
 
 # HUST ----
 result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/"
@@ -164,17 +164,18 @@ targets_methy %>%
       colour = "grey",
       linetype = "dashed",
       size = 0.2),
-    axis.text.x = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = -30, hjust = 0),
     axis.text = element_text(colour = "black"),
     axis.title.x = element_blank(),
     axis.text.y = element_text(size = 10),
+    # legend.position = "bottom",
     legend.text = element_text(size = 10),
     legend.title = element_text(size = 12),
     legend.key = element_rect(fill = "white", colour = "black") ,
     plot.title = element_text(size=20)
   ) -> p;p
-ggsave(file.path(result_path,"Figure4/Figure5","TSG_targets_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 6)
-ggsave(file.path(result_path,"Figure4/Figure5","TSG_targets_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 6)
+ggsave(file.path(result_path,"Figure4/Figure5","TSG_targets_methy_Cor-diff-gsca.pdf"),device = "pdf",width = 4,height = 4)
+ggsave(file.path(result_path,"Figure4/Figure5","TSG_targets_methy_Cor-diff-gsca.tiff"),device = "tiff",width = 4,height = 4)
 
 # miRNA regulation --------------------------------------------------------
 ### load miRNa regulation data -----
