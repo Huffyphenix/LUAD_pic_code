@@ -21,7 +21,7 @@ target_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets
 exp_path <- "H:/data/TCGA/TCGA_data"
 clinical_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/生存分析/data/LUAD"
 clinical_path_1 <- "F:/我的坚果云/ENCODE-TCGA-LUAD/survival"
-survival_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5"
+survival_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5/Figure5C.survival"
 data_path<- "H:/data"
 chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
@@ -398,7 +398,7 @@ for(i in 1:nrow(mRNA_survival_p_OS)){
 ### PFI -----
 mRNA_clinical %>%
   dplyr::group_by(symbol) %>%
-  dplyr::mutate(survival=purrr::map2(symbol,data,.up=25,.low=75,fn_survival_PFI)) %>%
+  dplyr::mutate(survival=purrr::map2(symbol,data,.up=50,.low=50,fn_survival_PFI)) %>%
   dplyr::select(-data) %>%
   tidyr::unnest() %>%
   dplyr::mutate(Worse=ifelse(Coxp.estimate>0,"H", "L")) %>%
@@ -410,8 +410,8 @@ mRNA_survival_p_PFI %>%
 
 ### PFI pic -----
 for(i in 1:nrow(mRNA_survival_p_PFI)){
-  .up=25
-  .low=75
+  .up=50
+  .low=50
   gene=mRNA_survival_p_PFI$symbol[i]
   print(gene)
   mRNA_clinical %>%
@@ -464,7 +464,11 @@ for(i in 1:nrow(mRNA_survival_p_PFI)){
                             axis.text = element_text(size = 12, colour = "black"),
                             legend.title = element_blank(),
                             axis.title = element_text(size = 12,color = "black")
-                          )
+                          ),
+    font.main = c(16),
+    font.x = c(14),
+    font.y = c(14),
+    font.tickslab = c(12)
     ) +
       scale_color_manual(
         values = c( "#EE6363","#1C86EE"),
@@ -786,8 +790,8 @@ for(.gene3 in CBX2_target_ppar){
       labels = legend$label
     )
   # dev.off()
-  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
-  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
+  ggsave(filename = fig_name1, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
+  ggsave(filename = fig_name2, device = "tiff", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
   # ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
   # ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
 }
@@ -895,10 +899,10 @@ for(.gene3 in CBX2_target_ppar){
           values = c("#1C86EE", "#EE6363"),
           labels = legend$label
         )
-      ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
-      ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
-      # ggsave(filename = fig_name1, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
-      # ggsave(filename = fig_name2, device = "tiff", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
+      # ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
+      # ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 4, height = 3)
+      ggsave(filename = fig_name1, device = "pdf", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
+      ggsave(filename = fig_name2, device = "tiff", path = file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5/survival"), width = 5, height = 4)
 
     }
   }
