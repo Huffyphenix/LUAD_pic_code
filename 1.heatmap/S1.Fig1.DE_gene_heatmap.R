@@ -104,13 +104,13 @@ colnames(progene.exp.scaled) <- colnames(progene.exp)
 out_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/supplymentary"
 library(circlize)
 he = Heatmap(progene.exp.scaled,
-             col = colorRamp2(c(-2, 0, 4), c(c("#00BFFF"), "white", "red")),
+             col = colorRamp2(c(-2, 0, 4), c("blue", "white", "red")),
         show_row_names = FALSE, 
         show_column_names = FALSE,
         cluster_columns = FALSE,
         show_row_dend = FALSE, # whether show row clusters.
         top_annotation = sample_anno,
-        heatmap_legend_param = list(title = c("Expression")))
-pdf(file.path(out_path,"FC2_progene_exp_heatmap.pdf"),width = 5,height = 7)
+        heatmap_legend_param = list(title = c("Scaled Exp.")))
+pdf(file.path(out_path,"FC2_gene_exp_heatmap.pdf"),width = 5,height = 7)
 he+gene_anno
 dev.off()

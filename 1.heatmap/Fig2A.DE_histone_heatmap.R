@@ -22,7 +22,7 @@ progene_DE_info <- read.table(file.path(data_path,"NOISeq_DE_ProGene_FC2_cpm_30"
 rbind(TF_DE_info,progene_DE_info) -> all_DE_info
 
 histone <- readr::read_tsv("H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/hisone/histone-methylation-180725/all_histone_methylation.idmap.symbol",col_names = F)
-# histone <- c("CBX2","EZH2","CBX7","CBX3","DNMT3A","CBX8","SUV39H2","UHRF1")
+histone <- c("CBX2","EZH2","CBX7","CBX3","DNMT3A","CBX8","SUV39H2","UHRF1")
 tcga_geneinfo <- readr::read_tsv(file.path(gene_info,"TCGA_all_gene_id.txt"))
 ncbi_geneinfo_9606 <- readr::read_tsv(file.path(gene_info,"Homo_sapiens.gene_info.filter.20180423download-ncbi"))
 ncbi_geneinfo_9606 %>%
@@ -73,7 +73,7 @@ gene_anno <- rowAnnotation(df=gene_info,
                            col = list(log2FC=circlize::colorRamp2(c(min(gene_info$log2FC),
                                                                     0,
                                                                     max(gene_info$log2FC)),
-                                                                  c("green","white","red"))
+                                                                  c("#00BFFF","white","red"))
                                       # log2N_mean=circlize::colorRamp2(c(min(min(gene_info$log2N_mean),min(gene_info$log2T_mean)), 
                                       #                                   median(c(gene_info$log2N_mean,gene_info$log2T_mean)),
                                       #                                   max(max(gene_info$log2N_mean),max(gene_info$log2T_mean))),
