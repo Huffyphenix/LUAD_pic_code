@@ -335,7 +335,7 @@ immune_class_score.all %>%
   scale_shape_manual(values = c(1,2),
                      labels = cor_p_label$label) +
   facet_wrap(~ sample_type) +
-  scale_color_manual(values = c("#00C5CD","#EE6363")) +
+  scale_color_manual(values = c("#00BFFF","#EE6363")) +
   geom_smooth(method = "lm") +
   # geom_vline(xintercept = c(2.8,5.9)) +
   # geom_hline(yintercept = c(5.9,2.8))+
@@ -355,7 +355,7 @@ immune_class_score.all %>%
   ylab("EZH2 protein level") +
   xlab("CBX2 protein level")
 
-ggsave(file.path(result_path,"immune_histone_T-N_correlation-1.pdf"),device = "pdf",height = 3,width = 3)
+ggsave(file.path(result_path,"immune_histone_T-N_correlation.pdf"),device = "pdf",height = 3,width = 3)
 ggsave(file.path(result_path,"immune_histone_T-N_correlation.tiff"),device = "tiff",height = 4,width = 5)
 
 # DE analysis between tumor and normal samples
