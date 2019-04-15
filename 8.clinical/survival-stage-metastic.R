@@ -617,6 +617,97 @@ data %>%
   ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 4, height = 3)
   ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 4, height = 3)
 
+  ##### EZH2 and CBX2 in survival with oppsite expression trend
+  data <- mRNA_clinical 
+  .up=50
+  .low=50  
+  .gene2 = "CBX2"
+  .gene3 = "EZH2"
+  data %>%
+    dplyr::filter(symbol %in% .gene2) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group2=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
+  data %>%
+    dplyr::filter(symbol %in% .gene3) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(group3=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
+    dplyr::mutate(group3=ifelse(exp<quantile(exp,probs =.low/100),"Low",group3)) -> .data3
+  
+  .data2 %>%
+    # dplyr::inner_join(.data1,by="sample") %>%
+    dplyr::inner_join(.data3,by="sample") %>%
+    dplyr::mutate(group=ifelse(group2=="Up"&group3=="Low","Up","NA")) %>%
+    dplyr::mutate(group=ifelse(group2=="Low"&group3=="Up","Low",group)) %>%
+    dplyr::filter(! group=="NA")-> .data
+  
+  
+  ##### PFI survival ----
+  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data)
+  # print(.d_diff)
+  kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
+  # print(kmp)
+  # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
+  # print(coxp)
+  
+  .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  low_n=.fit$n[1]
+  high_n=.fit$n[2]
+  legend <- data.frame(CBX2=as.character(c("Low","High")),EZH2=as.character(c("High","Low")),n=c(low_n,high_n))
+  
+  legend %>%
+    dplyr::mutate(CBX2 = as.character(CBX2), EZH2 = as.character(EZH2)) %>%
+    dplyr::group_by(CBX2) %>%
+    dplyr::mutate(
+      label = purrr::pmap(
+        list(.x1 = CBX2,  
+             .x2 = EZH2,
+             .y = n),
+        .f = function(.x1, .x2, .y){
+          latex2exp::TeX(glue::glue("<<.gene2>>^{<<.x1>>}/<<.gene3>>^{<<.x2>>}, n = <<.y>>", .open = "<<", .close = ">>"))
+        }
+      )
+    ) -> legend
+  
+  # print(.fit)
+  # fn_sur_draw(.gene,kmp,.fit)
+  fig_name1 <- paste(.gene2,"+",.gene3,"-","PFI.Opposite",".pdf",sep="")
+  fig_name2 <- paste(.gene2,"+",.gene3,"-","PFI.Opposite",".tiff",sep="")
+  title <- paste(.gene2,.gene3,sep="-")
+  library(ggplot2)
+  survminer::ggsurvplot(.fit,pval=F, #pval.method = T,
+                        surv.median.line = "hv",
+                        title = paste(title," p =", signif(kmp, 2),sep=""),
+                        xlab = "Survival in months",
+                        ylab = 'Probability of survival',
+                        legend.title = "Expression group:",
+                        legend= c(0.6,0.9),
+                        # risk.table = TRUE,
+                        # tables.height = 0.2,
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 12, colour = "black"),
+                          axis.text = element_text(size = 12, colour = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black")
+                        ),
+                        font.main = c(16),
+                        font.x = c(14),
+                        font.y = c(14),
+                        font.tickslab = c(12)
+  ) +
+    scale_color_manual(
+      values = c("#1C86EE", "#EE6363"),
+      labels = legend$label
+    )
+  # dev.off()
+  ggsave(filename = fig_name1, device = "pdf", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 4, height = 3)
+  ggsave(filename = fig_name2, device = "tiff", path = file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure2"), width = 4, height = 3)
+  
   ##### EZH2 with upstream TFs-----
   data <- mRNA_clinical 
   .up=50
