@@ -1118,6 +1118,7 @@ miRNA_clinical %>%
                     color = "stage", palette = "npg", add = "jitter",
                     facet.by = "name") +
   theme(legend.position = "none") +
+  ylab("log2 (Exp)") +
   ggpubr::stat_compare_means(label.y = 19) +
   ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(15, 16,17,18))->p;p
 ggsave(file.path("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure4/Figure5","miRNA_stage-box.pdf"),p,width = 10,height = 3)
@@ -1137,8 +1138,7 @@ mRNA_clinical %>%
                     color = "stage", palette = "npg", add = "jitter",
                     facet.by = "symbol") +
   theme(legend.position = "none") +
-  ggpubr::stat_compare_means(label.y = 20) +
-  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test",label.y = c(16,17,18))->p;p
+  ggpubr::stat_compare_means(comparisons = comp_list,method = "wilcox.test")->p;p
 ggsave(file.path(survival_path,"all_mRNA_stage-box.pdf"),p,width = 20,height = 15)
 
 
