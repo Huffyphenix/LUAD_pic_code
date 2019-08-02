@@ -59,7 +59,7 @@ EDU_A549_summary %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
-  dplyr::mutate(x="A549 cell")-> EDU_A549_summary
+  dplyr::mutate(x="A549")-> EDU_A549_summary
 
 # ggplot
 EDU_A549_summary<-within(EDU_A549_summary,group <- factor(group,levels = c("Control","siCBX2","siEZH2","siCBX2+EZH2")))
@@ -118,7 +118,7 @@ EDU_H1299_summary %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
-  dplyr::mutate(x="H1299 cell")-> EDU_H1299_summary
+  dplyr::mutate(x="H1299")-> EDU_H1299_summary
 
 # ggplot
 EDU_H1299_summary<-within(EDU_H1299_summary,group <- factor(group,levels = c("Control","siCBX2","siEZH2","siCBX2+EZH2")))
@@ -160,20 +160,20 @@ EDU_H1299_summary %>%
            position=position_dodge()) +
   geom_errorbar(aes(ymin=Relative_mRNA_level-sd, ymax=Relative_mRNA_level+sd), width=.2,
                 position=position_dodge(.9)) +
-  facet_wrap(~ x, strip.position = "bottom") +
-  geom_text(aes(y = Relative_mRNA_level+sd+1, label=p_labe), size = 5) +
+  facet_wrap(~ x, strip.position = "left",ncol=1) +
+  geom_text(aes(y = Relative_mRNA_level+sd+1.5, label=p_labe), size = 5, angle = 90) +
   # ylim(0,1.5)+
   # facet_wrap( ~ targets) +
   # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
   theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
   theme(
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank() ,
-    axis.ticks.x = element_blank() ,
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank() ,
+    axis.ticks.y = element_blank() ,
     axis.text = element_text(color = "black",size = 12),
-    axis.title.y = element_text(size = 12, colour = "black"),
-    legend.position = "right",
+    axis.title.x = element_text(size = 12, colour = "black"),
+    legend.position = "none",
     legend.title = element_blank(),
     legend.text = element_text(colour = "black",size = 12),
     strip.background = element_rect(colour = "white"),
@@ -182,11 +182,14 @@ EDU_H1299_summary %>%
     # legend.key.width = unit(0.15,"inches"),
     legend.background = element_blank()
   )  +
-  ylab(paste("EdU positive", "cells(%)",sep = "\n")) +
-  labs(title = "Edu")
+  ylab(paste("EdU positive", "cells(%)")) +
+  # labs(title = "Edu") +
+  coord_flip()
 ggsave(file.path(result_path,"EDU_siCBX-EZH2-H1299-A549.pdf"),width = 6,height = 2,device = "pdf")
 ggsave(file.path(result_path,"EDU_siCBX-EZH2-H1299-A549.tiff"),width = 6,height = 2,device = "tiff")
 
+
+ggsave(file.path(result_path,"EDU_siCBX-EZH2-H1299-A549-flip.tiff"),width = 4,height = 4,device = "tiff")
 ##################################################
 ### CBX2 and EZH2 siRNA invasion in A549 cell
 A549_invasion <- readr::read_tsv(file.path(data_path,"4.Invasion_A549.txt")) %>%
@@ -213,7 +216,7 @@ A549_invasion_summary %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
-  dplyr::mutate(x="A549 cell")-> A549_invasion_summary
+  dplyr::mutate(x="A549")-> A549_invasion_summary
 
 # ggplot
 A549_invasion_summary<-within(A549_invasion_summary,group <- factor(group,levels = c("Control","siCBX2","siEZH2","siCBX2+siEZH2")))
@@ -276,7 +279,7 @@ H1299_invasion_summary %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
-  dplyr::mutate(x="H1299 cell")-> H1299_invasion_summary
+  dplyr::mutate(x="H1299")-> H1299_invasion_summary
 
 # ggplot
 H1299_invasion_summary<-within(H1299_invasion_summary,group <- factor(group,levels = c("Control","siCBX2","siEZH2","siCBX2+siEZH2")))
@@ -321,19 +324,20 @@ H1299_invasion_summary %>%
            position=position_dodge()) +
   geom_errorbar(aes(ymin=invasion-sd, ymax=invasion+sd), width=.2,
                 position=position_dodge(.9)) +
-  facet_wrap(~ x, strip.position = "bottom") +
-  geom_text(aes(y = invasion+sd+5, label=p_labe), size = 5) +
+  facet_wrap(~ x, strip.position = "left",ncol=1) +
+  geom_text(aes(y = invasion+sd+5, label=p_labe), size = 5, angle =90) +
   # ylim(0,1.5)+
   # facet_wrap( ~ targets) +
   # ggpubr::stat_compare_means(ref.group = "Control",method = "t.test",label.y = c(50),label = "p.signif") +
   theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
+  scale_y_continuous(position = "right") +
   theme(
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank() ,
-    axis.ticks.x = element_blank() ,
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank() ,
+    axis.ticks.y = element_blank() ,
     axis.text = element_text(color = "black",size = 12),
-    axis.title.y = element_text(size = 12, colour = "black"),
+    axis.title.x = element_text(size = 12, colour = "black"),
     legend.position = "right",
     legend.title = element_blank(),
     legend.text = element_text(colour = "black",size = 12),
@@ -343,11 +347,13 @@ H1299_invasion_summary %>%
     # legend.key.width = unit(0.15,"inches"),
     legend.background = element_blank()
   )  +
-  ylab(paste("Cells invasion", "(% of Control)",sep="\n")) +
-  labs(title = "Invasion")
+  ylab(paste("Cells invasion", "(% of Control)")) +
+  # labs(title = "Invasion") +
+  coord_flip()
 ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549.pdf"),width = 6,height = 2,device = "pdf")
 ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549.tiff"),width = 6,height = 2,device = "tiff")
 
+ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549-flip.tiff"),width = 4,height = 4,device = "tiff")
 ##################################################
 ### CBX2 and EZH2 siRNA cell variability in A549
 CBX2_viability_bar_A549 <- readr::read_tsv(file.path(data_path,"2.MTT_A549_value.txt")) %>%
@@ -502,50 +508,82 @@ ggsave(file.path(result_path,"viability_siCBX-EZH2_brokenline-H1299.pdf"),width 
 ##################################################
 ### CBX2 and EZH2 siRNA cell apoptosis
 CBX2_apoptosis_bar.A549 <- readr::read_tsv(file.path(data_path,"5.apoptosis_A549.txt")) %>%
-  tidyr::gather(key="group",value="Relative_mRNA_level") %>%
+  tidyr::gather(key="group",value="Apoptosis") %>%
   dplyr::mutate(x="A549")
 CBX2_apoptosis_bar.H1299 <- readr::read_tsv(file.path(data_path,"5.apoptosis_H1299.txt")) %>%
-  tidyr::gather(key="group",value="Relative_mRNA_level") %>%
+  tidyr::gather(key="group",value="Apoptosis") %>%
   dplyr::mutate(x="H1299")
 
-data_summary(CBX2_apoptosis_bar.A549,varname = "Relative_mRNA_level",groupnames = "group") -> apoptosis_A549_summary
-data_summary(CBX2_apoptosis_bar.H1299,varname = "Relative_mRNA_level",groupnames = "group") -> apoptosis_H1299_summary
+data_summary(CBX2_apoptosis_bar.A549,varname = "Apoptosis",groupnames = "group") -> apoptosis_A549_summary
+data_summary(CBX2_apoptosis_bar.H1299,varname = "Apoptosis",groupnames = "group") -> apoptosis_H1299_summary
+
+CBX2_apoptosis_bar.A549 %>%
+  dplyr::mutate(x=c(rep(c(1,2,3),4))) %>%
+  tidyr::spread(key="group",value="Apoptosis") %>%
+  as.matrix() -> apoptosis_bar.A549.for_ttest
+apoptosis_A549_p <- data.frame(group=apoptosis_A549_summary$group,p=NA)
+for(i in 3:5){
+  t.test(apoptosis_bar.A549.for_ttest[,2],apoptosis_bar.A549.for_ttest[,i]) %>% 
+    broom::tidy() %>% .[1,5] -> apoptosis_A549_p[i-1,2]
+}
+
+CBX2_apoptosis_bar.H1299 %>%
+  dplyr::mutate(x=c(rep(c(1,2,3),4))) %>%
+  tidyr::spread(key="group",value="Apoptosis") %>%
+  as.matrix() -> apoptosis_bar.H1299.for_ttest
+apoptosis_H1299_p <- data.frame(group=apoptosis_H1299_summary$group,p=NA)
+for(i in 3:5){
+  t.test(apoptosis_bar.H1299.for_ttest[,2],apoptosis_bar.H1299.for_ttest[,i]) %>% 
+    broom::tidy() %>% .[1,5] -> apoptosis_H1299_p[i-1,2]
+}
 
 apoptosis_A549_summary %>%
+  dplyr::inner_join(apoptosis_A549_p,by="group") %>%
+  dplyr::mutate(x="A549") %>%
+  rbind(
+    apoptosis_H1299_summary %>%
+      dplyr::inner_join(apoptosis_H1299_p,by="group") %>%
+      dplyr::mutate(x="H1299")
+  ) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001,"***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p>0.05 ,"ns",p_labe)) %>%
-  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) %>%
-  dplyr::mutate(x="Apoptosis")
+  dplyr::mutate(p_labe=ifelse(is.na(p),"",p_labe)) ->apoptosis_combine
 
 # ggplot
 ## bar plot
-ggplot(CBX2_apoptosis_bar, aes(x=siRNA, y=Apoptosis, fill = siRNA)) + 
+apoptosis_combine<-within(apoptosis_combine,
+                          group <- factor(group,levels = c("Control","siCBX2","siEZH2","siCBX2+EZH2")))
+with(apoptosis_combine,levels(group))
+
+ggplot(apoptosis_combine, aes(x=group, y=Apoptosis, fill = group)) + 
   geom_bar(stat="identity", color="black",
            position=position_dodge())  +
   geom_errorbar(aes(ymin=Apoptosis-sd, ymax=Apoptosis+sd), width=.2,
                 position=position_dodge(.9)) +
-  facet_wrap(~x,strip.position = "bottom") +
-  geom_text(aes(y=Apoptosis+sd+1,label=p_labe),size=5) +theme_classic() +
-  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD"),
-                    labels = c("Control", "siCBX2-1", "siCBX2-2","siEZH2-1","siEZH2-2")) +
+  facet_wrap(~x,strip.position = "left",ncol =1) +
+  geom_text(aes(y=Apoptosis+sd+1,label=p_labe),size=5, angle = 90) +theme_classic() +
+  scale_fill_manual(values=c("#FFFFFF", "#7FFFD4", "#458B74", "#87CEFA", "#4F94CD")) +
   theme(
-    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
     axis.text = element_text(color = "black",size = 12),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    axis.title.y = element_text(size = 12, colour = "black"),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.title.x = element_text(size = 12, colour = "black"),
     legend.position = "right",
     legend.title = element_blank(),
     legend.text = element_text(size = 12),
     strip.background = element_rect(colour = "white"),
     strip.text = element_text(size = 12,colour = "black")
   ) +
-  ylab("Apoptotic cells (%)")
-ggsave(file.path(result_path,"apoptosis_siCBX-EZH2_barplot.pdf"),width = 3,height = 2,device = "pdf")
-ggsave(file.path(result_path,"apoptosis_siCBX-EZH2_barplot.tiff"),width = 3,height = 2,device = "tiff")
+  ylab("Apoptotic cells (%)") +
+  # labs(title = "Apoptosis") +
+  coord_flip()
+ggsave(file.path(result_path,"apoptosis_siCBX-EZH2-H1299-A549.pdf"),width = 6,height = 2,device = "pdf")
+ggsave(file.path(result_path,"apoptosis_siCBX-EZH2-H1299-A549.tiff"),width = 6,height = 2,device = "tiff")
 
+ggsave(file.path(result_path,"apoptosis_siCBX-EZH2-H1299-A549-filp.tiff"),width = 4,height = 4,device = "tiff")
 ##################################################
 ### siRNA target PPARG
 siRNA_target_PPARG <- readr::read_tsv(file.path(data_path,"8. siCBX_PPARG.txt")) 
