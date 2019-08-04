@@ -5,13 +5,13 @@ library(ggplot2)
 
 # load path ---------------------------------------------------------------
 
-clinical_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/生存分析/data/LUAD"
-clinical_path_1 <- "F:/我的坚果云/ENCODE-TCGA-LUAD/survival"
-survival_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5"
+clinical_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/鐢熷瓨鍒嗘瀽/data/LUAD"
+clinical_path_1 <- "F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/survival"
+survival_path <- "F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/Figure/Figure5"
 data_path<- "H:/data"
 exp_path <- "H:/data/TCGA/TCGA_data"
-enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-target_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
+enrich_path <- "F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/閫氳矾瀵岄泦/LUAD-noFC-prob0.9-kegg-gsea"
+target_path <- "F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 
 
 # load data ---------------------------------------------------------------
@@ -123,9 +123,9 @@ plot_ready %>%
   coord_flip() +
   ggthemes::theme_gdocs() +
   labs(y = "Hazard Ratio", x = "Symbols") -> p;p
-ggsave("F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure1/PPAR_hazard_ratio.pdf"  )
-ggsave(filename = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure1/PPAR_hazard_ratio.pdf",device="pdf",width=4,height=3)
-ggsave(filename = "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure1/PPAR_hazard_ratio.tiff",device="tiff",width=4,height=3)
+ggsave("F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/Figure/Figure1/PPAR_hazard_ratio.pdf"  )
+ggsave(filename = "F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/Figure/Figure1/PPAR_hazard_ratio.pdf",device="pdf",width=4,height=3)
+ggsave(filename = "F:/鎴戠殑鍧氭灉浜?/ENCODE-TCGA-LUAD/Figure/Figure1/PPAR_hazard_ratio.tiff",device="tiff",width=4,height=3)
 
 knitr::kable(plot_ready %>% 
                dplyr::rename(`hazard ratio` = hr) %>% 
