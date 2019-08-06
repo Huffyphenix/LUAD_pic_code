@@ -51,8 +51,9 @@ clinical_info <- readr::read_tsv(file.path(clinical_path,"LUAD_clinical_info_mul
   dplyr::mutate(smoke_year = ifelse(is.na(stopped_smoking_year) & is.na(year_of_tobacco_smoking_onset) & is.na(smoke_year),
                                     0,
                                     smoke_year)) %>%
-  dplyr::mutate(smoke_year_group = ifelse(smoke_year>20,">20y",".<=20y")) %>%
-  dplyr::mutate(smoke_year_group = ifelse(is.na(smoke_year),NA,smoke_year_group)) %>%
+  # dplyr::mutate(smoke_year_group = ifelse(smoke_year>20,">20y",".<=20y")) %>%
+  # dplyr::mutate(smoke_year_group = ifelse(is.na(smoke_year),NA,smoke_year_group)) %>%
+  dplyr::mutate(smoke_year_group = smoke_year) %>%
   dplyr::mutate(kras_mut = ifelse(!is.na(kras_mutation_result),"yes","1wild_type")) %>%
   dplyr::mutate(egfr_mut = ifelse(!is.na(egfr_mutation_result),"yes","1wild_type")) %>%
   dplyr::mutate(OS = ifelse(!is.na(days_to_last_followup),days_to_last_followup,days_to_death)) %>%
@@ -90,6 +91,10 @@ gene_exp %>%
 # 3.2.function to do cox survival analysis  ----
 # 3.2.1.univariable cox analysis ---------
 fn_survival_test <- function(data,feature){
+  if(feature=="smoke_year_group"){
+    data %>%
+      dplyr::mutate(group = as.numeric(group)) -> data
+  }
   print(feature)
   .cox <- survival::coxph(survival::Surv(time, status) ~ group, data = data, na.action = na.exclude)
   summary(.cox) -> .z
@@ -293,6 +298,31 @@ PFS_OS_clinical_exp %>%
 
 combine_res.univarite.surv.PFS.multi %>%
   readr::write_tsv(file.path(res_path,"combine_res.multi-varite.surv.PFS.tsv"))
+
+
+PFS_OS_clinical_exp %>%
+  dplyr::filter(PFS <= 30*60) %>%
+  tidyr::spread(key="symbol",value=exp) %>%
+  dplyr::mutate(CBX2 = ifelse(CBX2 > quantile(CBX2,0.5),"high","1low")) %>%
+  dplyr::mutate(EZH2 = ifelse(EZH2 > quantile(EZH2,0.5),"high","1low")) %>%
+  dplyr::filter(CBX2==EZH2) %>%
+  dplyr::mutate(CBX2_EZH2 = paste(CBX2,"both",sep = "_")) %>%
+  dplyr::select(-CBX2,-EZH2)-> sample_info
+
+sample_statistic <- list()
+for(i in 8:13){
+  sample_statistic[[colnames(sample_info)[i]]]<- sample_info[,i] %>% table()
+}
+
+sample_statistic %>%
+  as.data.frame() %>%
+  t() %>%
+  as.data.frame() -> sample_statistic.x
+sample_statistic.x %>%
+  dplyr::as.tbl() %>%
+  dplyr::mutate(x=rownames(sample_statistic.x)) %>%
+  readr::write_tsv(file.path(res_path,"combine_multi-variable_survival.sample.statistic.tsv"))
+  
 
 combine_res.univarite.surv.PFS.multi %>%
   dplyr::mutate(cox_sig = ifelse(coxp<0.1,"1yes","2no")) %>%
