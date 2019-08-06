@@ -366,6 +366,7 @@ CBX2_viability_P_A549 <- readr::read_tsv(file.path(data_path,"2.MTT_A549_P.txt")
 CBX2_viability_bar_A549 %>%
   dplyr::inner_join(CBX2_viability_SD_A549,by=c("siRNA","Time (hours)")) %>%
   dplyr::left_join(CBX2_viability_P_A549,by=c("siRNA","Time (hours)")) %>%
+  dplyr::mutate(p=as.numeric(p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
@@ -442,6 +443,7 @@ CBX2_viability_P_H1299 <- readr::read_tsv(file.path(data_path,"3.MTT_H1299_P.txt
 CBX2_viability_bar_H1299 %>%
   dplyr::inner_join(CBX2_viability_SD_H1299,by=c("siRNA","Time (hours)")) %>%
   dplyr::left_join(CBX2_viability_P_H1299,by=c("siRNA","Time (hours)")) %>%
+  dplyr::mutate(p=as.numeric(p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
   dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
