@@ -17,19 +17,20 @@ data_path<- "Z:/data"
 chip_path <- "D:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
 
 # e zhou -----
-target_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
-exp_path <- "H:/data/TCGA/TCGA_data"
-clinical_path <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/生存分析/data/LUAD"
-clinical_path_1 <- "F:/我的坚果云/ENCODE-TCGA-LUAD/survival"
-survival_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5/Figure5C.survival"
-data_path<- "H:/data"
-chip_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
-enrich_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-
-# HUST -----
-target_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
+target_path <- "E:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
 exp_path <- "G:/data/TCGA/TCGA_data"
 clinical_path <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/生存分析/data/LUAD"
+clinical_path_1 <- "E:/我的坚果云/ENCODE-TCGA-LUAD/survival"
+survival_path <- "E:/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5/Figure5C.survival"
+data_path<- "G:/data"
+chip_path <- "E:/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/"
+enrich_path <- "E:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+
+# HUST -----
+basic_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD"
+target_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/CBX2_H3K27me3-common-targets/common-targets-180426-new"
+exp_path <- "S:/study/生存分析/免疫检查点project/liucj_tcga_process_data"
+clinical_path <- file.path(basic_path,"survival")
 clinical_path_1 <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/survival"
 survival_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/Figure/Figure5"
 data_path<- "G:/data"
@@ -66,7 +67,7 @@ miRNA_exp <- readr::read_rds(file.path(exp_path,"pancan33_mirna_expr.rds.gz")) %
 gene_exp <- readr::read_rds(file.path(exp_path,"pancan33_expr.rds.gz")) %>%
   dplyr::filter(cancer_types=="LUAD") %>%
   tidyr::unnest()
-clinical <- readr::read_tsv(file.path(clinical_path,"clinical_info_multi_survival.txt"))
+clinical <- readr::read_tsv(file.path(clinical_path,"LUAD_clinical_info_multi_survival.txt"))
 survival <- readr::read_tsv(file.path(clinical_path_1,"cancer_cell_survival_time_table.txt"))
 survival %>%
   dplyr::mutate(sample=substr(bcr_patient_barcode,9,12)) %>%
@@ -534,34 +535,29 @@ data <- mRNA_clinical
 .low=50  
 .gene2 = "CBX2"
 .gene3 = "EZH2"
+
 data %>%
-  dplyr::filter(symbol %in% .gene2) %>%
+  dplyr::filter(symbol %in% c(.gene2,.gene3)) %>%
   tidyr::unnest() %>%
-  dplyr::mutate(group2=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
-  dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
-data %>%
-    dplyr::filter(symbol %in% .gene3) %>%
-    tidyr::unnest() %>%
-    dplyr::mutate(group3=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
-    dplyr::mutate(group3=ifelse(exp<quantile(exp,probs =.low/100),"Low",group3)) -> .data3
-  
-  .data2 %>%
-    # dplyr::inner_join(.data1,by="sample") %>%
-    dplyr::inner_join(.data3,by="sample") %>%
-    dplyr::mutate(group=ifelse(group2=="Up"&group3=="Up","Up","NA")) %>%
-    dplyr::mutate(group=ifelse(group2=="Low"&group3=="Low","Low",group)) %>%
-    dplyr::filter(! group=="NA")-> .data
-  
-  
+  dplyr::mutate(n=c(1:468,1:468)) %>%
+  tidyr::spread(key="symbol",value="exp") %>%
+  dplyr::mutate(CBX2 = ifelse(CBX2 > quantile(CBX2,0.5),"high","1low")) %>%
+  dplyr::mutate(EZH2 = ifelse(EZH2 > quantile(EZH2,0.5),"high","1low")) %>%
+  dplyr::filter(CBX2 == EZH2) %>%
+  dplyr::mutate(group=ifelse(CBX2=="high"&EZH2=="high","Up","NA")) %>%
+  dplyr::mutate(group=ifelse(CBX2=="1low"&EZH2=="1low","Low",group)) %>%
+  dplyr::filter(! group=="NA")-> .data
+
+
   ##### PFI survival ----
-  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data)
+  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1, PFI.1) ~ group, data = .data)
   # print(.d_diff)
   kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
   # print(kmp)
   # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
   # print(coxp)
   
-  .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  .fit <- survival::survfit(survival::Surv(PFI.time.1, PFI.1) ~ group, data = .data, na.action = na.exclude) 
   low_n=.fit$n[1]
   high_n=.fit$n[2]
   legend <- data.frame(group=c("Low","High"),n=c(low_n,high_n))
@@ -623,34 +619,29 @@ data %>%
   .low=50  
   .gene2 = "CBX2"
   .gene3 = "EZH2"
-  data %>%
-    dplyr::filter(symbol %in% .gene2) %>%
-    tidyr::unnest() %>%
-    dplyr::mutate(group2=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
-    dplyr::mutate(group2=ifelse(exp<quantile(exp,probs =.low/100),"Low",group2)) -> .data2
-  data %>%
-    dplyr::filter(symbol %in% .gene3) %>%
-    tidyr::unnest() %>%
-    dplyr::mutate(group3=ifelse(exp>quantile(exp,probs =.up/100),"Up",NA)) %>%
-    dplyr::mutate(group3=ifelse(exp<quantile(exp,probs =.low/100),"Low",group3)) -> .data3
   
-  .data2 %>%
-    # dplyr::inner_join(.data1,by="sample") %>%
-    dplyr::inner_join(.data3,by="sample") %>%
-    dplyr::mutate(group=ifelse(group2=="Up"&group3=="Low","Up","NA")) %>%
-    dplyr::mutate(group=ifelse(group2=="Low"&group3=="Up","Low",group)) %>%
+  data %>%
+    dplyr::filter(symbol %in% c(.gene2,.gene3)) %>%
+    tidyr::unnest() %>%
+    dplyr::mutate(n=c(1:468,1:468)) %>%
+    tidyr::spread(key="symbol",value="exp") %>%
+    dplyr::mutate(CBX2 = ifelse(CBX2 > quantile(CBX2,0.5),"high","1low")) %>%
+    dplyr::mutate(EZH2 = ifelse(EZH2 > quantile(EZH2,0.5),"high","1low")) %>%
+    dplyr::filter(CBX2 != EZH2) %>%
+    dplyr::mutate(group=ifelse(CBX2=="high"&EZH2=="1low","Up","NA")) %>%
+    dplyr::mutate(group=ifelse(CBX2=="1low"&EZH2=="high","Low",group)) %>%
     dplyr::filter(! group=="NA")-> .data
   
   
   ##### PFI survival ----
-  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data)
+  .d_diff <- survival::survdiff(survival::Surv(PFI.time.1, PFI.1) ~ group, data = .data)
   # print(.d_diff)
   kmp <- 1 - pchisq(.d_diff$chisq, df = length(levels(as.factor(.data$group))) - 1)
   # print(kmp)
   # coxp <-  broom::tidy(survival::coxph(survival::Surv(PFI.time.1.x, PFI.1.x) ~ exp, data = .data, na.action = na.exclude))
   # print(coxp)
   
-  .fit <- survival::survfit(survival::Surv(PFI.time.1.x, PFI.1.x) ~ group, data = .data, na.action = na.exclude) 
+  .fit <- survival::survfit(survival::Surv(PFI.time.1, PFI.1) ~ group, data = .data, na.action = na.exclude) 
   low_n=.fit$n[1]
   high_n=.fit$n[2]
   legend <- data.frame(CBX2=as.character(c("Low","High")),EZH2=as.character(c("High","Low")),n=c(low_n,high_n))
