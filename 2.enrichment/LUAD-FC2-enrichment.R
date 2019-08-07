@@ -1,17 +1,17 @@
-# data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"c
-# data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-data_path_1<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+# data_path <- "F:/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"c
+# data_path <- "F:/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+data_path_1<- "F:/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
 # data_path_2 <- "S:/study/ENCODE-TCGA-LUAD/result/热图/20160519.FC2"
 # data_path_3 <- "S:/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 data_path_2 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 data_path_3 <- "H:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
-data_path_4<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-data_path_5<- "F:/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
+data_path_4<- "F:/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+data_path_5<- "F:/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
 
 #### HUST -----
-data_path_1<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
-data_path_4<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
-data_path_5<- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
+data_path_1<- "S:/坚果�?/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-noFC-prob0.9-kegg-gsea"
+data_path_4<- "S:/坚果�?/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-dwon_pro-TFgene"
+data_path_5<- "S:/坚果�?/我的坚果�?/ENCODE-TCGA-LUAD/通路富集/LUAD-FC2-up_pro-TFgene"
 data_path_2 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/差异表达data/FC2"
 data_path_3 <- "G:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{3cf9130b-f942-4f48-a322-418d1c20f05f}/study/ENCODE-TCGA-LUAD/result/noiseq_no_cutoff_result"
 
