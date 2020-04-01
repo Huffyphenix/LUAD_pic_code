@@ -1,4 +1,4 @@
-.libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
+c("#FFD700", "#1C86EE")c("#FFB90F", "#00B2EE").libPaths("F:/WD Backup.swstor/MyPC/MDNkNjQ2ZjE0ZTcwNGM0Mz/Volume{7a27e707-64db-4391-94fd-a8b51e3df0b4}/software/R/R-3.4.1/library")
 .libPaths("D:/jianguoyun/library")
 .libPaths("E:/library")
 library(magrittr)
