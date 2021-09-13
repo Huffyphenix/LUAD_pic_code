@@ -7,6 +7,9 @@ library(clusterProfiler)
 # path --------------------------------------------------------------------
 # HUST
 basic_path <- file.path("S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD")
+# HOME
+basic_path <- file.path("F:/胡斐斐/我的坚果云/ENCODE-TCGA-LUAD/")
+
 # exp_path <- "S:/study/生存分析/免疫检查点project/liucj_tcga_process_data"
 res_path <- file.path(basic_path,"Figure/DE_between_high_low_CBX2_EZH2")
 
