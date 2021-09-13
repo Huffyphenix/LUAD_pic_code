@@ -1,8 +1,9 @@
 .libPaths("E:/library")
-
+.libPaths("F:/library")
+.libPaths("C:/Users/94998/Documents/library")
 library(ggplot2)
 library(magrittr)
-
+library(plyr)
 # data path ---------------------------------------------------------------
 # HUST 
 data_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/process_data"
@@ -11,6 +12,14 @@ result_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/P
 # E Zhou 
 data_path <- "E:/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/process_data"
 result_path <- "E:/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/Pic_by_R"
+
+# xiaomi laptop 
+data_path <- "C:/Users/94998/Documents/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/process_data"
+result_path <- "C:/Users/94998/Documents/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/Pic_by_R"
+
+# wust 
+data_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/process_data"
+result_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD/实验图片/2019-7-29补实验/Pic_by_R"
 
 #+++++++++++++++++++++++++
 # Function to calculate the mean and the standard deviation
@@ -35,7 +44,7 @@ data_summary <- function(data, varname, groupnames){
 
 
 ##################################################
-### CBX2 and EZH2 siRNA EDU in A549 cell
+### CBX2 and EZH2 siRNA EDU in A549 cell ----
 EDU_A549 <- readr::read_tsv(file.path(data_path,"1.EDU_A549.txt"),col_names = F) %>%
   tidyr::gather(-X1,key = "group",value="Relative_mRNA_level") %>%
   dplyr::select(-group) %>%
@@ -54,6 +63,27 @@ for(i in 3:5){
   t.test(EDU_A549_for_ttest[,2],EDU_A549_for_ttest[,i]) %>% 
     broom::tidy() %>% .[1,5] -> edu_p[i-1,2]
 }
+
+edu_p_2 <- tibble::tibble()
+for(i in EDU_A549_summary$group){
+  for (j in EDU_A549_summary$group) {
+    if(i!=j){
+      t.test(EDU_A549_for_ttest[,i],EDU_A549_for_ttest[,j]) %>% 
+        broom::tidy() %>% .[1,5] -> .p
+      tibble::tibble(group1=i,group2=j,p=.p$p.value) -> tmp
+      rbind(edu_p_2,tmp)->edu_p_2
+    }else{
+      edu_p_2->edu_p_2
+    }
+  }
+}
+
+edu_p_2 %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  readr::write_tsv(file.path(result_path,"EDU_siCBX-EZH2_A549-Pvalue.tsv"))
 
 EDU_A549_summary %>%
   dplyr::inner_join(edu_p,by="group") %>%
@@ -94,7 +124,7 @@ ggplot(EDU_A549_summary, aes(x=group, y=Relative_mRNA_level, fill=group)) +
 ggsave(file.path(result_path,"EDU_siCBX-EZH2_A549.pdf"),width = 4,height = 2,device = "pdf")
 ggsave(file.path(result_path,"EDU_siCBX-EZH2_A549.tiff"),width = 4,height = 2,device = "tiff")
 
-### CBX2 and EZH2 siRNA EDU in H1299 cell
+### CBX2 and EZH2 siRNA EDU in H1299 cell ----
 EDU_H1299 <- readr::read_tsv(file.path(data_path,"1.EDU_H1299.txt"),col_names = F) %>%
   tidyr::gather(-X1,key = "group",value="Relative_mRNA_level") %>%
   dplyr::select(-group) %>%
@@ -113,6 +143,27 @@ for(i in 3:5){
   t.test(EDU_H1299_for_ttest[,2],EDU_H1299_for_ttest[,i]) %>% 
     broom::tidy() %>% .[1,5] -> edu_p[i-1,2]
 }
+
+edu_p_2 <- tibble::tibble()
+for(i in EDU_H1299_summary$group){
+  for (j in EDU_H1299_summary$group) {
+    if(i!=j){
+      t.test(EDU_H1299_for_ttest[,i],EDU_H1299_for_ttest[,j]) %>% 
+        broom::tidy() %>% .[1,5] -> .p
+      tibble::tibble(group1=i,group2=j,p=.p$p.value) -> tmp
+      rbind(edu_p_2,tmp)->edu_p_2
+    }else{
+      edu_p_2->edu_p_2
+    }
+  }
+}
+
+edu_p_2 %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  readr::write_tsv(file.path(result_path,"EDU_siCBX-EZH2_H1299-Pvalue.tsv"))
 
 EDU_H1299_summary %>%
   dplyr::inner_join(edu_p,by="group") %>%
@@ -154,7 +205,7 @@ ggsave(file.path(result_path,"EDU_siCBX-EZH2_H1299.pdf"),width = 4,height = 2,de
 ggsave(file.path(result_path,"EDU_siCBX-EZH2_H1299.tiff"),width = 4,height = 2,device = "tiff")
 
 
-##### combine EDU of A549 and H1299 into one
+##### combine EDU of A549 and H1299 into one ----
 EDU_H1299_summary %>%
   rbind(EDU_A549_summary) %>%
   ggplot(aes(x=group, y=Relative_mRNA_level, fill=group)) +
@@ -193,7 +244,7 @@ ggsave(file.path(result_path,"EDU_siCBX-EZH2-H1299-A549.tiff"),width = 6,height 
 
 ggsave(file.path(result_path,"EDU_siCBX-EZH2-H1299-A549-flip.tiff"),width = 4,height = 4,device = "tiff")
 ##################################################
-### CBX2 and EZH2 siRNA invasion in A549 cell
+### CBX2 and EZH2 siRNA invasion in A549 cell ----
 A549_invasion <- readr::read_tsv(file.path(data_path,"4.Invasion_A549.txt")) %>%
   tidyr::gather(key = "group",value="invasion") %>%
   dplyr::mutate(invasion = invasion*100)
@@ -211,6 +262,26 @@ for(i in 3:5){
   t.test(A549_invasion_for_ttest[,2],A549_invasion_for_ttest[,i]) %>% 
     broom::tidy() %>% .[1,5] -> A549_invasion_p[i-1,2]
 }
+A549_invasion_p_2 <- tibble::tibble()
+for(i in A549_invasion_summary$group){
+  for (j in A549_invasion_summary$group) {
+    if(i!=j){
+      t.test(A549_invasion_for_ttest[,i],A549_invasion_for_ttest[,j]) %>% 
+        broom::tidy() %>% .[1,5] -> .p
+      tibble::tibble(group1=i,group2=j,p=.p$p.value) -> tmp
+      rbind(A549_invasion_p_2,tmp)->A549_invasion_p_2
+    }else{
+      A549_invasion_p_2->A549_invasion_p_2
+    }
+  }
+}
+
+A549_invasion_p_2 %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  readr::write_tsv(file.path(result_path,"invasion_siCBX-EZH2-A549-Pvalue.tsv"))
 
 A549_invasion_summary %>%
   dplyr::inner_join(A549_invasion_p,by="group") %>%
@@ -261,9 +332,9 @@ H1299_invasion <- readr::read_tsv(file.path(data_path,"4.Invasion_H1299.txt")) %
   tidyr::gather(key = "group",value="invasion") %>%
   dplyr::mutate(invasion = invasion*100)
 
-data_summary(A549_invasion,varname = "invasion",groupnames = "group") -> H1299_invasion_summary
+data_summary(H1299_invasion,varname = "invasion",groupnames = "group") -> H1299_invasion_summary
 
-#  bar plot
+.#  bar plot
 # get p signif
 H1299_invasion %>%
   dplyr::mutate(x=c(rep(c(1,2,3),4))) %>%
@@ -274,7 +345,26 @@ for(i in 3:5){
   t.test(H1299_invasion_for_ttest[,2],H1299_invasion_for_ttest[,i]) %>% 
     broom::tidy() %>% .[1,5] -> H1299_invasion_p[i-1,2]
 }
+H1299_invasion_p_2 <- tibble::tibble()
+for(i in H1299_invasion_summary$group){
+  for (j in H1299_invasion_summary$group) {
+    if(i!=j){
+      t.test(H1299_invasion_for_ttest[,i],H1299_invasion_for_ttest[,j]) %>% 
+        broom::tidy() %>% .[1,5] -> .p
+      tibble::tibble(group1=i,group2=j,p=.p$p.value) -> tmp
+      rbind(H1299_invasion_p_2,tmp)->H1299_invasion_p_2
+    }else{
+      H1299_invasion_p_2->H1299_invasion_p_2
+    }
+  }
+}
 
+H1299_invasion_p_2 %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.01 & p>0.001,"**",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p<=0.05 & p>0.01,"*",p_labe)) %>%
+  dplyr::mutate(p_labe=ifelse(p>0.05,"ns",p_labe)) %>%
+  readr::write_tsv(file.path(result_path,"invasion_siCBX-EZH2-H1299-Pvalue.tsv"))
 H1299_invasion_summary %>%
   dplyr::inner_join(H1299_invasion_p,by="group") %>%
   dplyr::mutate(p_labe=ifelse(p<=0.001, "***",p)) %>%
@@ -318,7 +408,7 @@ ggplot(H1299_invasion_summary, aes(x=group, y=invasion, fill=group)) +
 ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299.pdf"),width = 4,height = 2,device = "pdf")
 ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299.tiff"),width = 4,height = 2,device = "tiff")
 
-##### combine invasion of A549 and H1299 into one
+##### combine invasion of A549 and H1299 into one ----
 H1299_invasion_summary %>%
   rbind(A549_invasion_summary) %>%
   ggplot(aes(x=group, y=invasion, fill=group)) +
@@ -352,8 +442,8 @@ H1299_invasion_summary %>%
   ylab(paste("Cells invasion", "(% of Control)")) +
   # labs(title = "Invasion") +
   coord_flip()
-ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549.pdf"),width = 6,height = 2,device = "pdf")
-ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549.tiff"),width = 6,height = 2,device = "tiff")
+ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549.pdf"),width = 4,height = 4,device = "pdf")
+ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549.tiff"),width = 4,height = 4,device = "tiff")
 
 ggsave(file.path(result_path,"invasion_siCBX-EZH2-H1299-A549-flip.tiff"),width = 4,height = 4,device = "tiff")
 ##################################################
