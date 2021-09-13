@@ -22,9 +22,9 @@ my_theme <- theme(
 # 1. GSVA score correlation with TIL ------
 # muli-variable survival analysis -----------------------------------------
 
-basic_path <- "S:/坚果云/我的坚果云/ENCODE-TCGA-LUAD"
+basic_path <- "F:/我的坚果云/ENCODE-TCGA-LUAD"
 clinical_path <- file.path(basic_path,"survival")
-exp_path <- "S:/study/生存分析/免疫检查点project/liucj_tcga_process_data"
+exp_path <- "J:/胡斐斐guolab电脑/study/生存分析/免疫检查点project/liucj_tcga_process_data"
 res_path <- file.path(basic_path,"Figure/Figure2/survival")
 
 # load data ---------------------------------------------------------------
@@ -90,6 +90,50 @@ gene_exp %>%
 
 # 3.2.function to do cox survival analysis  ----
 # 3.2.1.univariable cox analysis ---------
+color <- tibble::tibble(group=c("yes","1no","1wild_type","high","1low","i","ii","iii","iv"),
+                        color=c("red","blue","blue","#e16261","#327bc0","#f2bbc4","#e16177","#c52641","#9f1f35"))
+fn_sur_plot<- function(fit,title="",ylab="",x_lable=1500,logrankp=NA){
+  color %>%
+    dplyr::inner_join(data,by="group") %>%
+    dplyr::group_by(group) %>%
+    dplyr::mutate(n = n()) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(group_label = paste(group,", n=",n,sep="")) %>%
+    dplyr::select(group,group_label,color) %>%
+    unique() %>%
+    dplyr::arrange(group) -> color_paired
+  survminer::ggsurvplot(fit,pval=F, #pval.method = T,
+                        data = data,
+                        surv.median.line = "hv",
+                        title = paste(title), # change it when doing diff data
+                        ylab = ylab,
+                        xlab = 'Time (days)',
+                        legend = "right",
+                        # legend.title = "Methyla group:",
+                        # ggtheme = theme_survminer(),
+                        ggtheme = theme(
+                          panel.border = element_blank(), panel.grid.major = element_blank(), 
+                          panel.grid.minor = element_blank(), axis.line = element_line(colour = "black", 
+                                                                                       size = 0.5), 
+                          panel.background = element_rect(fill = "white"),
+                          legend.key = element_blank(),
+                          legend.background = element_blank(),
+                          legend.text = element_text(size = 8),
+                          axis.text = element_text(size = 12,color = "black"),
+                          legend.title = element_blank(),
+                          axis.title = element_text(size = 12,color = "black"),
+                          text = element_text(color = "black")
+                        )
+  )[[1]] +
+    annotate("text", 
+             x = x_lable, y = 0.8, # x and y coordinates of the text
+             label = paste("Logrank P value =", round(logrankp,2))) +
+    scale_color_manual(
+      values = color_paired$color,
+      labels = color_paired$group_label
+    ) -> p
+  return(p)
+}
 fn_survival_test <- function(data,feature){
   if(feature=="smoke_year_group"){
     data %>%
@@ -100,7 +144,14 @@ fn_survival_test <- function(data,feature){
   summary(.cox) -> .z
   
   # KM pvalue
+  fit <- survfit(survival::Surv(time, status) ~ group, data = data, na.action = na.exclude)
   kmp <- 1 - pchisq(survival::survdiff(survival::Surv(time, status) ~ group, data = data, na.action = na.exclude)$chisq,df = length(levels(as.factor(data$group))) - 1)
+  if(feature!="smoke_year_group"){
+    p <- fn_sur_plot(fit,title = paste(feature,"p = ",signif(kmp,2)),ylab = "PFI",x_lable =1500,logrankp=kmp)
+    ggsave(file.path(res_path,paste(feature,"sur_plot.pdf",sep = ".")),device = "pdf",height = 3, width = 4)
+    ggsave(file.path(res_path,paste(feature,"sur_plot.png",sep = ".")),device = "png",height = 3, width = 4)
+  }
+  
   
   # mearge results
   tibble::tibble(
@@ -213,7 +264,7 @@ PFS_OS_clinical_exp %>%
   dplyr::select(-data) %>%
   tidyr::unnest() -> res.univarite.surv.PFS
 
-res.univarite.surv.PFS %>%
+.res.univarite.surv.PFS %>%
   readr::write_tsv(file.path(res_path,"res.univarite.surv.PFS.tsv"))
 
 # multi-variable survival analysis
